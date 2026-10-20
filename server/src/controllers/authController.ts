@@ -29,9 +29,9 @@ const REFRESH_COOKIE = 'ds_refresh';
 function cookieOptions(maxAgeMs: number) {
   return {
     httpOnly: true,
-    secure: env.cookieSecure || env.isProd,
+    secure: env.cookieSecure,
     sameSite: env.cookieSameSite,
-    domain: env.cookieDomain,
+    ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
     path: '/',
     maxAge: maxAgeMs,
   } as const;
@@ -45,9 +45,9 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
 function clearAuthCookies(res: Response) {
   const base = {
     httpOnly: true,
-    secure: env.cookieSecure || env.isProd,
+    secure: env.cookieSecure,
     sameSite: env.cookieSameSite,
-    domain: env.cookieDomain,
+    ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
     path: '/',
   } as const;
   res.clearCookie(ACCESS_COOKIE, base);
