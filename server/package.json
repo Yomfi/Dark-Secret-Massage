@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc -p tsconfig.json",
+    "build": "DATABASE_URL=\"${DATABASE_URL:-mysql://build:build@127.0.0.1:3306/build}\" prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "start:prod": "NODE_ENV=production node dist/server.js",
     "lint": "tsc -p tsconfig.json --noEmit",

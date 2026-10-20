@@ -1,4 +1,15 @@
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
+/**
+ * Same-origin production default: `/api`
+ * Local Vite can set VITE_API_URL=http://localhost:4000/api
+ * or leave unset and use the Vite `/api` proxy to the Express server.
+ */
+function resolveApiBase(): string {
+  const raw = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (!raw) return '/api';
+  return raw.replace(/\/$/, '');
+}
+
+const API_BASE = resolveApiBase();
 
 export class ApiError extends Error {
   code: string;
@@ -25,7 +36,7 @@ async function tryRefresh(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/auth/refresh`, {
+        const res = await fetch(`${API_BASE}/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -47,18 +58,26 @@ export async function apiRequest<T>(
   options: RequestInit = {},
   retry = true
 ): Promise<T> {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const url = `${API_BASE}${normalized}`;
+
   const headers = new Headers(options.headers || {});
   if (options.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(url, {
     ...options,
     headers,
     credentials: 'include',
   });
 
-  if (res.status === 401 && retry && path !== '/api/auth/login' && path !== '/api/auth/refresh') {
+  if (
+    res.status === 401 &&
+    retry &&
+    normalized !== '/auth/login' &&
+    normalized !== '/auth/refresh'
+  ) {
     const refreshed = await tryRefresh();
     if (refreshed) return apiRequest<T>(path, options, false);
   }
@@ -82,34 +101,34 @@ export async function apiRequest<T>(
 }
 
 export const authApi = {
-  me: () => apiRequest<{ user: AuthUserDto }>('/api/auth/me'),
+  me: () => apiRequest<{ user: AuthUserDto }>('/auth/me'),
   login: (body: { identifier: string; password: string }) =>
-    apiRequest<{ user: AuthUserDto }>('/api/auth/login', {
+    apiRequest<{ user: AuthUserDto }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
   register: (body: RegisterBody) =>
-    apiRequest<{ user: AuthUserDto }>('/api/auth/register', {
+    apiRequest<{ user: AuthUserDto }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
   logout: () =>
-    apiRequest<{ loggedOut: boolean }>('/api/auth/logout', {
+    apiRequest<{ loggedOut: boolean }>('/auth/logout', {
       method: 'POST',
       body: '{}',
     }),
   refresh: () =>
-    apiRequest<{ user: AuthUserDto }>('/api/auth/refresh', {
+    apiRequest<{ user: AuthUserDto }>('/auth/refresh', {
       method: 'POST',
       body: '{}',
     }),
   onboarding: (choice: OnboardingChoice) =>
-    apiRequest<{ user: AuthUserDto }>('/api/auth/onboarding', {
+    apiRequest<{ user: AuthUserDto }>('/auth/onboarding', {
       method: 'POST',
       body: JSON.stringify({ choice }),
     }),
   forgotPassword: (email: string) =>
-    apiRequest<{ message: string }>('/api/auth/forgot-password', {
+    apiRequest<{ message: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),

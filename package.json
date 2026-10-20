@@ -1,17 +1,25 @@
 {
-  "name": "react-example",
+  "name": "dark-secret",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "build:server": "npm --prefix server run build",
+    "build:production": "VITE_API_URL=/api vite build && npm --prefix server install && npm --prefix server run build",
+    "start": "node server/dist/server.js",
+    "migrate:deploy": "npm --prefix server exec prisma migrate deploy",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "rm -rf dist server/dist",
     "lint": "tsc --noEmit",
     "server:dev": "npm --prefix server run dev",
     "server:build": "npm --prefix server run build",
-    "server:start": "npm --prefix server run start"
+    "server:start": "npm --prefix server run start",
+    "postinstall": "npm --prefix server install"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
