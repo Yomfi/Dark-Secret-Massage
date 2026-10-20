@@ -2,17 +2,20 @@
 
 Private platform for intentional matrimonial matchmaking and professional massage wellness.
 
-## One-app production (Hostinger)
+## One-app production (Hostinger Express)
 
 Express serves `/api/*` and the Vite SPA from the same origin.
 
+Hostinger runs `npm install` only (no build-command field). Root `postinstall`
+installs server deps and runs `build:production`, producing `server/dist/server.js`.
+
 ```bash
-npm install
-npm run build:production
-npm start
+npm install   # also builds frontend + backend via postinstall
+npm start     # node server/dist/server.js
 ```
 
-Full Hostinger settings: see [HOSTINGER.md](./HOSTINGER.md).
+Entry file in hPanel: `server/dist/server.js`  
+Full settings: see [HOSTINGER.md](./HOSTINGER.md).
 
 ## Frontend (local)
 

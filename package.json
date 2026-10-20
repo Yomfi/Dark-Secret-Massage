@@ -9,8 +9,11 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "build:frontend": "VITE_API_URL=/api vite build",
     "build:server": "npm --prefix server run build",
-    "build:production": "VITE_API_URL=/api vite build && npm --prefix server install && npm --prefix server run build",
+    "build:production": "npm run build:frontend && npm run build:server",
+    "install:server": "npm --prefix server install --include=dev --no-audit --no-fund",
+    "postinstall": "npm run install:server && npm run build:production",
     "start": "node server/dist/server.js",
     "migrate:deploy": "npm --prefix server exec prisma migrate deploy",
     "preview": "vite preview",
@@ -18,8 +21,7 @@
     "lint": "tsc --noEmit",
     "server:dev": "npm --prefix server run dev",
     "server:build": "npm --prefix server run build",
-    "server:start": "npm --prefix server run start",
-    "postinstall": "npm --prefix server install"
+    "server:start": "npm --prefix server run start"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
