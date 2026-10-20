@@ -1,0 +1,17 @@
+# Optional local MySQL for development
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dark_secret
+      MYSQL_USER: dark_secret
+      MYSQL_PASSWORD: dark_secret
+    volumes:
+      - dark_secret_mysql:/var/lib/mysql
+
+volumes:
+  dark_secret_mysql:

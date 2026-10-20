@@ -1,0 +1,141 @@
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
+
+export class ApiError extends Error {
+  code: string;
+  status: number;
+  details?: unknown;
+
+  constructor(status: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+type ApiSuccess<T> = { success: true; data: T };
+type ApiFailure = {
+  success: false;
+  error: { code: string; message: string; details?: unknown };
+};
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        return res.ok;
+      } catch {
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestInit = {},
+  retry = true
+): Promise<T> {
+  const headers = new Headers(options.headers || {});
+  if (options.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  if (res.status === 401 && retry && path !== '/api/auth/login' && path !== '/api/auth/refresh') {
+    const refreshed = await tryRefresh();
+    if (refreshed) return apiRequest<T>(path, options, false);
+  }
+
+  let payload: ApiSuccess<T> | ApiFailure | null = null;
+  try {
+    payload = (await res.json()) as ApiSuccess<T> | ApiFailure;
+  } catch {
+    payload = null;
+  }
+
+  if (!res.ok || !payload || payload.success !== true) {
+    const err = (payload && 'error' in payload && payload.error) || {
+      code: 'REQUEST_FAILED',
+      message: 'Something went wrong. Please try again.',
+    };
+    throw new ApiError(res.status, err.code, err.message, 'details' in err ? err.details : undefined);
+  }
+
+  return payload.data;
+}
+
+export const authApi = {
+  me: () => apiRequest<{ user: AuthUserDto }>('/api/auth/me'),
+  login: (body: { identifier: string; password: string }) =>
+    apiRequest<{ user: AuthUserDto }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  register: (body: RegisterBody) =>
+    apiRequest<{ user: AuthUserDto }>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  logout: () =>
+    apiRequest<{ loggedOut: boolean }>('/api/auth/logout', {
+      method: 'POST',
+      body: '{}',
+    }),
+  refresh: () =>
+    apiRequest<{ user: AuthUserDto }>('/api/auth/refresh', {
+      method: 'POST',
+      body: '{}',
+    }),
+  onboarding: (choice: OnboardingChoice) =>
+    apiRequest<{ user: AuthUserDto }>('/api/auth/onboarding', {
+      method: 'POST',
+      body: JSON.stringify({ choice }),
+    }),
+  forgotPassword: (email: string) =>
+    apiRequest<{ message: string }>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+};
+
+export type OnboardingChoice = 'find_partner' | 'book_massage' | 'become_provider';
+
+export type AuthUserDto = {
+  id: string;
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  accountStatus: string;
+  emailVerifiedAt: string | null;
+  phoneVerifiedAt: string | null;
+  onboardingChoice: string | null;
+};
+
+export type RegisterBody = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  termsAccepted: true;
+};

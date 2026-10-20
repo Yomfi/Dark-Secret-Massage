@@ -1,20 +1,42 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Dark Secret
 
-# Run and deploy your AI Studio app
+Private platform for intentional matrimonial matchmaking and professional massage wellness.
 
-This contains everything you need to run your app locally.
+## Frontend
 
-View your app in AI Studio: https://ai.studio/apps/aee0a14b-3e8c-4ff6-bc8e-6485d7da37b8
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+```
 
-## Run Locally
+Set `VITE_API_URL` (see `.env.example`). Leave empty in local Vite to use the `/api` proxy to the backend.
 
-**Prerequisites:**  Node.js
+## Backend (Milestone 1 — Auth)
 
+```bash
+cd server
+cp .env.example .env   # fill MySQL + JWT secrets
+npm install
+npx prisma generate
+npx prisma migrate deploy
+npm run build
+npm start
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+See `server/HOSTINGER.md` for Hostinger deployment preparation.
+
+Auth smoke checks (no DB required):
+
+```bash
+cd server && npm run test:auth
+```
+
+## Routes
+
+- `/` homepage
+- `/massage` explore services
+- `/book-massage` booking flow
+- `/find-a-life-partner` discovery (requires authentication)
+- `/login` `/register` `/onboarding`

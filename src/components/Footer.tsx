@@ -1,5 +1,6 @@
 import React from 'react';
-import { ShieldCheck, Heart, Sparkles, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
 
 interface FooterProps {
   onOpenMatchmaking: () => void;
@@ -75,6 +76,11 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
           <ul className="space-y-2 text-xs">
             <li>
+              <Link to="/massage" className="hover:text-white transition-colors">
+                Explore Massage Services
+              </Link>
+            </li>
+            <li>
               <button
                 onClick={onOpenBooking}
                 className="hover:text-white transition-colors cursor-pointer text-left"
@@ -83,20 +89,9 @@ export const Footer: React.FC<FooterProps> = ({
               </button>
             </li>
             <li>
-              <button
-                onClick={onOpenBooking}
-                className="hover:text-white transition-colors cursor-pointer text-left"
-              >
-                Certified Therapists
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={onOpenBooking}
-                className="hover:text-white transition-colors cursor-pointer text-left"
-              >
+              <Link to="/massage" className="hover:text-white transition-colors">
                 In-Studio & Home Visits
-              </button>
+              </Link>
             </li>
             <li>
               <a href="#safety" className="hover:text-white transition-colors">

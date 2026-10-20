@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
   Heart,
@@ -24,7 +25,9 @@ interface ClientDashboardProps {
   onBackToHome: () => void;
   onOpenMatchmaking: () => void;
   onOpenBooking: () => void;
-  userBookings: Array<BookingRequest & { totalGHS: number; id: string }>;
+  userBookings: Array<
+    BookingRequest & { totalGHS: number; id: string; status?: string; reference?: string }
+  >;
   userIntroductions: Array<{ profile: MatchmakingProfile; note: string; status: string; date: string }>;
 }
 
@@ -35,7 +38,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   userBookings,
   userIntroductions,
 }) => {
-  const [activeTab, setActiveTab] = useState<'matchmaking' | 'massage' | 'messages' | 'privacy'>('matchmaking');
+  const [searchParams] = useSearchParams();
+  const initialTab =
+    searchParams.get('tab') === 'massage'
+      ? 'massage'
+      : ('matchmaking' as 'matchmaking' | 'massage' | 'messages' | 'privacy');
+  const [activeTab, setActiveTab] = useState<'matchmaking' | 'massage' | 'messages' | 'privacy'>(
+    initialTab
+  );
   const [messages, setMessages] = useState<Array<{ sender: string; text: string; time: string; isUser: boolean }>>([
     {
       sender: 'Relationship Concierge',
@@ -323,12 +333,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   </div>
 
                   <div className="text-xs text-zinc-400 flex items-center justify-between pt-2">
-                    <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                    <span
+                      className={`flex items-center gap-1.5 font-medium ${
+                        b.status === 'pending_payment' || b.status === 'pending'
+                          ? 'text-amber-400'
+                          : 'text-emerald-400'
+                      }`}
+                    >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Confirmed with Certified Therapist</span>
+                      <span>
+                        {b.status === 'pending_payment'
+                          ? 'Pending payment / review'
+                          : b.status === 'pending'
+                            ? 'Pending review'
+                            : 'Session recorded'}
+                      </span>
                     </span>
                     <button
-                      onClick={() => alert(`Your session reference is ${b.id}. For rescheduling, please message your concierge.`)}
+                      onClick={() =>
+                        alert(
+                          `Reference: ${b.reference || b.id}. Status: ${b.status || 'recorded'}.`
+                        )
+                      }
                       className="text-purple-400 hover:text-purple-300 text-xs font-medium cursor-pointer"
                     >
                       Session Details

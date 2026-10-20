@@ -53,19 +53,19 @@ export const VisualMedia: React.FC<VisualMediaProps> = ({ type, className = '', 
     );
   }
 
-  // 2. MATRIMONIAL / MATCHMAKING: Real editorial photograph of Ghanaian couple
+  // 2. MATRIMONIAL / MATCHMAKING: Editorial picnic lifestyle photograph
   if (type === 'matchmaking-editorial') {
     return (
       <div className={`relative overflow-hidden rounded-3xl bg-[#09090f] border border-white/10 group ${className}`}>
         <img
-          src="/ghanaian_couple_story.jpg"
-          alt={alt || 'Ghanaian couple in matrimonial companionship'}
-          className="w-full h-full object-cover object-[center_20%] brightness-[0.88] contrast-[1.08] group-hover:scale-102 transition-transform duration-700"
+          src="/ghanaian_couple_picnic.jpg"
+          alt={alt || 'Stylish Ghanaian couple enjoying a relaxed picnic together outdoors'}
+          className="w-full h-full object-cover object-[48%_42%] sm:object-[50%_40%] brightness-[0.92] contrast-[1.05] group-hover:scale-105 transition-transform duration-700"
           onError={() => setImageError(true)}
         />
         {/* Subtle cinematic gradient vignette */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#060608] via-[#060608]/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#060608]/40 via-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#060608]/35 via-transparent to-black/25" />
       </div>
     );
   }

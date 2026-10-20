@@ -49,8 +49,11 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
               <div
                 key={service.id}
                 onClick={() => {
-                  if (onSelectService) onSelectService(service.id);
-                  onOpenBooking();
+                  if (onSelectService) {
+                    onSelectService(service.id);
+                  } else {
+                    onOpenBooking();
+                  }
                 }}
                 className="group p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-purple-500/40 hover:bg-white/[0.06] transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
@@ -78,6 +81,20 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Secondary CTA — explore full massage services */}
+          <div className="pt-1">
+            <a
+              href="/massage"
+              className="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full border border-white/15 bg-white/[0.03] px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-zinc-200 shadow-[0_0_0_1px_rgba(168,85,247,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-purple-400/45 hover:bg-purple-500/[0.08] hover:text-white hover:shadow-[0_12px_40px_-16px_rgba(168,85,247,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#060608] motion-reduce:transform-none"
+            >
+              <span>View More Massage Services</span>
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transform-none"
+                aria-hidden
+              />
+            </a>
           </div>
 
           {/* CTA Button */}
