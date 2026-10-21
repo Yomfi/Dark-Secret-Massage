@@ -14,12 +14,12 @@ export const Hero: React.FC<HeroProps> = ({
   verifiedCount = '1,200+',
 }) => {
   return (
-    <section className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-32 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 overflow-hidden select-none isolate">
+    <section className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-32 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 overflow-x-hidden select-none">
       <motion.div
         initial={{ opacity: 0, scale: 1.04 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute inset-0 z-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 z-0 w-full h-full pointer-events-none overflow-hidden"
       >
         <VisualMedia
           type="hero-cinematic"
@@ -70,7 +70,7 @@ export const Hero: React.FC<HeroProps> = ({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-xl mx-auto mb-7 sm:mb-8"
+          className="relative z-30 w-full max-w-xl mx-auto mb-7 sm:mb-8"
         >
           <CitySearch variant="hero" />
         </motion.div>
@@ -79,7 +79,7 @@ export const Hero: React.FC<HeroProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.8 }}
-          className="flex flex-wrap items-center justify-center gap-4 sm:gap-7 text-[11px] sm:text-xs uppercase tracking-[0.22em] text-zinc-300 font-medium drop-shadow-md"
+          className="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-7 text-[11px] sm:text-xs uppercase tracking-[0.22em] text-zinc-300 font-medium drop-shadow-md"
         >
           <div className="inline-flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-purple-400" />

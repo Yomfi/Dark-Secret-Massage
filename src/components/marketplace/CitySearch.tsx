@@ -60,13 +60,23 @@ export const CitySearch: React.FC<CitySearchProps> = ({
   };
 
   const isHero = variant === 'hero';
+  const showList = open && suggestions.length > 0;
+
+  // Hero: in-flow list reserves vertical space so trust/next sections never sit under it.
+  // Toolbar: absolute overlay keeps the filter bar compact.
+  const listClassName = isHero
+    ? 'relative z-30 w-full mt-2 max-h-[min(16rem,45vh)] overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-[#0c0c12] shadow-[0_24px_48px_rgba(0,0,0,0.85)] py-2'
+    : 'absolute z-50 left-0 right-0 mt-2 max-h-[min(16rem,45vh)] overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-[#0c0c12] shadow-[0_24px_48px_rgba(0,0,0,0.85)] py-2';
 
   return (
-    <div ref={wrapRef} className={`relative w-full ${className}`}>
+    <div
+      ref={wrapRef}
+      className={`relative w-full ${isHero ? 'z-30' : 'z-20'} ${className}`}
+    >
       <div
         className={
           isHero
-            ? 'flex flex-col sm:flex-row gap-2 sm:gap-0 w-full max-w-xl mx-auto rounded-2xl sm:rounded-full border border-white/15 bg-black/50 backdrop-blur-xl p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
+            ? 'flex flex-col sm:flex-row gap-2 sm:gap-0 w-full rounded-2xl sm:rounded-full border border-white/15 bg-black/50 backdrop-blur-xl p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
             : 'flex flex-col sm:flex-row gap-2 sm:gap-0 w-full rounded-xl border border-white/10 bg-white/[0.04] p-1'
         }
       >
@@ -120,12 +130,8 @@ export const CitySearch: React.FC<CitySearchProps> = ({
         </button>
       </div>
 
-      {open && suggestions.length > 0 && (
-        <ul
-          id={listId}
-          role="listbox"
-          className="absolute z-40 left-0 right-0 mt-2 max-h-64 overflow-auto rounded-2xl border border-white/10 bg-[#0c0c12]/98 backdrop-blur-xl shadow-2xl py-2"
-        >
+      {showList && (
+        <ul id={listId} role="listbox" className={listClassName}>
           {suggestions.map((city, i) => (
             <li key={city.id} role="option" aria-selected={i === highlight}>
               <button
