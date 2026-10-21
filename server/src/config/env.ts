@@ -17,14 +17,17 @@ function required(name: string, fallback?: string): string {
 }
 
 function parsePort(): number {
-  const raw = process.env.PORT || (isProd ? undefined : '4000');
-  if (!raw) {
-    throw new Error('Missing required environment variable: PORT');
+  const rawPort = process.env.PORT?.trim();
+  let port = 3000;
+
+  if (rawPort) {
+    const parsedPort = Number(rawPort);
+    if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+      throw new Error('Invalid PORT: expected an integer between 1 and 65535.');
+    }
+    port = parsedPort;
   }
-  const port = Number(raw);
-  if (!Number.isFinite(port) || port <= 0) {
-    throw new Error(`Invalid PORT value: ${raw}`);
-  }
+
   return port;
 }
 

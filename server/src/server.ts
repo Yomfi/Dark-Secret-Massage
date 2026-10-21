@@ -19,7 +19,7 @@ async function main() {
     console.warn('SKIP_DB_CONNECT=true — starting without MySQL (smoke/static only).');
   }
 
-  // Bind all interfaces for Hostinger / containers. Port from process.env.PORT.
+  // Bind all interfaces for Hostinger / containers. Port from env (default 3000).
   const host = process.env.HOST || '0.0.0.0';
   app.listen(env.port, host, () => {
     console.info(`Dark Secret listening on ${host}:${env.port} (${env.nodeEnv})`);

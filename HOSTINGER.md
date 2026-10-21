@@ -63,7 +63,7 @@ Password is configured only in Hostinger. Never commit it.
 | Variable | Value |
 |----------|--------|
 | `NODE_ENV` | `production` |
-| `PORT` | Hostinger-provided (leave to platform if auto-injected) |
+| `PORT` | Optional. Defaults to `3000` if unset. Use Hostinger's value when provided (`PORT=3000` is fine to set explicitly). |
 | `DATABASE_URL` | see format above |
 | `JWT_ACCESS_SECRET` | long random secret (from local `server/.secrets.local`) |
 | `JWT_REFRESH_SECRET` | different long random secret |
