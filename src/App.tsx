@@ -19,6 +19,8 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ExplorePage } from './pages/ExplorePage';
+import { MarketplaceProfilePage } from './pages/MarketplaceProfilePage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { MatchmakingProfile, BookingRequest } from './lib/bookingAndMatchmaking';
 import { MATCHMAKING_PROFILES } from './data/mockData';
@@ -197,6 +199,9 @@ function AppRoutes() {
       />
       <Route path="/massage" element={<MassagePage />} />
       <Route path="/massage-services" element={<Navigate to="/massage" replace />} />
+      <Route path="/explore" element={<Navigate to="/explore/accra" replace />} />
+      <Route path="/explore/:citySlug" element={<ExplorePage />} />
+      <Route path="/profile/:profileSlug" element={<MarketplaceProfilePage />} />
       <Route
         path="/dashboard"
         element={

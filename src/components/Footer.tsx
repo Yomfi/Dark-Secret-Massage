@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 
 interface FooterProps {
-  onOpenMatchmaking: () => void;
-  onOpenBooking: () => void;
-  onOpenDashboard: () => void;
+  onOpenMatchmaking?: () => void;
+  onOpenBooking?: () => void;
+  onOpenDashboard?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -13,6 +13,9 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenBooking,
   onOpenDashboard,
 }) => {
+  const goMatchmaking = onOpenMatchmaking || (() => {});
+  const goBooking = onOpenBooking || (() => {});
+  const goDashboard = onOpenDashboard || (() => {});
   return (
     <footer className="border-t border-white/[0.08] bg-[#050507] text-zinc-400 py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
@@ -42,7 +45,7 @@ export const Footer: React.FC<FooterProps> = ({
           <ul className="space-y-2 text-xs">
             <li>
               <button
-                onClick={onOpenMatchmaking}
+                onClick={goMatchmaking}
                 className="hover:text-white transition-colors cursor-pointer text-left"
               >
                 Find a Life Partner
@@ -50,7 +53,7 @@ export const Footer: React.FC<FooterProps> = ({
             </li>
             <li>
               <button
-                onClick={onOpenMatchmaking}
+                onClick={goMatchmaking}
                 className="hover:text-white transition-colors cursor-pointer text-left"
               >
                 Vetted Member Directory
@@ -82,7 +85,7 @@ export const Footer: React.FC<FooterProps> = ({
             </li>
             <li>
               <button
-                onClick={onOpenBooking}
+                onClick={goBooking}
                 className="hover:text-white transition-colors cursor-pointer text-left"
               >
                 Book a Session
@@ -109,7 +112,7 @@ export const Footer: React.FC<FooterProps> = ({
           <ul className="space-y-2 text-xs">
             <li>
               <button
-                onClick={onOpenDashboard}
+                onClick={goDashboard}
                 className="hover:text-purple-300 transition-colors cursor-pointer text-left"
               >
                 Member Portal

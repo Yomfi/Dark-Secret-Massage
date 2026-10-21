@@ -1,22 +1,20 @@
 import React from 'react';
 import { VisualMedia } from './VisualMedia';
-import { ShieldCheck, HeartHandshake, Sparkles, Lock } from 'lucide-react';
+import { ShieldCheck, Sparkles, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
+import { CitySearch } from './marketplace/CitySearch';
 
 interface HeroProps {
-  onOpenMatchmaking: () => void;
-  onOpenBooking: () => void;
+  onOpenMatchmaking?: () => void;
+  onOpenBooking?: () => void;
   verifiedCount?: string;
 }
 
 export const Hero: React.FC<HeroProps> = ({
-  onOpenMatchmaking,
-  onOpenBooking,
   verifiedCount = '1,200+',
 }) => {
   return (
     <section className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-32 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 overflow-hidden select-none isolate">
-      {/* 1. Large Edge-to-Edge Cinematic Photographic Background */}
       <motion.div
         initial={{ opacity: 0, scale: 1.04 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -30,9 +28,7 @@ export const Hero: React.FC<HeroProps> = ({
         />
       </motion.div>
 
-      {/* 2. Centred Hero Content with deliberate negative space */}
       <div className="flex-1 flex flex-col items-center justify-center text-center max-w-4xl mx-auto my-auto z-10 py-6 sm:py-10">
-        {/* Eyebrow */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -40,65 +36,45 @@ export const Hero: React.FC<HeroProps> = ({
           className="mb-5 sm:mb-6 inline-flex items-center gap-2"
         >
           <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.38em] text-purple-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-sans">
-            PRIVATE. VERIFIED. INTENTIONAL.
+            DISCOVER NEAR YOU
           </span>
         </motion.div>
 
-        {/* Headline: Very large, dominant, broken intentionally across ~2 lines */}
         <motion.h1
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl font-bold tracking-tight text-white leading-[1.07] mb-6 font-sans drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
         >
-          Find connection.
+          Find the right service,
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
-            Find your moment.
+            connection or experience
+          </span>
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
+            in your city.
           </span>
         </motion.h1>
 
-        {/* Supporting Copy */}
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.5 }}
           className="text-base sm:text-lg md:text-xl text-zinc-300/90 max-w-2xl mx-auto leading-relaxed font-normal mb-8 sm:mb-10 text-balance drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
         >
-          One private platform for meaningful relationships and trusted professional massage services.
+          Search by city for massage, wellness and meaningful connections — browse freely, register when you are ready.
         </motion.p>
 
-        {/* Primary Action: Large Horizontal Outlined Pill */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-md sm:max-w-lg mx-auto mb-7 sm:mb-8"
+          className="w-full max-w-xl mx-auto mb-7 sm:mb-8"
         >
-          <div className="flex flex-col sm:flex-row items-center p-1.5 rounded-2xl sm:rounded-full border border-white/25 bg-black/60 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.8),0_0_30px_rgba(168,85,247,0.15)] gap-2">
-            {/* Left: Find a Life Partner (restrained/dark) */}
-            <button
-              onClick={onOpenMatchmaking}
-              className="w-full sm:w-1/2 py-3.5 px-5 text-xs sm:text-[13px] font-semibold tracking-wider uppercase text-zinc-100 hover:text-white bg-white/[0.06] hover:bg-white/[0.14] rounded-xl sm:rounded-full border border-white/10 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 group whitespace-nowrap"
-            >
-              <HeartHandshake className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span>FIND A LIFE PARTNER</span>
-            </button>
-
-            {/* Right: Book a Massage (purple accent) */}
-            <button
-              onClick={onOpenBooking}
-              className="w-full sm:w-1/2 py-3.5 px-5 text-xs sm:text-[13px] font-semibold tracking-wider uppercase text-white bg-purple-600 hover:bg-purple-500 rounded-xl sm:rounded-full shadow-lg shadow-purple-950/60 transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 group whitespace-nowrap"
-            >
-              <span>BOOK A MASSAGE</span>
-              <span className="text-base transition-transform group-hover:translate-x-1" aria-hidden="true">
-                →
-              </span>
-            </button>
-          </div>
+          <CitySearch variant="hero" />
         </motion.div>
 
-        {/* Trust Indicators: Verified Profiles, Trusted Providers, Private & Secure */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -126,7 +102,6 @@ export const Hero: React.FC<HeroProps> = ({
         </motion.div>
       </div>
 
-      {/* 3. Social Proof Section at Lower Hero (Afterdark Style) */}
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -134,7 +109,6 @@ export const Hero: React.FC<HeroProps> = ({
         className="w-full max-w-2xl mx-auto z-10 pt-2 flex flex-col items-center justify-center text-center"
       >
         <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2">
-          {/* Subtle decorative left laurel wreath branch */}
           <svg
             className="w-5 h-6 text-purple-400/70 shrink-0 hidden sm:block"
             viewBox="0 0 24 24"
@@ -151,7 +125,6 @@ export const Hero: React.FC<HeroProps> = ({
             <path d="M9 6c1.5-.5 3-.5 4.5.5" />
           </svg>
 
-          {/* Overlapping circular portraits of fictional Ghanaian adults */}
           <div className="flex -space-x-2.5 overflow-hidden p-0.5">
             <VisualMedia type="avatar-ama" className="w-8 h-8 ring-2 ring-[#070709]" alt="Ama" />
             <VisualMedia type="avatar-kwame" className="w-8 h-8 ring-2 ring-[#070709]" alt="Kwame" />
@@ -166,7 +139,6 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
           </div>
 
-          {/* Subtle decorative right laurel wreath branch */}
           <svg
             className="w-5 h-6 text-purple-400/70 shrink-0 scale-x-[-1] hidden sm:block"
             viewBox="0 0 24 24"
