@@ -32,12 +32,15 @@ Root `postinstall` automatically:
 1. Installs `server/` dependencies (including build-time types)
 2. Builds the Vite frontend → `dist/`
 3. Runs `prisma generate` + compiles Express → `server/dist/server.js`
-4. Runs `prisma migrate deploy` against Hostinger `DATABASE_URL` (idempotent)
+4. Syncs the SPA into `server/dist/public/` (served next to the entry file)
+5. Runs `prisma migrate deploy` against Hostinger `DATABASE_URL` (idempotent)
 
 `build:production` does **not** connect to MySQL. Only the migration step after the build uses the live database.  
 If `DATABASE_URL` is missing, deploy fails clearly (no unmigrated app).
 
-Do **not** set a fake root `server.js`. Use the real compiled entry above.
+Entry file remains `server/dist/server.js`. Express serves the React app from `server/dist/public` (with fallbacks to repo-root `dist/`).
+
+Do **not** set a fake root `server.js`.
 
 ## Routing behavior
 

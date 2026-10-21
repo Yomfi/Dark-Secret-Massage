@@ -29,15 +29,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await authApi.me();
       setUser(data.user);
       return true;
-    } catch {
-      try {
-        const refreshed = await authApi.refresh();
-        setUser(refreshed.user);
-        return true;
-      } catch {
-        setUser(null);
-        return false;
+    } catch (err) {
+      // Unauthenticated visitors must not crash the public homepage.
+      // Only attempt refresh when an access cookie may have expired.
+      const maybeExpired =
+        err instanceof ApiError && err.status === 401 && err.code === 'UNAUTHENTICATED';
+
+      if (maybeExpired) {
+        try {
+          const refreshed = await authApi.refresh();
+          setUser(refreshed.user);
+          return true;
+        } catch {
+          setUser(null);
+          return false;
+        }
       }
+
+      setUser(null);
+      return false;
     }
   }, []);
 

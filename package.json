@@ -8,10 +8,11 @@
   },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "build": "npm run build:production",
     "build:frontend": "VITE_API_URL=/api vite build",
     "build:server": "npm --prefix server run build",
-    "build:production": "npm run build:frontend && npm run build:server",
+    "sync:frontend": "node scripts/sync-frontend.mjs",
+    "build:production": "npm run build:frontend && npm run build:server && npm run sync:frontend",
     "install:server": "npm --prefix server install --include=dev --no-audit --no-fund",
     "postinstall": "npm run install:server && npm run build:production && npm run migrate:deploy",
     "start": "node server/dist/server.js",

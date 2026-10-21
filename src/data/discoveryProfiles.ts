@@ -90,7 +90,7 @@ export const DISCOVERY_PROFILES: DiscoveryProfile[] = [
       'I split time between clinical work and community health initiatives. Warmth, humour, and deliberate purpose matter deeply to me.',
     lookingFor:
       'A supportive life partner who values kindness, intellectual curiosity, and long-term companionship.',
-    photos: ['/profiles/profile_yaa.jpg', '/Warm Amber Whisper.png'],
+    photos: ['/profiles/profile_yaa.jpg', '/Warm%20Amber%20Whisper.png'],
     verified: true,
     highlights: ['Matches your age preference', 'Same faith preference'],
   },
@@ -166,7 +166,7 @@ export const DISCOVERY_PROFILES: DiscoveryProfile[] = [
       'I help schools raise standards across Ghana. Calm temperament, strong values, and a soft spot for good conversation.',
     lookingFor:
       'A thoughtful partner who respects faith, family, and personal growth.',
-    photos: ['/profiles/profile_esi.jpg', '/Warm Amber Whisper.png'],
+    photos: ['/profiles/profile_esi.jpg', '/Warm%20Amber%20Whisper.png'],
     verified: false,
     highlights: ['Matches your age preference', 'Same faith preference'],
   },

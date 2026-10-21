@@ -31,7 +31,7 @@ export const VisualMedia: React.FC<VisualMediaProps> = ({ type, className = '', 
       <div className={`relative overflow-hidden w-full h-full select-none ${className}`}>
         {!imageError ? (
           <img
-            src="/Warm Amber Whisper.png"
+            src="/Warm%20Amber%20Whisper.png"
             alt={alt || 'Editorial photograph of an authentic Ghanaian couple in warm low-key ambient romance'}
             className="w-full h-full object-cover object-[32%_22%] sm:object-[center_18%] brightness-[0.94] contrast-[1.06] transition-transform duration-1000"
             onError={() => setImageError(true)}
