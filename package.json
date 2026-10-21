@@ -3,33 +3,18 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "engines": {
-    "node": "22.x"
-  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "npm run build:production",
-    "build:frontend": "VITE_API_URL=/api vite build",
-    "build:server": "npm --prefix server run build",
-    "sync:frontend": "node scripts/sync-frontend.mjs",
-    "build:production": "npm run build:frontend && npm run build:server && npm run sync:frontend",
-    "install:server": "npm --prefix server install --include=dev --no-audit --no-fund",
-    "postinstall": "npm run install:server && npm run build:production && npm run migrate:deploy",
-    "start": "node server/dist/server.js",
-    "migrate:deploy": "npm --prefix server run migrate:deploy",
+    "build": "VITE_API_URL=/api vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server/dist",
+    "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "server:dev": "npm --prefix server run dev",
-    "server:build": "npm --prefix server run build",
-    "server:start": "npm --prefix server run start"
+    "php:lint": "command -v php >/dev/null && find public/api -name '*.php' -print0 | xargs -0 -n1 php -l || echo 'PHP CLI not installed locally; syntax will be validated on Hostinger.'"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
-    "dotenv": "^17.2.3",
-    "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.1",
@@ -38,13 +23,11 @@
     "vite": "^8.3.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.21.0",
     "typescript": "^7.0.2"
   }
 }

@@ -1,145 +1,114 @@
-# Dark Secret — single full-stack Hostinger app
+# Dark Secret — Hostinger PHP + MySQL (same origin)
 
-One Express application serves the React SPA **and** the API on the same origin.
+Production origin: `https://dartscret.havensnet.com`
 
-**Production origin:** `https://dartscret.havensnet.com`  
-**Do not** create a second app on `api.dartscret.havensnet.com`.
+**Architecture:** Vite React SPA + PHP API under `/api/*` + Hostinger MySQL.  
+**No Node/Express runtime** is required for production.
 
-## Hostinger Express preset (exact fields)
+The `server/` Express/Prisma tree remains in the repo for reference until a later cleanup commit. Production must not depend on it.
 
-There is **no separate Build Command** in the Express deployment UI.
+## Hostinger deployment (exact settings)
 
 | Field | Value |
 |--------|--------|
-| Framework | **Express** |
-| Domain | `dartscret.havensnet.com` (HTTPS) |
+| Domain | `dartscret.havensnet.com` |
 | Repository | `Yomfi/Dark-Secret-Massage` |
 | Branch | `main` |
-| Root directory | `./` |
-| Package manager | `npm` |
-| Node | **22.x** |
-| Entry file | `server/dist/server.js` |
+| Hosting type | **PHP / Apache** (standard web hosting — not Node.js) |
+| Publish directory | `dist/` (or deploy `dist` contents to `public_html`) |
+| Build | `npm install && npm run build` |
 
-Hostinger runs:
+After build, `dist/` must contain:
 
-```text
-npm install
-→ starts server/dist/server.js
-```
+- `index.html`
+- `assets/`
+- `api/` (PHP endpoints copied from `public/api`)
+- `.htaccess`
 
-Root `postinstall` automatically:
-
-1. Installs `server/` dependencies (including build-time types)
-2. Builds the Vite frontend → `dist/`
-3. Runs `prisma generate` + compiles Express → `server/dist/server.js`
-4. Syncs the SPA into `server/dist/public/` (served next to the entry file)
-5. Runs `prisma migrate deploy` against Hostinger `DATABASE_URL` (idempotent)
-
-`build:production` does **not** connect to MySQL. Only the migration step after the build uses the live database.  
-If `DATABASE_URL` is missing, deploy fails clearly (no unmigrated app).
-
-Entry file remains `server/dist/server.js`. Express serves the React app from `server/dist/public` (with fallbacks to repo-root `dist/`).
-
-Do **not** set a fake root `server.js`.
-
-## Routing behavior
-
-| URL | Handler |
-|-----|---------|
-| `/`, `/massage`, `/book-massage`, `/find-a-life-partner`, … | React SPA (`dist/index.html`) |
-| `/api/health`, `/api/auth/*`, … | Express API (JSON) |
-| Unknown `/api/*` | JSON 404 (never HTML) |
-
-## MySQL
+## Database
 
 | Field | Value |
 |--------|--------|
-| Database name | `u190513960_darksecret` |
-| Username | `u190513960_darksecret` |
+| Database | `u190513960_darksecret` |
+| User | `u190513960_darksecret` |
 | Host | `localhost` |
 | Port | `3306` |
 
-```text
-DATABASE_URL=mysql://u190513960_darksecret:<PASSWORD>@localhost:3306/u190513960_darksecret
+**Reuse existing Prisma tables** if already migrated (`users`, token tables).  
+If tables are missing, run once (safe, no drops):
+
+`public/api/sql/schema_if_missing.sql`
+
+in phpMyAdmin. Do **not** drop production tables.
+
+## PHP API config
+
+On the server, create:
+
+`dist/api/config/config.local.php`
+
+(from `public/api/config/config.example.php`)
+
+Set at least:
+
+```php
+<?php
+return [
+  'db_host' => 'localhost',
+  'db_name' => 'u190513960_darksecret',
+  'db_user' => 'u190513960_darksecret',
+  'db_pass' => 'YOUR_PASSWORD',
+  'cookie_secure' => true,
+  'cookie_samesite' => 'Lax',
+  'app_env' => 'production',
+  'app_url' => 'https://dartscret.havensnet.com',
+];
 ```
 
-Password is configured only in Hostinger. Never commit it.
+Never commit `config.local.php` or the DB password.
 
-## Environment variables (hPanel)
+## Auth model
 
-| Variable | Value |
-|----------|--------|
-| `NODE_ENV` | `production` |
-| `PORT` | Optional. Defaults to `3000` if unset. Use Hostinger's value when provided (`PORT=3000` is fine to set explicitly). |
-| `DATABASE_URL` | see format above |
-| `JWT_ACCESS_SECRET` | long random secret (from local `server/.secrets.local`) |
-| `JWT_REFRESH_SECRET` | different long random secret |
-| `ACCESS_TOKEN_TTL` | `15m` |
-| `REFRESH_TOKEN_TTL` | `30d` |
-| `COOKIE_SECURE` | `true` |
-| `COOKIE_SAME_SITE` | `lax` |
-| `COOKIE_DOMAIN` | leave **unset** (same-origin host-only cookies) |
-| `VITE_API_URL` | `/api` (optional; baked by build script and code default) |
-| `CORS_ORIGINS` | `https://dartscret.havensnet.com` (optional; same-origin default exists) |
+- PHP sessions (`ds_session` cookie)
+- `httpOnly`, `Secure` in production, `SameSite=Lax`, `path=/`
+- Passwords: `password_hash` / `password_verify` (bcrypt — compatible with prior bcryptjs hashes)
+- Same-origin frontend calls `/api` with `credentials: 'include'`
 
-Template: `server/.env.production.example`  
-Never commit `.env`, `.secrets.local`, or real JWT/DB values.
+## Endpoints
 
-## Migrations
+| Method | Path | File |
+|--------|------|------|
+| GET | `/api/health` | `api/health.php` |
+| POST | `/api/auth/register` | `api/auth/register.php` |
+| POST | `/api/auth/login` | `api/auth/login.php` |
+| POST | `/api/auth/logout` | `api/auth/logout.php` |
+| GET | `/api/auth/me` | `api/auth/me.php` |
+| POST | `/api/auth/refresh` | `api/auth/refresh.php` |
+| POST | `/api/auth/forgot-password` | `api/auth/forgot-password.php` |
+| POST | `/api/auth/reset-password` | `api/auth/reset-password.php` |
+| POST | `/api/auth/onboarding` | `api/auth/onboarding.php` |
+| POST | `/api/auth/verify-email` | `api/auth/verify-email.php` |
+| POST | `/api/auth/verify-phone` | `api/auth/verify-phone.php` |
 
-`npm install` → `postinstall` → `npm run migrate:deploy` applies pending migrations automatically.
+`.htaccess` maps clean `/api/...` URLs to `.php` and **never** rewrites `/api` to React `index.html`.
 
-Never run `prisma migrate dev` in production.  
-Never use `db push`, reset, or auto-seed.
+## Checklist
 
-## Cookies / CORS (same origin)
+1. Stop / remove the Node.js web app for this domain (if still present)
+2. Deploy static/`dist` to the domain’s web root (PHP enabled)
+3. Ensure `.htaccess` is uploaded
+4. Add `api/config/config.local.php` with DB password
+5. Confirm tables exist (or run `schema_if_missing.sql`)
+6. Verify `https://dartscret.havensnet.com/api/health`
+7. Verify `https://dartscret.havensnet.com/` loads the React app
+8. Verify register / login / me / logout
 
-- Cookies `ds_access` / `ds_refresh`: `httpOnly`, `secure` in production, `sameSite=lax`, `path=/`, host-only
-- Frontend calls relative `/api` with `credentials: 'include'`
-- CORS is restricted (no wildcards); production same-origin traffic does not depend on CORS
-
-## Health check
-
-```http
-GET https://dartscret.havensnet.com/api/health
-```
-
-Expected JSON (not the React homepage):
-
-```json
-{ "success": true, "data": { "status": "ok", "service": "dark-secret-api" } }
-```
-
-## Manual hPanel checklist
-
-1. Express app on `dartscret.havensnet.com` — root `./`, entry `server/dist/server.js`, Node 22
-2. Remove any separate `api.dartscret` app
-3. Set env vars above
-4. Deploy (Hostinger runs `npm install` — `postinstall` builds + migrates)
-5. Verify `/api/health` (JSON) and `/` (React)
-
-## Local Hostinger simulation
+## Local frontend
 
 ```bash
-rm -rf node_modules server/node_modules dist server/dist
 npm install
-# after install, dist/index.html and server/dist/server.js must exist
-SKIP_DB_CONNECT=true PORT=4000 NODE_ENV=production \
-  JWT_ACCESS_SECRET=dev_access_secret_change_me_32chars_min \
-  JWT_REFRESH_SECRET=dev_refresh_secret_change_me_32chars_xx \
-  DATABASE_URL=mysql://build:build@127.0.0.1:3306/build \
-  npm start
+npm run dev      # Vite; API calls go to /api (needs PHP backend or proxy)
+npm run build
+npm run lint
+npm run php:lint
 ```
-
-## Local development (two processes)
-
-```bash
-# Terminal 1 — API
-npm run server:dev
-
-# Terminal 2 — Vite (proxies /api → localhost:4000)
-npm run dev
-```
-
-Leave `VITE_API_URL` unset locally to use the Vite `/api` proxy, or set  
-`VITE_API_URL=http://localhost:4000/api`.

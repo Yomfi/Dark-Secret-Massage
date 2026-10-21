@@ -2,22 +2,22 @@
 
 Private platform for intentional matrimonial matchmaking and professional massage wellness.
 
-## One-app production (Hostinger Express)
+## Production (Hostinger PHP + MySQL)
 
-Express serves `/api/*` and the Vite SPA from the same origin.
+Same origin: `https://dartscret.havensnet.com`
 
-Hostinger runs `npm install` only (no build-command field). Root `postinstall`
-installs server deps, runs `build:production`, then `migrate:deploy`.
+- Frontend: Vite React → `dist/`
+- Backend: PHP under `public/api/` (copied into `dist/api/` on build)
+- Database: Hostinger MySQL (`users` table shared with prior Prisma schema)
 
 ```bash
-npm install   # build + prisma migrate deploy (needs DATABASE_URL)
-npm start     # node server/dist/server.js
+npm install
+npm run build
 ```
 
-Entry file in hPanel: `server/dist/server.js`  
-Full settings: see [HOSTINGER.md](./HOSTINGER.md).
+Deploy `dist/` to Hostinger PHP hosting. See [HOSTINGER.md](./HOSTINGER.md).
 
-## Frontend (local)
+## Local frontend
 
 ```bash
 npm install
@@ -26,27 +26,7 @@ npm run build
 npm run lint
 ```
 
-API client defaults to `/api`. Leave `VITE_API_URL` unset in local Vite to use the `/api` proxy, or set `VITE_API_URL=http://localhost:4000/api`.
-
-## Backend (local)
-
-```bash
-cd server
-cp .env.example .env   # fill MySQL + JWT secrets
-npm install
-npx prisma generate
-npx prisma migrate deploy
-npm run build
-npm start
-```
-
-Or from root: `npm run server:dev`
-
-Auth smoke checks (no DB required):
-
-```bash
-cd server && npm run test:auth
-```
+API client defaults to `/api` (same-origin).
 
 ## Routes
 
@@ -55,3 +35,8 @@ cd server && npm run test:auth
 - `/book-massage` booking flow
 - `/find-a-life-partner` discovery (requires authentication)
 - `/login` `/register` `/onboarding`
+
+## Legacy Node backend
+
+The `server/` Express + Prisma tree is retained temporarily for reference.  
+Production no longer depends on Node/Express/Prisma runtime.

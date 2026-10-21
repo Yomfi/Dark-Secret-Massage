@@ -1,7 +1,6 @@
 /**
- * Same-origin production default: `/api`
- * Local Vite can set VITE_API_URL=http://localhost:4000/api
- * or leave unset and use the Vite `/api` proxy to the Express server.
+ * Same-origin production default: `/api` (Hostinger PHP under public/api → dist/api).
+ * Optional override: VITE_API_URL (no trailing slash).
  */
 function resolveApiBase(): string {
   const raw = (import.meta.env.VITE_API_URL as string | undefined)?.trim();

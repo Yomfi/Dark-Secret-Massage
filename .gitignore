@@ -12,3 +12,5 @@ coverage/
 !**/.env.production.example
 *.secrets.local
 .secrets.local
+public/api/config/config.local.php
+**/api/config/config.local.php

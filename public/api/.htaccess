@@ -1,0 +1,15 @@
+# Protect config secrets; allow PHP endpoints
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+</IfModule>
+
+<Files "config.local.php">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</Files>
+
+# Block direct web access to PHP helpers under config/
+<IfModule mod_rewrite.c>
+  RewriteRule ^config/(?!config\.example\.php$).+\.php$ - [F,L]
+</IfModule>

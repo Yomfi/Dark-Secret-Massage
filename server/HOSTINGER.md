@@ -1,15 +1,8 @@
-# Hostinger deployment
+# Legacy Node backend
+
+Production has moved to **PHP + MySQL** on standard Hostinger hosting.
 
 See the root guide: [../HOSTINGER.md](../HOSTINGER.md)
 
-| | |
-|--|--|
-| Framework | Express |
-| Domain | `https://dartscret.havensnet.com` |
-| Root directory | `./` (not `server`) |
-| Entry file | `server/dist/server.js` |
-| Package manager | npm |
-| Build command | **none** — root `postinstall` builds frontend + backend, then migrates |
-| Migrate | automatic via `postinstall` → `npm run migrate:deploy` |
-
-Do **not** deploy a separate API app on `api.dartscret.havensnet.com`.
+This `server/` Express + Prisma tree is retained temporarily for reference only.
+It is **not** used for production deploys.

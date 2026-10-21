@@ -1,0 +1,30 @@
+# Dark Secret — Hostinger Apache (PHP + Vite SPA)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # --- API: map clean URLs to PHP scripts; never fall through to React ---
+  RewriteRule ^api/health/?$ api/health.php [L,QSA]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^api/auth/([a-z0-9-]+)/?$ api/auth/$1.php [L,QSA]
+
+  # Any other /api/* that is not a real file → JSON 404 (not index.html)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^api/ - [R=404,L]
+
+  # --- Existing files/directories (assets, images, PHP) ---
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # --- React Router SPA fallback ---
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Deny access to local API secrets if ever placed under public/
+<FilesMatch "^(config\.local\.php|\.env)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</FilesMatch>
