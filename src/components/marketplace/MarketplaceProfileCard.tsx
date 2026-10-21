@@ -4,6 +4,7 @@ import { MapPin, BadgeCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { MarketplaceProfile } from '../../data/marketplaceProfiles';
 import { availabilityLabel, formatPrice, serviceSettingLabel } from '../../lib/marketplace';
+import { PortraitMedia } from './PortraitMedia';
 
 type Props = {
   profile: MarketplaceProfile;
@@ -12,7 +13,7 @@ type Props = {
 
 export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) => {
   const price = formatPrice(profile.startingPrice, profile.currency);
-  const thumbs = profile.gallery.slice(1, 4);
+  const thumbs = profile.gallery.filter((src) => src !== profile.primaryImage).slice(0, 3);
 
   return (
     <motion.article
@@ -21,34 +22,45 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
       transition={{ delay: Math.min(index * 0.05, 0.35), duration: 0.35 }}
       className="group flex flex-col md:flex-row gap-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:border-purple-400/35 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(88,28,135,0.18)] transition-all duration-300"
     >
-      <div className="relative md:w-[42%] aspect-[4/3] md:aspect-auto md:min-h-[240px] overflow-hidden bg-zinc-900">
-        <img
+      <div className="relative md:w-[38%] lg:w-[36%] shrink-0 bg-[#0a0a0f]">
+        <PortraitMedia
           src={profile.primaryImage}
           alt={profile.displayName}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          aspectClassName="aspect-[4/5] md:aspect-auto md:h-full md:min-h-[280px]"
+          hoverZoom
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/20" />
         {thumbs.length > 0 && (
-          <div className="absolute bottom-3 left-3 flex gap-1.5">
+          <div className="absolute bottom-3 left-3 right-3 flex gap-1.5">
             {thumbs.map((src) => (
-              <div key={src} className="w-10 h-10 rounded-lg overflow-hidden border border-white/25 shadow-lg">
-                <img src={src} alt="" className="w-full h-full object-cover" />
+              <div
+                key={src}
+                className="relative w-12 h-14 rounded-lg overflow-hidden border border-white/25 shadow-lg bg-black/50"
+              >
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full object-cover scale-125 blur-md opacity-60"
+                />
+                <img src={src} alt="" className="absolute inset-0 w-full h-full object-contain object-center" />
               </div>
             ))}
           </div>
         )}
         {profile.isDemo && (
-          <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/60 border border-white/15 text-zinc-300">
+          <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/70 border border-white/15 text-zinc-300 z-10">
             Demo
           </span>
         )}
       </div>
 
-      <div className="flex-1 flex flex-col p-5 sm:p-6 gap-3">
+      <div className="flex-1 flex flex-col p-5 sm:p-6 gap-3 min-w-0">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-xl font-semibold text-white tracking-tight">{profile.displayName}</h3>
+              <h3 className="text-xl font-semibold text-white tracking-tight uppercase">
+                {profile.displayName}
+              </h3>
               {profile.verified && (
                 <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-300">
                   <BadgeCheck className="w-3.5 h-3.5" /> Verified
@@ -56,7 +68,7 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
               )}
             </div>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
-              <MapPin className="w-3.5 h-3.5 text-purple-300" />
+              <MapPin className="w-3.5 h-3.5 text-purple-300 shrink-0" />
               {profile.city}, {profile.country}
             </p>
           </div>
@@ -79,7 +91,7 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
           ))}
         </div>
 
-        <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">{profile.shortBio}</p>
+        <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">“{profile.shortBio}”</p>
 
         <div className="mt-auto pt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500 uppercase tracking-wider">
           <span>{availabilityLabel(profile.availability)}</span>

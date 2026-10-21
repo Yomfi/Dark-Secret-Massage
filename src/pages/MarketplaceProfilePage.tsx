@@ -24,6 +24,7 @@ import {
   whatsappEnquiryUrl,
 } from '../lib/marketplace';
 import { useAuth } from '../auth/AuthContext';
+import { PortraitMedia } from '../components/marketplace/PortraitMedia';
 
 function ContactPanel({
   profile,
@@ -190,36 +191,37 @@ export const MarketplaceProfilePage: React.FC = () => {
 
         <div className="grid lg:grid-cols-[1fr_320px] gap-8">
           <div className="space-y-8">
-            {/* Gallery */}
+            {/* Gallery — photography-led, full subject visible */}
             <section>
               <button
                 type="button"
                 onClick={() => setLightbox(images[galleryIndex])}
-                className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 bg-zinc-900 group"
+                className="relative w-full max-w-xl mx-auto lg:mx-0 rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0f] group block"
               >
-                <img
+                <PortraitMedia
                   src={images[galleryIndex]}
                   alt={profile.displayName}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  aspectClassName="aspect-[4/5] sm:aspect-[3/4] max-h-[70vh]"
+                  hoverZoom
                 />
                 {profile.isDemo && (
-                  <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/60 border border-white/15 text-zinc-300">
+                  <span className="absolute top-3 left-3 z-10 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/70 border border-white/15 text-zinc-300">
                     Demo
                   </span>
                 )}
               </button>
               {images.length > 1 && (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 max-w-xl">
                   {images.map((src, i) => (
                     <button
                       key={src + i}
                       type="button"
                       onClick={() => setGalleryIndex(i)}
-                      className={`shrink-0 w-16 h-16 rounded-xl overflow-hidden border ${
-                        i === galleryIndex ? 'border-purple-400' : 'border-white/10 opacity-70 hover:opacity-100'
+                      className={`shrink-0 w-[4.5rem] h-[5.5rem] rounded-xl overflow-hidden border bg-[#0a0a0f] ${
+                        i === galleryIndex ? 'border-purple-400' : 'border-white/10 opacity-80 hover:opacity-100'
                       }`}
                     >
-                      <img src={src} alt="" className="w-full h-full object-cover" />
+                      <PortraitMedia src={src} alt="" aspectClassName="w-full h-full" />
                     </button>
                   ))}
                 </div>
@@ -323,7 +325,11 @@ export const MarketplaceProfilePage: React.FC = () => {
           >
             <X className="w-5 h-5" />
           </button>
-          <img src={lightbox} alt="" className="max-h-[90vh] max-w-full object-contain rounded-lg" />
+          <img
+            src={lightbox}
+            alt=""
+            className="max-h-[90vh] max-w-full w-auto object-contain rounded-lg"
+          />
         </div>
       )}
 
