@@ -15,7 +15,7 @@
     "install:server": "npm --prefix server install --include=dev --no-audit --no-fund",
     "postinstall": "npm run install:server && npm run build:production",
     "start": "node server/dist/server.js",
-    "migrate:deploy": "npm --prefix server exec prisma migrate deploy",
+    "migrate:deploy": "npm --prefix server run migrate:deploy",
     "preview": "vite preview",
     "clean": "rm -rf dist server/dist",
     "lint": "tsc --noEmit",
