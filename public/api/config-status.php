@@ -21,7 +21,8 @@ $dbPass = (string) ($cfg['db_pass'] ?? '');
 $effectiveDbPassPresent =
     $dbPass !== '' && $dbPass !== 'REPLACE_WITH_HOSTINGER_DB_PASSWORD';
 
-ds_success([
+ds_json([
+    'success' => true,
     'config_local_exists' => $configLocalExists,
     'config_local_readable' => $configLocalReadable,
     'env_db_pass_present' => $envDbPassPresent,
