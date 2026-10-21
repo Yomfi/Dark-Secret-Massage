@@ -3,6 +3,9 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Flag,
   Heart,
   MapPin,
   MessageCircle,
@@ -13,7 +16,8 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import {
   findMarketplaceProfile,
-  MARKETPLACE_PROFILES,
+  PROFILE_TYPE_LABELS,
+  siblingProfiles,
   type MarketplaceProfile,
 } from '../data/marketplaceProfiles';
 import { findServiceCategory } from '../data/serviceCategories';
@@ -26,6 +30,16 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { PortraitMedia } from '../components/marketplace/PortraitMedia';
 
+function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
+  if (value == null || value === '') return null;
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-4 py-2.5 border-b border-white/[0.06] last:border-0">
+      <dt className="sm:w-40 shrink-0 text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</dt>
+      <dd className="text-sm text-zinc-200">{value}</dd>
+    </div>
+  );
+}
+
 function ContactPanel({
   profile,
   stickyMobile,
@@ -36,65 +50,55 @@ function ContactPanel({
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const price = formatPrice(profile.startingPrice, profile.currency);
+  const canCall = profile.publicContactEnabled && Boolean(profile.phone);
+  const canWhatsApp = profile.publicContactEnabled && Boolean(profile.whatsapp);
 
   const saveProfile = () => {
     if (!isAuthenticated || !user) {
       navigate(`/login?redirect=${encodeURIComponent(`/profile/${profile.slug}`)}`);
       return;
     }
-    // Favourites storage arrives with MySQL-backed accounts; acknowledge intent for now.
     window.alert('Saved profiles will sync to your account in a coming update.');
   };
 
   const enquire = () => {
     const subject = encodeURIComponent(`Enquiry: ${profile.displayName} on Dark Secret`);
     const body = encodeURIComponent(
-      `Hello, I found your profile on Dark Secret and would like to enquire about your services.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
+      `Hello, I found your profile on Dark Secret and would like to enquire.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
     );
     window.location.href = `mailto:hello@darksecret.app?subject=${subject}&body=${body}`;
   };
 
-  const actions = (
-    <div className={`flex flex-col gap-2 ${stickyMobile ? 'flex-row' : ''}`}>
-      {profile.publicContactEnabled && profile.phone && (
-        <a
-          href={`tel:${profile.phone}`}
-          className="inline-flex flex-1 items-center justify-center gap-2 min-h-[44px] px-4 rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-purple-400/40"
-        >
-          <Phone className="w-4 h-4" /> Call
-        </a>
-      )}
-      {profile.publicContactEnabled && profile.whatsapp && (
-        <a
-          href={whatsappEnquiryUrl(profile.whatsapp, profile.displayName)}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex flex-1 items-center justify-center gap-2 min-h-[44px] px-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs uppercase tracking-widest text-white"
-        >
-          <MessageCircle className="w-4 h-4" /> WhatsApp
-        </a>
-      )}
-      <button
-        type="button"
-        onClick={enquire}
-        className="inline-flex flex-1 items-center justify-center gap-2 min-h-[44px] px-4 rounded-full bg-purple-600 hover:bg-purple-500 text-xs uppercase tracking-widest text-white"
-      >
-        Enquire
-      </button>
-      <button
-        type="button"
-        onClick={saveProfile}
-        className="inline-flex flex-1 items-center justify-center gap-2 min-h-[44px] px-4 rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200"
-      >
-        <Heart className="w-4 h-4" /> Save
-      </button>
-    </div>
-  );
-
   if (stickyMobile) {
     return (
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {actions}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="flex gap-2">
+          {canCall && (
+            <a
+              href={`tel:${profile.phone}`}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full border border-white/15 text-[11px] uppercase tracking-widest text-zinc-100"
+            >
+              <Phone className="w-4 h-4" /> Call
+            </a>
+          )}
+          {canWhatsApp && (
+            <a
+              href={whatsappEnquiryUrl(profile.whatsapp!)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-emerald-600 text-[11px] uppercase tracking-widest text-white"
+            >
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={enquire}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-purple-600 text-[11px] uppercase tracking-widest text-white"
+          >
+            Enquire
+          </button>
+        </div>
       </div>
     );
   }
@@ -105,19 +109,189 @@ function ContactPanel({
       className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 lg:sticky lg:top-28 space-y-4"
     >
       <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Contact</p>
-        {price && <p className="mt-1 text-lg font-semibold text-purple-200">From {price}</p>}
+        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+          {price ? 'From' : 'Contact'}
+        </p>
+        {price ? (
+          <p className="mt-1 text-2xl font-semibold text-purple-200 tracking-tight">{price}</p>
+        ) : (
+          <p className="mt-1 text-lg font-semibold text-white">Get in touch</p>
+        )}
         {!profile.publicContactEnabled && (
-          <p className="mt-2 text-sm text-zinc-400">
-            Direct phone/WhatsApp is private for this profile. Use Enquire to reach the Dark Secret team.
+          <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
+            Direct phone and WhatsApp are private for this profile. Use Enquire to reach Dark Secret.
           </p>
         )}
+        {profile.publicContactEnabled && profile.phone && (
+          <p className="mt-2 text-sm text-zinc-300 tabular-nums">{profile.phone}</p>
+        )}
       </div>
-      {actions}
+
+      <div className="flex flex-col gap-2">
+        {canWhatsApp && (
+          <a
+            href={whatsappEnquiryUrl(profile.whatsapp!)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs uppercase tracking-widest text-white transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </a>
+        )}
+        {canCall && (
+          <a
+            href={`tel:${profile.phone}`}
+            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-purple-400/40 transition-colors"
+          >
+            <Phone className="w-4 h-4" /> Call
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={enquire}
+          className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-purple-600 hover:bg-purple-500 text-xs uppercase tracking-widest text-white transition-colors"
+        >
+          Enquire
+        </button>
+        <button
+          type="button"
+          onClick={saveProfile}
+          className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-purple-400/40 transition-colors"
+        >
+          <Heart className="w-4 h-4" /> Save
+        </button>
+      </div>
+
       {profile.isDemo && (
-        <p className="text-[10px] uppercase tracking-widest text-zinc-600">Demo profile · contact numbers are placeholders</p>
+        <p className="text-[10px] uppercase tracking-widest text-zinc-600">
+          Demo profile · contact numbers are placeholders
+        </p>
       )}
     </aside>
+  );
+}
+
+function ProfileGallery({
+  images,
+  displayName,
+  isDemo,
+}: {
+  images: string[];
+  displayName: string;
+  isDemo: boolean;
+}) {
+  const [index, setIndex] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+
+  const go = (dir: -1 | 1) => {
+    setIndex((i) => (i + dir + images.length) % images.length);
+  };
+
+  return (
+    <>
+      <section className="relative">
+        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0f] group">
+          <button
+            type="button"
+            onClick={() => setLightbox(true)}
+            className="block w-full text-left"
+            aria-label="Open gallery lightbox"
+          >
+            <PortraitMedia
+              src={images[index]}
+              alt={displayName}
+              aspectClassName="aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5]"
+              hoverZoom
+            />
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => go(-1)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full border border-white/20 bg-black/55 text-white hover:bg-black/75"
+                aria-label="Previous photo"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => go(1)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full border border-white/20 bg-black/55 text-white hover:bg-black/75"
+                aria-label="Next photo"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+
+          {isDemo && (
+            <span className="absolute top-3 left-3 z-10 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/70 border border-white/15 text-zinc-300">
+              Demo
+            </span>
+          )}
+          <span className="absolute bottom-3 right-3 z-10 text-[10px] uppercase tracking-widest px-2 py-1 rounded-full bg-black/60 border border-white/10 text-zinc-400">
+            {index + 1} / {images.length}
+          </span>
+        </div>
+
+        {images.length > 1 && (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {images.map((src, i) => (
+              <button
+                key={src + i}
+                type="button"
+                onClick={() => setIndex(i)}
+                className={`shrink-0 w-[4.75rem] h-[5.75rem] rounded-xl overflow-hidden border bg-[#0a0a0f] transition-opacity ${
+                  i === index ? 'border-purple-400 opacity-100' : 'border-white/10 opacity-75 hover:opacity-100'
+                }`}
+              >
+                <PortraitMedia src={src} alt="" aspectClassName="w-full h-full" />
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {lightbox && (
+        <div className="fixed inset-0 z-50 bg-black/92 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute top-4 right-4 p-2 rounded-full border border-white/20 text-white"
+            onClick={() => setLightbox(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => go(-1)}
+                className="absolute left-3 sm:left-6 p-2 rounded-full border border-white/20 bg-black/40 text-white"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={() => go(1)}
+                className="absolute right-3 sm:right-6 p-2 rounded-full border border-white/20 bg-black/40 text-white"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+          <img
+            src={images[index]}
+            alt={displayName}
+            className="max-h-[90vh] max-w-full w-auto object-contain rounded-lg"
+          />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -127,8 +301,6 @@ export const MarketplaceProfilePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const profile = findMarketplaceProfile(profileSlug);
-  const [lightbox, setLightbox] = useState<string | null>(null);
-  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const navProps = {
     onOpenBooking: () => navigate('/book-massage'),
@@ -139,15 +311,25 @@ export const MarketplaceProfilePage: React.FC = () => {
   };
 
   const category = profile ? findServiceCategory(profile.primaryCategory) : undefined;
+  const filterService = searchParams.get('service');
+  const backCity = searchParams.get('from') || profile?.citySlug || 'accra';
 
   const siblings = useMemo(() => {
     if (!profile) return [];
-    return MARKETPLACE_PROFILES.filter((p) => p.citySlug === profile.citySlug);
-  }, [profile]);
+    return siblingProfiles(profile, profile.citySlug, filterService);
+  }, [profile, filterService]);
 
   const siblingIndex = siblings.findIndex((p) => p.slug === profile?.slug);
   const prev = siblingIndex > 0 ? siblings[siblingIndex - 1] : null;
   const next = siblingIndex >= 0 && siblingIndex < siblings.length - 1 ? siblings[siblingIndex + 1] : null;
+
+  const navQs = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set('from', backCity);
+    if (filterService) p.set('service', filterService);
+    const s = p.toString();
+    return s ? `?${s}` : '';
+  }, [backCity, filterService]);
 
   useEffect(() => {
     if (!profile) {
@@ -175,164 +357,225 @@ export const MarketplaceProfilePage: React.FC = () => {
   }
 
   const images = profile.gallery.length ? profile.gallery : [profile.primaryImage];
-  const backCity = searchParams.get('from') || profile.citySlug;
+  const typeLabel = PROFILE_TYPE_LABELS[profile.profileType];
+  const isProvider =
+    profile.profileType === 'massage_provider' || profile.profileType === 'wellness_provider';
+
+  const backHref = (() => {
+    const p = new URLSearchParams();
+    if (filterService) p.set('service', filterService);
+    const qs = p.toString();
+    return qs ? `/explore/${backCity}?${qs}` : `/explore/${backCity}`;
+  })();
 
   return (
-    <div className="min-h-screen bg-[#050508] text-zinc-100 pb-24 lg:pb-0">
+    <div className="min-h-screen bg-[#050508] text-zinc-100 pb-28 lg:pb-0">
       <Navbar {...navProps} />
 
       <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-16">
-        <Link
-          to={`/explore/${backCity}`}
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-400 hover:text-white mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to results
-        </Link>
-
-        <div className="grid lg:grid-cols-[1fr_320px] gap-8">
-          <div className="space-y-8">
-            {/* Gallery — photography-led, full subject visible */}
-            <section>
-              <button
-                type="button"
-                onClick={() => setLightbox(images[galleryIndex])}
-                className="relative w-full max-w-xl mx-auto lg:mx-0 rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0f] group block"
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <Link
+            to={backHref}
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-400 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to results
+          </Link>
+          <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
+            {prev && (
+              <Link
+                to={`/profile/${prev.slug}${navQs}`}
+                className="inline-flex items-center gap-1 hover:text-white uppercase tracking-wider"
               >
-                <PortraitMedia
-                  src={images[galleryIndex]}
-                  alt={profile.displayName}
-                  aspectClassName="aspect-[4/5] sm:aspect-[3/4] max-h-[70vh]"
-                  hoverZoom
-                />
-                {profile.isDemo && (
-                  <span className="absolute top-3 left-3 z-10 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/70 border border-white/15 text-zinc-300">
-                    Demo
-                  </span>
-                )}
-              </button>
-              {images.length > 1 && (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 max-w-xl">
-                  {images.map((src, i) => (
-                    <button
-                      key={src + i}
-                      type="button"
-                      onClick={() => setGalleryIndex(i)}
-                      className={`shrink-0 w-[4.5rem] h-[5.5rem] rounded-xl overflow-hidden border bg-[#0a0a0f] ${
-                        i === galleryIndex ? 'border-purple-400' : 'border-white/10 opacity-80 hover:opacity-100'
-                      }`}
-                    >
-                      <PortraitMedia src={src} alt="" aspectClassName="w-full h-full" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
+                <ArrowLeft className="w-3.5 h-3.5" /> Previous
+              </Link>
+            )}
+            {next && (
+              <Link
+                to={`/profile/${next.slug}${navQs}`}
+                className="inline-flex items-center gap-1 hover:text-white uppercase tracking-wider"
+              >
+                Next <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+          </div>
+        </div>
 
-            <section>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/80">
-                {category?.label || 'Profile'}
-              </p>
-              <h1 className="mt-2 text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+        {/* Desktop: gallery left + sticky contact; Mobile: gallery → identity → contact summary */}
+        <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] gap-8 lg:gap-10 items-start">
+          <ProfileGallery images={images} displayName={profile.displayName} isDemo={profile.isDemo} />
+
+          <div className="space-y-5">
+            <header>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/90">{typeLabel}</p>
+              <h1 className="mt-2 text-3xl sm:text-4xl font-semibold text-white tracking-tight uppercase">
                 {profile.displayName}
               </h1>
               <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-400">
-                <MapPin className="w-4 h-4 text-purple-300" />
-                {profile.city}, {profile.region}, {profile.country}
+                <MapPin className="w-4 h-4 text-purple-300 shrink-0" />
+                {profile.city}, {profile.country}
               </p>
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 space-y-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300">About</h2>
-              <p className="text-sm text-zinc-400 leading-relaxed">{profile.about}</p>
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 space-y-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300">Services & rates</h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.services.map((s) => (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {profile.services.map((tag) => (
                   <span
-                    key={s}
+                    key={tag}
                     className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-purple-400/25 bg-purple-500/10 text-purple-100"
                   >
-                    {s}
+                    {tag}
                   </span>
                 ))}
               </div>
-              <dl className="grid sm:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Availability</dt>
-                  <dd className="text-zinc-200 mt-1">{availabilityLabel(profile.availability)}</dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Setting</dt>
-                  <dd className="text-zinc-200 mt-1">{serviceSettingLabel(profile.serviceSetting)}</dd>
-                </div>
-                {profile.startingPrice != null && (
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Starting rate</dt>
-                    <dd className="text-zinc-200 mt-1">
-                      {formatPrice(profile.startingPrice, profile.currency)}
-                    </dd>
-                  </div>
-                )}
-                {profile.languages && (
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-widest text-zinc-500">Languages</dt>
-                    <dd className="text-zinc-200 mt-1">{profile.languages.join(', ')}</dd>
-                  </div>
-                )}
+              <p className="mt-4 text-sm text-zinc-400 leading-relaxed">{profile.shortBio}</p>
+            </header>
+
+            <div className="hidden lg:block">
+              <ContactPanel profile={profile} />
+            </div>
+
+            {/* Mobile contact teaser (full sticky bar below) */}
+            <div className="lg:hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              {formatPrice(profile.startingPrice, profile.currency) ? (
+                <p className="text-lg font-semibold text-purple-200">
+                  From {formatPrice(profile.startingPrice, profile.currency)}
+                </p>
+              ) : (
+                <p className="text-sm text-zinc-300">Public enquiry available</p>
+              )}
+              <p className="mt-1 text-xs text-zinc-500 uppercase tracking-wider">
+                {availabilityLabel(profile.availability)} · {serviceSettingLabel(profile.serviceSetting)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed sections */}
+        <div className="mt-10 space-y-6 max-w-4xl">
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-3">About</h2>
+            <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{profile.about}</p>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-1">
+              Profile details
+            </h2>
+            <dl>
+              <DetailRow label="Profile type" value={typeLabel} />
+              <DetailRow label="City" value={profile.city} />
+              <DetailRow label="Region" value={profile.region} />
+              <DetailRow label="Country" value={profile.country} />
+              <DetailRow label="Nationality" value={profile.nationality} />
+              <DetailRow label="Age" value={profile.age} />
+              <DetailRow label="Languages" value={profile.languages?.join(', ')} />
+              <DetailRow label="Occupation" value={profile.occupation} />
+              <DetailRow label="Height" value={profile.height} />
+              <DetailRow label="Smoking" value={profile.smoking} />
+              <DetailRow label="Availability" value={availabilityLabel(profile.availability)} />
+              <DetailRow label="Available days" value={profile.availableDays} />
+              <DetailRow label="Service setting" value={serviceSettingLabel(profile.serviceSetting)} />
+              <DetailRow label="Service area" value={profile.serviceArea} />
+              <DetailRow
+                label="Starting rate"
+                value={formatPrice(profile.startingPrice, profile.currency)}
+              />
+            </dl>
+          </section>
+
+          {isProvider && profile.serviceOfferings && profile.serviceOfferings.length > 0 && (
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-4">
+                Services offered
+              </h2>
+              <ul className="space-y-3">
+                {profile.serviceOfferings.map((offering) => (
+                  <li
+                    key={offering.name}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-white/[0.06] last:border-0"
+                  >
+                    <div>
+                      <p className="text-sm text-white">{offering.name}</p>
+                      {offering.durationMinutes != null && (
+                        <p className="text-xs text-zinc-500 mt-0.5">{offering.durationMinutes} minutes</p>
+                      )}
+                    </div>
+                    {offering.priceFrom != null && (
+                      <p className="text-sm text-purple-200 font-medium">
+                        From {formatPrice(offering.priceFrom, profile.currency)}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {!isProvider && (
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-1">
+                Connection preferences
+              </h2>
+              <dl>
+                <DetailRow label="Looking for" value={profile.lookingFor} />
+                <DetailRow label="Relationship intention" value={profile.relationshipIntention} />
+                <DetailRow label="Preferred connection" value={profile.preferredConnection} />
+                <DetailRow label="Social preference" value={profile.socialPreference} />
+                <DetailRow label="Interests" value={profile.interests?.join(', ')} />
               </dl>
             </section>
+          )}
 
-            <section className="flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500">
-              <button
-                type="button"
-                onClick={() => window.alert('Report received. Our team will review this profile.')}
-                className="underline underline-offset-4 hover:text-zinc-300"
-              >
-                Report Profile
-              </button>
-              <div className="flex gap-3">
-                {prev && (
-                  <Link to={`/profile/${prev.slug}`} className="inline-flex items-center gap-1 hover:text-white">
-                    <ArrowLeft className="w-3.5 h-3.5" /> {prev.displayName}
-                  </Link>
-                )}
-                {next && (
-                  <Link to={`/profile/${next.slug}`} className="inline-flex items-center gap-1 hover:text-white">
-                    {next.displayName} <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                )}
+          {isProvider && profile.interests && profile.interests.length > 0 && (
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-3">
+                Interests
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.interests.map((item) => (
+                  <span
+                    key={item}
+                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/10 text-zinc-300"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
             </section>
-          </div>
+          )}
 
-          <div className="hidden lg:block">
-            <ContactPanel profile={profile} />
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-2">Reviews</h2>
+            <p className="text-sm text-zinc-500">No reviews yet.</p>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-2">Questions</h2>
+            <p className="text-sm text-zinc-500">No questions yet. Use Enquire to ask privately.</p>
+          </section>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 text-xs text-zinc-500">
+            <button
+              type="button"
+              onClick={() => window.alert('Report received. Our team will review this profile.')}
+              className="inline-flex items-center gap-1.5 underline underline-offset-4 hover:text-zinc-300"
+            >
+              <Flag className="w-3.5 h-3.5" /> Report Profile
+            </button>
+            <div className="flex gap-4">
+              {prev && (
+                <Link to={`/profile/${prev.slug}${navQs}`} className="inline-flex items-center gap-1 hover:text-white">
+                  <ArrowLeft className="w-3.5 h-3.5" /> {prev.displayName}
+                </Link>
+              )}
+              {next && (
+                <Link to={`/profile/${next.slug}${navQs}`} className="inline-flex items-center gap-1 hover:text-white">
+                  {next.displayName} <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </main>
 
       <ContactPanel profile={profile} stickyMobile />
-
-      {lightbox && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute top-4 right-4 p-2 rounded-full border border-white/20 text-white"
-            onClick={() => setLightbox(null)}
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <img
-            src={lightbox}
-            alt=""
-            className="max-h-[90vh] max-w-full w-auto object-contain rounded-lg"
-          />
-        </div>
-      )}
-
       <Footer />
     </div>
   );

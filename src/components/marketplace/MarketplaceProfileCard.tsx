@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, BadgeCheck } from 'lucide-react';
+import { MapPin, BadgeCheck, Phone } from 'lucide-react';
 import { motion } from 'motion/react';
-import type { MarketplaceProfile } from '../../data/marketplaceProfiles';
+import { PROFILE_TYPE_LABELS, type MarketplaceProfile } from '../../data/marketplaceProfiles';
 import { availabilityLabel, formatPrice, serviceSettingLabel } from '../../lib/marketplace';
 import { PortraitMedia } from './PortraitMedia';
 
@@ -14,6 +14,7 @@ type Props = {
 export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) => {
   const price = formatPrice(profile.startingPrice, profile.currency);
   const thumbs = profile.gallery.filter((src) => src !== profile.primaryImage).slice(0, 3);
+  const typeLabel = PROFILE_TYPE_LABELS[profile.profileType];
 
   return (
     <motion.article
@@ -26,7 +27,7 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
         <PortraitMedia
           src={profile.primaryImage}
           alt={profile.displayName}
-          aspectClassName="aspect-[4/5] md:aspect-auto md:h-full md:min-h-[280px]"
+          aspectClassName="aspect-[4/5] md:aspect-auto md:h-full md:min-h-[300px]"
           hoverZoom
         />
         {thumbs.length > 0 && (
@@ -57,6 +58,7 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
       <div className="flex-1 flex flex-col p-5 sm:p-6 gap-3 min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-purple-300/80 mb-1">{typeLabel}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-xl font-semibold text-white tracking-tight uppercase">
                 {profile.displayName}
@@ -93,27 +95,33 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
 
         <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">“{profile.shortBio}”</p>
 
-        <div className="mt-auto pt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500 uppercase tracking-wider">
+        <div className="mt-auto pt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] text-zinc-500 uppercase tracking-wider">
           <span>{availabilityLabel(profile.availability)}</span>
           <span className="text-zinc-700">·</span>
           <span>{serviceSettingLabel(profile.serviceSetting)}</span>
+          {profile.publicContactEnabled && (
+            <>
+              <span className="text-zinc-700">·</span>
+              <span className="inline-flex items-center gap-1 text-emerald-400/90">
+                <Phone className="w-3 h-3" /> Public contact
+              </span>
+            </>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
-            to={`/profile/${profile.slug}`}
+            to={`/profile/${profile.slug}?from=${profile.citySlug}`}
             className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-widest transition-colors"
           >
             View Profile
           </Link>
-          {profile.publicContactEnabled && (
-            <Link
-              to={`/profile/${profile.slug}#contact`}
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-white/15 text-zinc-200 hover:border-purple-400/40 hover:text-white text-xs font-semibold uppercase tracking-widest transition-colors"
-            >
-              Contact
-            </Link>
-          )}
+          <Link
+            to={`/profile/${profile.slug}?from=${profile.citySlug}#contact`}
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-white/15 text-zinc-200 hover:border-purple-400/40 hover:text-white text-xs font-semibold uppercase tracking-widest transition-colors"
+          >
+            Contact
+          </Link>
         </div>
       </div>
     </motion.article>

@@ -32,10 +32,10 @@ export function serviceSettingLabel(settings: MarketplaceProfile['serviceSetting
   return settings.map((s) => map[s]).join(' · ');
 }
 
-export function whatsappEnquiryUrl(phone: string, displayName: string): string {
+export function whatsappEnquiryUrl(phone: string, _displayName?: string): string {
   const digits = phone.replace(/\D/g, '');
   const text = encodeURIComponent(
-    `Hello ${displayName}, I found your profile on Dark Secret and would like to enquire about your services.`,
+    'Hello, I found your profile on Dark Secret and would like to enquire.',
   );
   return `https://wa.me/${digits}?text=${text}`;
 }
