@@ -20,6 +20,8 @@ if ($uri === '/api') {
 $fileMap = [
     '/health' => __DIR__ . '/health.php',
     '/health.php' => __DIR__ . '/health.php',
+    '/config-status' => __DIR__ . '/config-status.php',
+    '/config-status.php' => __DIR__ . '/config-status.php',
     '/auth/register' => __DIR__ . '/auth/register.php',
     '/auth/login' => __DIR__ . '/auth/login.php',
     '/auth/logout' => __DIR__ . '/auth/logout.php',
