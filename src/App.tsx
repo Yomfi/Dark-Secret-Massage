@@ -14,6 +14,9 @@ import { OnboardingPage } from './pages/OnboardingPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ExplorePage } from './pages/ExplorePage';
 import { MarketplaceProfilePage } from './pages/MarketplaceProfilePage';
+import { ProviderRegisterPage } from './pages/ProviderRegisterPage';
+import { ProviderDashboardPage } from './pages/ProviderDashboardPage';
+import { AdminProviderReviewsPage } from './pages/AdminProviderReviewsPage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { MatchmakingProfile, BookingRequest } from './lib/bookingAndMatchmaking';
 import { MATCHMAKING_PROFILES } from './data/mockData';
@@ -172,6 +175,9 @@ function AppRoutes() {
       <Route path="/explore" element={<Navigate to="/explore/accra" replace />} />
       <Route path="/explore/:citySlug" element={<ExplorePage />} />
       <Route path="/profile/:profileSlug" element={<MarketplaceProfilePage />} />
+      <Route path="/provider/register" element={<ProviderRegisterPage />} />
+      <Route path="/provider/dashboard" element={<ProviderDashboardPage />} />
+      <Route path="/admin/provider-reviews" element={<AdminProviderReviewsPage />} />
       <Route
         path="/dashboard"
         element={

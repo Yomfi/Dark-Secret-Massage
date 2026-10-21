@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, BadgeCheck, Phone } from 'lucide-react';
+import { MapPin, Phone } from 'lucide-react';
 import { motion } from 'motion/react';
 import { PROFILE_TYPE_LABELS, type MarketplaceProfile } from '../../data/marketplaceProfiles';
 import { availabilityLabel, formatPrice, serviceSettingLabel } from '../../lib/marketplace';
 import { PortraitMedia } from './PortraitMedia';
+import { VerifiedBadge, VerifiedNameCheck } from './VerifiedBadge';
 
 type Props = {
   profile: MarketplaceProfile;
@@ -63,11 +64,10 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
               <h3 className="text-xl font-semibold text-white tracking-tight uppercase">
                 {profile.displayName}
               </h3>
-              {profile.verified && (
-                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-300">
-                  <BadgeCheck className="w-3.5 h-3.5" /> Verified
-                </span>
-              )}
+              <VerifiedNameCheck verified={profile.verified} />
+            </div>
+            <div className="mt-1.5">
+              <VerifiedBadge verified={profile.verified} />
             </div>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
               <MapPin className="w-3.5 h-3.5 text-purple-300 shrink-0" />

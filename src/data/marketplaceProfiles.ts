@@ -111,7 +111,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     phone: '+233200000101',
     whatsapp: '+233200000101',
     publicContactEnabled: true,
-    verified: false,
+    verified: true,
     featured: true,
     languages: ['English', 'Twi'],
     occupation: 'Wellness practitioner',

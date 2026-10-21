@@ -29,6 +29,12 @@ import {
 } from '../lib/marketplace';
 import { useAuth } from '../auth/AuthContext';
 import { PortraitMedia } from '../components/marketplace/PortraitMedia';
+import { VerifiedBadge, VerifiedNameCheck } from '../components/marketplace/VerifiedBadge';
+import {
+  UnverifiedContactModal,
+  acknowledgeUnverified,
+  hasAcknowledgedUnverified,
+} from '../components/marketplace/UnverifiedContactModal';
 
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
   if (value == null || value === '') return null;
@@ -39,6 +45,8 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
     </div>
   );
 }
+
+type PendingContact = 'call' | 'whatsapp' | 'enquire';
 
 function ContactPanel({
   profile,
@@ -52,6 +60,35 @@ function ContactPanel({
   const price = formatPrice(profile.startingPrice, profile.currency);
   const canCall = profile.publicContactEnabled && Boolean(profile.phone);
   const canWhatsApp = profile.publicContactEnabled && Boolean(profile.whatsapp);
+  const [warnOpen, setWarnOpen] = useState(false);
+  const [pending, setPending] = useState<PendingContact | null>(null);
+
+  const runContact = (action: PendingContact) => {
+    if (action === 'call' && profile.phone) {
+      window.location.href = `tel:${profile.phone}`;
+      return;
+    }
+    if (action === 'whatsapp' && profile.whatsapp) {
+      window.open(whatsappEnquiryUrl(profile.whatsapp), '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (action === 'enquire') {
+      const subject = encodeURIComponent(`Enquiry: ${profile.displayName} on Dark Secret`);
+      const body = encodeURIComponent(
+        `Hello, I found your profile on Dark Secret and would like to enquire.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
+      );
+      window.location.href = `mailto:hello@darksecret.app?subject=${subject}&body=${body}`;
+    }
+  };
+
+  const requestContact = (action: PendingContact) => {
+    if (profile.verified || hasAcknowledgedUnverified(profile.id)) {
+      runContact(action);
+      return;
+    }
+    setPending(action);
+    setWarnOpen(true);
+  };
 
   const saveProfile = () => {
     if (!isAuthenticated || !user) {
@@ -61,113 +98,135 @@ function ContactPanel({
     window.alert('Saved profiles will sync to your account in a coming update.');
   };
 
-  const enquire = () => {
-    const subject = encodeURIComponent(`Enquiry: ${profile.displayName} on Dark Secret`);
-    const body = encodeURIComponent(
-      `Hello, I found your profile on Dark Secret and would like to enquire.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
-    );
-    window.location.href = `mailto:hello@darksecret.app?subject=${subject}&body=${body}`;
-  };
+  const modal = (
+    <UnverifiedContactModal
+      open={warnOpen}
+      onCancel={() => {
+        setWarnOpen(false);
+        setPending(null);
+      }}
+      onContinue={() => {
+        acknowledgeUnverified(profile.id);
+        setWarnOpen(false);
+        if (pending) runContact(pending);
+        setPending(null);
+      }}
+    />
+  );
 
   if (stickyMobile) {
     return (
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="flex gap-2">
-          {canCall && (
-            <a
-              href={`tel:${profile.phone}`}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full border border-white/15 text-[11px] uppercase tracking-widest text-zinc-100"
+      <>
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex gap-2">
+            {canCall && (
+              <button
+                type="button"
+                onClick={() => requestContact('call')}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full border border-white/15 text-[11px] uppercase tracking-widest text-zinc-100"
+              >
+                <Phone className="w-4 h-4" /> Call
+              </button>
+            )}
+            {canWhatsApp && (
+              <button
+                type="button"
+                onClick={() => requestContact('whatsapp')}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-emerald-600 text-[11px] uppercase tracking-widest text-white"
+              >
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => requestContact('enquire')}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-purple-600 text-[11px] uppercase tracking-widest text-white"
             >
-              <Phone className="w-4 h-4" /> Call
-            </a>
-          )}
-          {canWhatsApp && (
-            <a
-              href={whatsappEnquiryUrl(profile.whatsapp!)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-emerald-600 text-[11px] uppercase tracking-widest text-white"
-            >
-              <MessageCircle className="w-4 h-4" /> WhatsApp
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={enquire}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-purple-600 text-[11px] uppercase tracking-widest text-white"
-          >
-            Enquire
-          </button>
+              Enquire
+            </button>
+          </div>
         </div>
-      </div>
+        {modal}
+      </>
     );
   }
 
   return (
-    <aside
-      id="contact"
-      className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 lg:sticky lg:top-28 space-y-4"
-    >
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-          {price ? 'From' : 'Contact'}
-        </p>
-        {price ? (
-          <p className="mt-1 text-2xl font-semibold text-purple-200 tracking-tight">{price}</p>
-        ) : (
-          <p className="mt-1 text-lg font-semibold text-white">Get in touch</p>
-        )}
-        {!profile.publicContactEnabled && (
-          <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-            Direct phone and WhatsApp are private for this profile. Use Enquire to reach Dark Secret.
+    <>
+      <aside
+        id="contact"
+        className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 lg:sticky lg:top-28 space-y-4"
+      >
+        <div>
+          <div className="mb-2">
+            <VerifiedBadge verified={profile.verified} size="md" />
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+            {price ? 'From' : 'Contact'}
+          </p>
+          {price ? (
+            <p className="mt-1 text-2xl font-semibold text-purple-200 tracking-tight">{price}</p>
+          ) : (
+            <p className="mt-1 text-lg font-semibold text-white">Get in touch</p>
+          )}
+          {!profile.verified && (
+            <p className="mt-2 text-xs text-amber-200/80">
+              Unverified Profile — a caution notice appears before contact.
+            </p>
+          )}
+          {!profile.publicContactEnabled && (
+            <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
+              Direct phone and WhatsApp are private for this profile. Use Enquire to reach Dark Secret.
+            </p>
+          )}
+          {profile.verified && profile.publicContactEnabled && profile.phone && (
+            <p className="mt-2 text-sm text-zinc-300 tabular-nums">{profile.phone}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {canWhatsApp && (
+            <button
+              type="button"
+              onClick={() => requestContact('whatsapp')}
+              className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs uppercase tracking-widest text-white transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </button>
+          )}
+          {canCall && (
+            <button
+              type="button"
+              onClick={() => requestContact('call')}
+              className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-purple-400/40 transition-colors"
+            >
+              <Phone className="w-4 h-4" /> Call
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => requestContact('enquire')}
+            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-purple-600 hover:bg-purple-500 text-xs uppercase tracking-widest text-white transition-colors"
+          >
+            Enquire
+          </button>
+          <button
+            type="button"
+            onClick={saveProfile}
+            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-purple-400/40 transition-colors"
+          >
+            <Heart className="w-4 h-4" /> Save
+          </button>
+        </div>
+
+        {profile.isDemo && (
+          <p className="text-[10px] uppercase tracking-widest text-zinc-600">
+            Demo profile · contact numbers are placeholders
           </p>
         )}
-        {profile.publicContactEnabled && profile.phone && (
-          <p className="mt-2 text-sm text-zinc-300 tabular-nums">{profile.phone}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {canWhatsApp && (
-          <a
-            href={whatsappEnquiryUrl(profile.whatsapp!)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs uppercase tracking-widest text-white transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" /> WhatsApp
-          </a>
-        )}
-        {canCall && (
-          <a
-            href={`tel:${profile.phone}`}
-            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-purple-400/40 transition-colors"
-          >
-            <Phone className="w-4 h-4" /> Call
-          </a>
-        )}
-        <button
-          type="button"
-          onClick={enquire}
-          className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-purple-600 hover:bg-purple-500 text-xs uppercase tracking-widest text-white transition-colors"
-        >
-          Enquire
-        </button>
-        <button
-          type="button"
-          onClick={saveProfile}
-          className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-purple-400/40 transition-colors"
-        >
-          <Heart className="w-4 h-4" /> Save
-        </button>
-      </div>
-
-      {profile.isDemo && (
-        <p className="text-[10px] uppercase tracking-widest text-zinc-600">
-          Demo profile · contact numbers are placeholders
-        </p>
-      )}
-    </aside>
+      </aside>
+      {modal}
+    </>
   );
 }
 
@@ -407,9 +466,13 @@ export const MarketplaceProfilePage: React.FC = () => {
           <div className="space-y-5">
             <header>
               <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/90">{typeLabel}</p>
-              <h1 className="mt-2 text-3xl sm:text-4xl font-semibold text-white tracking-tight uppercase">
+              <h1 className="mt-2 text-3xl sm:text-4xl font-semibold text-white tracking-tight uppercase inline-flex items-center gap-2 flex-wrap">
                 {profile.displayName}
+                <VerifiedNameCheck verified={profile.verified} />
               </h1>
+              <div className="mt-2">
+                <VerifiedBadge verified={profile.verified} />
+              </div>
               <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-400">
                 <MapPin className="w-4 h-4 text-purple-300 shrink-0" />
                 {profile.city}, {profile.country}

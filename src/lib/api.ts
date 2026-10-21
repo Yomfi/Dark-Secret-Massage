@@ -162,3 +162,124 @@ export type RegisterBody = {
   confirmPassword: string;
   termsAccepted: true;
 };
+
+export type ProviderRegisterBody = RegisterBody & {
+  displayName: string;
+};
+
+export type ProviderDashboardDto = {
+  user: AuthUserDto;
+  profile: { id: string; slug: string; displayName: string; completed: boolean } | null;
+  verification: {
+    status: string;
+    identityStatus: string;
+    paymentStatus: string;
+    feeAmount: number;
+    currency: string;
+    verifiedAt: string | null;
+    rejectionReason: string | null;
+    submittedForReviewAt: string | null;
+  };
+  progress: {
+    accountCreated: boolean;
+    phoneVerified: boolean;
+    emailVerified: boolean;
+    profileCompleted: boolean;
+    identitySubmitted: boolean;
+    verificationFeePaid: boolean;
+    adminReview: string;
+  };
+  isVerified: boolean;
+};
+
+export const providerApi = {
+  register: (body: ProviderRegisterBody) =>
+    apiRequest<{ user: AuthUserDto; nextStep: string }>('/provider/register.php', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  sendPhoneCode: () =>
+    apiRequest<{
+      sent?: boolean;
+      alreadyVerified?: boolean;
+      demoMode?: boolean;
+      demoCode?: string;
+      message: string;
+    }>('/provider/send-phone-code.php', { method: 'POST', body: '{}' }),
+  verifyPhone: (code: string) =>
+    apiRequest<{ user: AuthUserDto; verified: boolean; nextStep: string }>(
+      '/provider/verify-phone.php',
+      { method: 'POST', body: JSON.stringify({ code }) },
+    ),
+  sendEmailCode: () =>
+    apiRequest<{
+      sent?: boolean;
+      alreadyVerified?: boolean;
+      demoMode?: boolean;
+      demoToken?: string;
+      message: string;
+    }>('/provider/send-email-code.php', { method: 'POST', body: '{}' }),
+  verifyEmail: (token: string) =>
+    apiRequest<{ user: AuthUserDto; verified: boolean; nextStep: string }>(
+      '/provider/verify-email.php',
+      { method: 'POST', body: JSON.stringify({ token }) },
+    ),
+  getProfile: () => apiRequest<{ profile: Record<string, unknown> | null }>('/provider/profile.php'),
+  saveProfile: (body: Record<string, unknown>) =>
+    apiRequest<{ saved: boolean; nextStep: string }>('/provider/profile.php', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  submitIdentity: async (form: FormData) => {
+    const res = await fetch(`${API_BASE}/provider/identity.php`, {
+      method: 'POST',
+      credentials: 'include',
+      body: form,
+    });
+    const payload = await res.json();
+    if (!res.ok || !payload?.success) {
+      throw new ApiError(
+        res.status,
+        payload?.error?.code || 'REQUEST_FAILED',
+        payload?.error?.message || 'Identity upload failed.',
+      );
+    }
+    return payload.data as { submitted: boolean; identityStatus: string; nextStep: string };
+  },
+  getPayment: () =>
+    apiRequest<{
+      feeAmount: number;
+      currency: string;
+      paymentStatus: string;
+      gatewayReady: boolean;
+      message: string;
+    }>('/provider/payment.php'),
+  initiatePayment: () =>
+    apiRequest<{
+      gatewayReady: boolean;
+      message: string;
+      paymentStatus: string;
+      nextStep: string;
+    }>('/provider/payment.php', { method: 'POST', body: '{}' }),
+  submitReview: () =>
+    apiRequest<{ submitted: boolean; verificationStatus: string; message: string }>(
+      '/provider/submit-review.php',
+      { method: 'POST', body: '{}' },
+    ),
+  dashboard: () => apiRequest<ProviderDashboardDto>('/provider/dashboard.php'),
+};
+
+export const adminProviderApi = {
+  list: () =>
+    apiRequest<{ providers: Array<Record<string, unknown>> }>('/admin/provider-reviews.php'),
+  review: (body: {
+    providerUserId: string;
+    action: 'approve' | 'reject' | 'request_changes';
+    notes?: string;
+    rejectionReason?: string;
+  }) =>
+    apiRequest<{ verificationStatus: string }>('/admin/provider-reviews.php', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};
