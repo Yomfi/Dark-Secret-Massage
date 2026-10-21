@@ -35,7 +35,7 @@ async function tryRefresh(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const res = await fetch(`${API_BASE}/auth/refresh`, {
+        const res = await fetch(`${API_BASE}/auth/refresh.php`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -74,10 +74,10 @@ export async function apiRequest<T>(
   if (
     res.status === 401 &&
     retry &&
-    normalized !== '/auth/login' &&
-    normalized !== '/auth/register' &&
-    normalized !== '/auth/logout' &&
-    normalized !== '/auth/refresh'
+    normalized !== '/auth/login.php' &&
+    normalized !== '/auth/register.php' &&
+    normalized !== '/auth/logout.php' &&
+    normalized !== '/auth/refresh.php'
   ) {
     const refreshed = await tryRefresh();
     if (refreshed) return apiRequest<T>(path, options, false);
@@ -105,34 +105,34 @@ export async function apiRequest<T>(
 }
 
 export const authApi = {
-  me: () => apiRequest<{ user: AuthUserDto }>('/auth/me'),
+  me: () => apiRequest<{ user: AuthUserDto }>('/auth/me.php'),
   login: (body: { identifier: string; password: string }) =>
-    apiRequest<{ user: AuthUserDto }>('/auth/login', {
+    apiRequest<{ user: AuthUserDto }>('/auth/login.php', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
   register: (body: RegisterBody) =>
-    apiRequest<{ user: AuthUserDto }>('/auth/register', {
+    apiRequest<{ user: AuthUserDto }>('/auth/register.php', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
   logout: () =>
-    apiRequest<{ loggedOut: boolean }>('/auth/logout', {
+    apiRequest<{ loggedOut: boolean }>('/auth/logout.php', {
       method: 'POST',
       body: '{}',
     }),
   refresh: () =>
-    apiRequest<{ user: AuthUserDto }>('/auth/refresh', {
+    apiRequest<{ user: AuthUserDto }>('/auth/refresh.php', {
       method: 'POST',
       body: '{}',
     }),
   onboarding: (choice: OnboardingChoice) =>
-    apiRequest<{ user: AuthUserDto }>('/auth/onboarding', {
+    apiRequest<{ user: AuthUserDto }>('/auth/onboarding.php', {
       method: 'POST',
       body: JSON.stringify({ choice }),
     }),
   forgotPassword: (email: string) =>
-    apiRequest<{ message: string }>('/auth/forgot-password', {
+    apiRequest<{ message: string }>('/auth/forgot-password.php', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
