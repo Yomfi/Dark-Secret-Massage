@@ -5,9 +5,6 @@ declare(strict_types=1);
  * Shared bootstrap for all API endpoints.
  */
 
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: same-origin');
-
 require_once __DIR__ . '/response.php';
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/auth.php';
@@ -22,13 +19,22 @@ function ds_config(): array
     }
 
     $defaults = [
+        'db_driver' => getenv('DS_DB_DRIVER') ?: 'mysql',
+        'sqlite_path' => getenv('DS_SQLITE_PATH') ?: '',
         'db_host' => getenv('DS_DB_HOST') ?: 'localhost',
         'db_port' => (int) (getenv('DS_DB_PORT') ?: 3306),
         'db_name' => getenv('DS_DB_NAME') ?: 'u190513960_darksecret',
         'db_user' => getenv('DS_DB_USER') ?: 'u190513960_darksecret',
         'db_pass' => getenv('DS_DB_PASS') ?: '',
         'session_name' => getenv('DS_SESSION_NAME') ?: 'ds_session',
-        'cookie_secure' => filter_var(getenv('DS_COOKIE_SECURE') ?: 'true', FILTER_VALIDATE_BOOLEAN),
+        // null = auto-detect HTTPS; set true/false in config.local.php to force
+        'cookie_secure' => (static function () {
+            $env = getenv('DS_COOKIE_SECURE');
+            if ($env === false || $env === '') {
+                return null;
+            }
+            return filter_var($env, FILTER_VALIDATE_BOOLEAN);
+        })(),
         'cookie_samesite' => getenv('DS_COOKIE_SAMESITE') ?: 'Lax',
         'cookie_path' => '/',
         'session_lifetime' => (int) (getenv('DS_SESSION_LIFETIME') ?: 60 * 60 * 24 * 30),
@@ -53,6 +59,16 @@ function ds_is_prod(): bool
     return (ds_config()['app_env'] ?? 'production') === 'production';
 }
 
+function ds_send_security_headers(): void
+{
+    if (headers_sent()) {
+        return;
+    }
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: same-origin');
+    header('Cache-Control: no-store');
+}
+
 function ds_json_body(): array
 {
     $raw = file_get_contents('php://input');
@@ -68,6 +84,7 @@ function ds_json_body(): array
 
 function ds_require_method(string ...$methods): void
 {
+    ds_send_security_headers();
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     if ($method === 'OPTIONS') {
         http_response_code(204);
@@ -81,7 +98,6 @@ function ds_require_method(string ...$methods): void
 
 function ds_new_id(): string
 {
-    // Compact unique id compatible with VARCHAR(191) primary keys
     return bin2hex(random_bytes(16));
 }
 
@@ -89,4 +105,9 @@ function ds_client_ip(): string
 {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     return substr($ip, 0, 64);
+}
+
+function ds_now_sql(): string
+{
+    return (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
 }

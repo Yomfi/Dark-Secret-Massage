@@ -8,17 +8,22 @@ ds_rate_limit('register', 20, 15 * 60);
 
 $input = ds_validate_register(ds_json_body());
 $pdo = ds_pdo();
+$cols = ds_users_columns();
 
-$stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-$stmt->execute([$input['email']]);
-if ($stmt->fetch()) {
+if (!isset($cols['email']) || !isset($cols['password_hash'])) {
+    ds_error(500, 'SCHEMA_ERROR', 'Users table is missing required columns.');
+}
+
+if (ds_find_user_by_email($input['email'])) {
     ds_error(409, 'EMAIL_IN_USE', 'An account with this email already exists.');
 }
 
-$stmt = $pdo->prepare('SELECT id FROM users WHERE phone = ? LIMIT 1');
-$stmt->execute([$input['phone']]);
-if ($stmt->fetch()) {
-    ds_error(409, 'PHONE_IN_USE', 'An account with this phone number already exists.');
+if (isset($cols['phone']) && $input['phone'] !== '') {
+    $stmt = $pdo->prepare('SELECT id FROM users WHERE phone = ? LIMIT 1');
+    $stmt->execute([$input['phone']]);
+    if ($stmt->fetch()) {
+        ds_error(409, 'PHONE_IN_USE', 'An account with this phone number already exists.');
+    }
 }
 
 $id = ds_new_id();
@@ -27,59 +32,74 @@ if ($hash === false) {
     ds_error(500, 'INTERNAL_ERROR', 'Unable to create account.');
 }
 
-$now = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
+$now = ds_now_sql();
+
+$fields = ['id', 'email', 'password_hash'];
+$values = [$id, $input['email'], $hash];
+
+if (isset($cols['first_name'])) {
+    $fields[] = 'first_name';
+    $values[] = $input['firstName'];
+}
+if (isset($cols['last_name'])) {
+    $fields[] = 'last_name';
+    $values[] = $input['lastName'];
+}
+if (isset($cols['phone'])) {
+    $fields[] = 'phone';
+    $values[] = $input['phone'];
+}
+if (isset($cols['role'])) {
+    $fields[] = 'role';
+    $values[] = 'user';
+}
+if (isset($cols['account_status'])) {
+    $fields[] = 'account_status';
+    // Active so login works immediately after register on Hostinger.
+    $values[] = 'active';
+}
+if (isset($cols['terms_accepted_at'])) {
+    $fields[] = 'terms_accepted_at';
+    $values[] = $now;
+}
+if (isset($cols['created_at'])) {
+    $fields[] = 'created_at';
+    $values[] = $now;
+}
+if (isset($cols['updated_at'])) {
+    $fields[] = 'updated_at';
+    $values[] = $now;
+}
+
+$placeholders = implode(', ', array_fill(0, count($fields), '?'));
+$sql = 'INSERT INTO users (' . implode(', ', $fields) . ') VALUES (' . $placeholders . ')';
 
 try {
-    $pdo->beginTransaction();
-
-    $insert = $pdo->prepare(
-        'INSERT INTO users (
-            id, first_name, last_name, email, phone, password_hash,
-            role, account_status, terms_accepted_at, created_at, updated_at
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?,
-            \'user\', \'pending_verification\', ?, ?, ?
-        )'
-    );
-    $insert->execute([
-        $id,
-        $input['firstName'],
-        $input['lastName'],
-        $input['email'],
-        $input['phone'],
-        $hash,
-        $now,
-        $now,
-        $now,
-    ]);
-
-    // Prepare email verification token (delivery can be wired later)
-    $emailRaw = bin2hex(random_bytes(32));
-    $emailHash = hash('sha256', $emailRaw);
-    $emailExp = (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s');
-    $pdo->prepare(
-        'INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at, created_at)
-         VALUES (?, ?, ?, ?, ?)'
-    )->execute([ds_new_id(), $id, $emailHash, $emailExp, $now]);
-
-    // Prepare phone OTP (delivery can be wired later)
-    $phoneCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $phoneHash = hash('sha256', $phoneCode);
-    $phoneExp = (new DateTimeImmutable('+15 minutes'))->format('Y-m-d H:i:s');
-    $pdo->prepare(
-        'INSERT INTO phone_verification_tokens (id, user_id, code_hash, expires_at, created_at)
-         VALUES (?, ?, ?, ?, ?)'
-    )->execute([ds_new_id(), $id, $phoneHash, $phoneExp, $now]);
-
-    $pdo->commit();
+    $pdo->prepare($sql)->execute($values);
 } catch (Throwable $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
     if (!ds_is_prod()) {
         ds_error(500, 'INTERNAL_ERROR', 'Unable to create account.', $e->getMessage());
     }
     ds_error(500, 'INTERNAL_ERROR', 'Unable to create account.');
+}
+
+// Optional verification rows — never fail registration if these tables are missing.
+try {
+    if (ds_table_exists('email_verification_tokens')) {
+        $emailRaw = bin2hex(random_bytes(32));
+        $pdo->prepare(
+            'INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at, created_at)
+             VALUES (?, ?, ?, ?, ?)'
+        )->execute([
+            ds_new_id(),
+            $id,
+            hash('sha256', $emailRaw),
+            (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s'),
+            $now,
+        ]);
+    }
+} catch (Throwable $e) {
+    // ignore
 }
 
 $user = ds_find_user_by_id($id);

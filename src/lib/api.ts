@@ -75,6 +75,8 @@ export async function apiRequest<T>(
     res.status === 401 &&
     retry &&
     normalized !== '/auth/login' &&
+    normalized !== '/auth/register' &&
+    normalized !== '/auth/logout' &&
     normalized !== '/auth/refresh'
   ) {
     const refreshed = await tryRefresh();
@@ -91,7 +93,10 @@ export async function apiRequest<T>(
   if (!res.ok || !payload || payload.success !== true) {
     const err = (payload && 'error' in payload && payload.error) || {
       code: 'REQUEST_FAILED',
-      message: 'Something went wrong. Please try again.',
+      message:
+        res.status >= 500
+          ? 'The server is temporarily unavailable. Please try again.'
+          : 'Something went wrong. Please try again.',
     };
     throw new ApiError(res.status, err.code, err.message, 'details' in err ? err.details : undefined);
   }

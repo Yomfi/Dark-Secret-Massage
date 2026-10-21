@@ -5,15 +5,16 @@
  */
 return [
     // MySQL — password only on Hostinger, never in Git
+    'db_driver' => 'mysql',
     'db_host' => 'localhost',
     'db_port' => 3306,
     'db_name' => 'u190513960_darksecret',
     'db_user' => 'u190513960_darksecret',
     'db_pass' => 'REPLACE_WITH_HOSTINGER_DB_PASSWORD',
 
-    // Session cookie
+    // Session cookie (HttpOnly always; Secure should be true on HTTPS)
     'session_name' => 'ds_session',
-    'cookie_secure' => true,      // true on HTTPS production
+    'cookie_secure' => true,
     'cookie_samesite' => 'Lax',
     'cookie_path' => '/',
     'session_lifetime' => 60 * 60 * 24 * 30, // 30 days
@@ -22,3 +23,4 @@ return [
     'app_env' => 'production',    // production | development
     'app_url' => 'https://dartscret.havensnet.com',
 ];
+

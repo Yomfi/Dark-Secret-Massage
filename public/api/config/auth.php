@@ -9,9 +9,26 @@ function ds_start_session(): void
 
     $cfg = ds_config();
     $lifetime = (int) ($cfg['session_lifetime'] ?? 2592000);
-    $secure = (bool) ($cfg['cookie_secure'] ?? true);
-    $sameSite = (string) ($cfg['cookie_samesite'] ?? 'Lax');
     $path = (string) ($cfg['cookie_path'] ?? '/');
+    $sameSite = (string) ($cfg['cookie_samesite'] ?? 'Lax');
+
+    // Prefer explicit config; otherwise detect HTTPS (including Hostinger proxies).
+    if (array_key_exists('cookie_secure', $cfg) && $cfg['cookie_secure'] !== null && $cfg['cookie_secure'] !== '') {
+        $secure = filter_var($cfg['cookie_secure'], FILTER_VALIDATE_BOOLEAN);
+    } else {
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (string) $_SERVER['SERVER_PORT'] === '443')
+            || (strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https');
+        $secure = $https || ds_is_prod();
+    }
+
+    $sessionDir = dirname(__DIR__) . '/storage/sessions';
+    if (!is_dir($sessionDir)) {
+        @mkdir($sessionDir, 0700, true);
+    }
+    if (is_dir($sessionDir) && is_writable($sessionDir)) {
+        session_save_path($sessionDir);
+    }
 
     session_name((string) ($cfg['session_name'] ?? 'ds_session'));
     session_set_cookie_params([
@@ -25,6 +42,7 @@ function ds_start_session(): void
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_secure', $secure ? '1' : '0');
     ini_set('session.gc_maxlifetime', (string) $lifetime);
 
     session_start();
@@ -48,7 +66,7 @@ function ds_logout_user(): void
             'expires' => time() - 42000,
             'path' => $params['path'] ?? '/',
             'domain' => $params['domain'] ?? '',
-            'secure' => (bool) ($params['secure'] ?? true),
+            'secure' => (bool) ($params['secure'] ?? false),
             'httponly' => true,
             'samesite' => $params['samesite'] ?? 'Lax',
         ]);
@@ -88,22 +106,38 @@ function ds_find_user_by_id(string $id): ?array
     return $row ?: null;
 }
 
+function ds_find_user_by_email(string $email): ?array
+{
+    $email = strtolower(trim($email));
+    $stmt = ds_pdo()->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
+    $stmt->execute([$email]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
 function ds_find_user_by_identifier(string $identifier): ?array
 {
     $email = strtolower(trim($identifier));
-    $phone = preg_replace('/\s+/', '', trim($identifier)) ?? trim($identifier);
+    $byEmail = ds_find_user_by_email($email);
+    if ($byEmail) {
+        return $byEmail;
+    }
 
-    $stmt = ds_pdo()->prepare(
-        'SELECT * FROM users WHERE email = ? OR phone = ? LIMIT 1'
-    );
-    $stmt->execute([$email, $phone]);
+    $cols = ds_users_columns();
+    if (!isset($cols['phone'])) {
+        return null;
+    }
+
+    $phone = preg_replace('/\s+/', '', trim($identifier)) ?? trim($identifier);
+    $stmt = ds_pdo()->prepare('SELECT * FROM users WHERE phone = ? LIMIT 1');
+    $stmt->execute([$phone]);
     $row = $stmt->fetch();
     return $row ?: null;
 }
 
 function ds_assert_account_can_auth(array $user): void
 {
-    $status = $user['account_status'] ?? '';
+    $status = (string) ($user['account_status'] ?? '');
     if ($status === 'suspended') {
         ds_error(403, 'ACCOUNT_SUSPENDED', 'This account has been suspended.');
     }
@@ -113,6 +147,17 @@ function ds_assert_account_can_auth(array $user): void
     if ($status === 'deleted') {
         ds_error(403, 'ACCOUNT_DELETED', 'This account is no longer available.');
     }
+}
+
+function ds_password_hash_column(array $user): ?string
+{
+    if (isset($user['password_hash']) && is_string($user['password_hash'])) {
+        return $user['password_hash'];
+    }
+    if (isset($user['password']) && is_string($user['password'])) {
+        return $user['password'];
+    }
+    return null;
 }
 
 function ds_user_dto(array $user): array
@@ -128,14 +173,15 @@ function ds_user_dto(array $user): array
         return $ts ? date(DATE_ATOM, $ts) : (string) $value;
     };
 
+    // Never expose password hashes.
     return [
         'id' => $user['id'],
         'email' => $user['email'],
-        'phone' => $user['phone'],
-        'firstName' => $user['first_name'],
-        'lastName' => $user['last_name'],
-        'role' => $user['role'],
-        'accountStatus' => $user['account_status'],
+        'phone' => $user['phone'] ?? '',
+        'firstName' => $user['first_name'] ?? ($user['firstName'] ?? ''),
+        'lastName' => $user['last_name'] ?? ($user['lastName'] ?? ''),
+        'role' => $user['role'] ?? 'user',
+        'accountStatus' => $user['account_status'] ?? ($user['accountStatus'] ?? 'active'),
         'emailVerifiedAt' => $iso($user['email_verified_at'] ?? null),
         'phoneVerifiedAt' => $iso($user['phone_verified_at'] ?? null),
         'onboardingChoice' => $user['onboarding_choice'] ?? null,

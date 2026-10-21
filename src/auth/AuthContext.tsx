@@ -120,7 +120,17 @@ export function getAuthErrorMessage(err: unknown): string {
     if (err.code === 'ACCOUNT_SUSPENDED') return 'This account has been suspended.';
     if (err.code === 'EMAIL_IN_USE') return 'An account with this email already exists.';
     if (err.code === 'PHONE_IN_USE') return 'An account with this phone number already exists.';
-    if (err.code === 'VALIDATION_ERROR') return err.message;
+    if (err.code === 'VALIDATION_ERROR') {
+      const details = err.details;
+      if (Array.isArray(details) && details.length > 0) {
+        const first = details[0] as { message?: string };
+        if (first?.message) return first.message;
+      }
+      return err.message || 'Please check your input and try again.';
+    }
+    if (err.code === 'CONFIG_ERROR' || err.code === 'DB_CONNECTION_FAILED') {
+      return err.message || 'The server is not fully configured. Please try again later.';
+    }
     return err.message || 'Something went wrong. Please try again.';
   }
   return 'Unable to reach the server. Please try again.';
