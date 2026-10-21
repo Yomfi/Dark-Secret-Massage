@@ -32,6 +32,10 @@ Root `postinstall` automatically:
 1. Installs `server/` dependencies (including build-time types)
 2. Builds the Vite frontend → `dist/`
 3. Runs `prisma generate` + compiles Express → `server/dist/server.js`
+4. Runs `prisma migrate deploy` against Hostinger `DATABASE_URL` (idempotent)
+
+`build:production` does **not** connect to MySQL. Only the migration step after the build uses the live database.  
+If `DATABASE_URL` is missing, deploy fails clearly (no unmigrated app).
 
 Do **not** set a fake root `server.js`. Use the real compiled entry above.
 
@@ -78,14 +82,12 @@ Password is configured only in Hostinger. Never commit it.
 Template: `server/.env.production.example`  
 Never commit `.env`, `.secrets.local`, or real JWT/DB values.
 
-## After first deploy — migrate once
+## Migrations
 
-```bash
-npm run migrate:deploy
-```
+`npm install` → `postinstall` → `npm run migrate:deploy` applies pending migrations automatically.
 
-Never run `prisma migrate deploy` inside `postinstall`.  
-Never run `prisma migrate dev` in production.
+Never run `prisma migrate dev` in production.  
+Never use `db push`, reset, or auto-seed.
 
 ## Cookies / CORS (same origin)
 
@@ -110,9 +112,8 @@ Expected JSON (not the React homepage):
 1. Express app on `dartscret.havensnet.com` — root `./`, entry `server/dist/server.js`, Node 22
 2. Remove any separate `api.dartscret` app
 3. Set env vars above
-4. Deploy (Hostinger runs `npm install` only — build happens in `postinstall`)
-5. Run `npm run migrate:deploy` once
-6. Verify `/api/health` (JSON) and `/` (React)
+4. Deploy (Hostinger runs `npm install` — `postinstall` builds + migrates)
+5. Verify `/api/health` (JSON) and `/` (React)
 
 ## Local Hostinger simulation
 

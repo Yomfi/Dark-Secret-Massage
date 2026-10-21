@@ -7,10 +7,10 @@ Private platform for intentional matrimonial matchmaking and professional massag
 Express serves `/api/*` and the Vite SPA from the same origin.
 
 Hostinger runs `npm install` only (no build-command field). Root `postinstall`
-installs server deps and runs `build:production`, producing `server/dist/server.js`.
+installs server deps, runs `build:production`, then `migrate:deploy`.
 
 ```bash
-npm install   # also builds frontend + backend via postinstall
+npm install   # build + prisma migrate deploy (needs DATABASE_URL)
 npm start     # node server/dist/server.js
 ```
 

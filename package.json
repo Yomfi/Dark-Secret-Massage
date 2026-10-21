@@ -13,7 +13,7 @@
     "build:server": "npm --prefix server run build",
     "build:production": "npm run build:frontend && npm run build:server",
     "install:server": "npm --prefix server install --include=dev --no-audit --no-fund",
-    "postinstall": "npm run install:server && npm run build:production",
+    "postinstall": "npm run install:server && npm run build:production && npm run migrate:deploy",
     "start": "node server/dist/server.js",
     "migrate:deploy": "npm --prefix server run migrate:deploy",
     "preview": "vite preview",
