@@ -60,14 +60,14 @@ export const Footer: React.FC<FooterProps> = ({
               </button>
             </li>
             <li>
-              <a href="#safety" className="hover:text-white transition-colors">
+              <Link to="/find-a-life-partner" className="hover:text-white transition-colors">
                 Values & Faith Alignment
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#safety" className="hover:text-white transition-colors">
+              <Link to="/find-a-life-partner" className="hover:text-white transition-colors">
                 Candidate Vetting Process
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
@@ -97,9 +97,9 @@ export const Footer: React.FC<FooterProps> = ({
               </Link>
             </li>
             <li>
-              <a href="#safety" className="hover:text-white transition-colors">
+              <Link to="/massage" className="hover:text-white transition-colors">
                 Hygiene & Clinical Ethics
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
@@ -119,14 +119,14 @@ export const Footer: React.FC<FooterProps> = ({
               </button>
             </li>
             <li>
-              <a href="#safety" className="hover:text-white transition-colors">
+              <Link to="/explore/accra" className="hover:text-white transition-colors">
                 Privacy Charter
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#safety" className="hover:text-white transition-colors">
+              <Link to="/explore/accra" className="hover:text-white transition-colors">
                 Code of Conduct
-              </a>
+              </Link>
             </li>
             <li>
               <span className="text-zinc-400">Strict Non-Disclosure</span>

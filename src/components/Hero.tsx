@@ -14,7 +14,7 @@ export const Hero: React.FC<HeroProps> = ({
   verifiedCount = '1,200+',
 }) => {
   return (
-    <section className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-32 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 overflow-x-hidden select-none">
+    <section className="relative min-h-[100svh] flex-1 flex flex-col justify-between pt-28 sm:pt-32 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 overflow-x-hidden select-none">
       <motion.div
         initial={{ opacity: 0, scale: 1.04 }}
         animate={{ opacity: 1, scale: 1 }}

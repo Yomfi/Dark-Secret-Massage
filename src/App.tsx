@@ -1,14 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { TwoExperiences } from './components/TwoExperiences';
-import { MatchmakingStory } from './components/MatchmakingStory';
-import { MassageStory } from './components/MassageStory';
-import { HowItWorks } from './components/HowItWorks';
-import { VisualGallery } from './components/VisualGallery';
-import { SafetyTrust } from './components/SafetyTrust';
-import { FinalCta } from './components/FinalCta';
 import { Footer } from './components/Footer';
 import { ClientDashboard } from './components/ClientDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -43,21 +36,8 @@ function HomePage({
   onOpenDashboard: () => void;
   bookMassagePath: (serviceId?: string) => string;
 }) {
-  const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace('#', '');
-      const el = document.getElementById(id);
-      if (el) {
-        requestAnimationFrame(() => {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      }
-    }
-  }, [location.hash, location.pathname]);
 
   const goBook = (serviceId?: string) => {
     navigate(bookMassagePath(serviceId));
@@ -66,7 +46,7 @@ function HomePage({
   const goMatchmaking = () => navigate(FIND_PARTNER_PATH);
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen flex flex-col">
       <Navbar
         onOpenMatchmaking={goMatchmaking}
         onOpenBooking={() => goBook()}
@@ -74,18 +54,8 @@ function HomePage({
         isAuthenticated={isAuthenticated}
       />
 
-      <main>
-        <Hero onOpenMatchmaking={goMatchmaking} onOpenBooking={() => goBook()} />
-        <TwoExperiences onOpenMatchmaking={goMatchmaking} onOpenBooking={() => goBook()} />
-        <MatchmakingStory onOpenMatchmaking={goMatchmaking} />
-        <MassageStory
-          onOpenBooking={() => goBook()}
-          onSelectService={(serviceId) => goBook(serviceId)}
-        />
-        <HowItWorks />
-        <VisualGallery />
-        <SafetyTrust />
-        <FinalCta onOpenMatchmaking={goMatchmaking} onOpenBooking={() => goBook()} />
+      <main className="flex-1 flex flex-col">
+        <Hero />
       </main>
 
       <Footer
