@@ -118,15 +118,21 @@ export function getAuthErrorMessage(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.code === 'INVALID_CREDENTIALS') return 'The email or password is incorrect.';
     if (err.code === 'ACCOUNT_SUSPENDED') return 'This account has been suspended.';
-    if (err.code === 'EMAIL_IN_USE') return 'An account with this email already exists.';
-    if (err.code === 'PHONE_IN_USE') return 'An account with this phone number already exists.';
+    if (err.code === 'EMAIL_IN_USE') return 'Email already registered.';
+    if (err.code === 'PHONE_IN_USE') return 'This phone number is already registered.';
     if (err.code === 'VALIDATION_ERROR') {
       const details = err.details;
       if (Array.isArray(details) && details.length > 0) {
-        const first = details[0] as { message?: string };
-        if (first?.message) return first.message;
+        const messages = details
+          .map((d) => (d && typeof d === 'object' && 'message' in d ? String((d as { message?: string }).message || '') : ''))
+          .filter(Boolean);
+        if (messages.length > 0) return messages[0];
       }
-      return err.message || 'Please check your input and try again.';
+      // Prefer a specific API message over the generic fallback when present.
+      if (err.message && !/please check your input/i.test(err.message)) {
+        return err.message;
+      }
+      return 'Please check your input and try again.';
     }
     if (err.code === 'CONFIG_ERROR' || err.code === 'DB_CONNECTION_FAILED') {
       return err.message || 'The server is not fully configured. Please try again later.';

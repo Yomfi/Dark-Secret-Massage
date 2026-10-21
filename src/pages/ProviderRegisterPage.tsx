@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ApiError, providerApi } from '../lib/api';
+import { providerApi } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { MARKETPLACE_CITIES } from '../data/locations';
 
@@ -14,7 +14,7 @@ type Step =
   | 'review';
 
 const STEPS: { id: Step; label: string }[] = [
-  { id: 'account', label: 'Account' },
+  { id: 'account', label: 'Your Details' },
   { id: 'phone', label: 'Phone' },
   { id: 'email', label: 'Email' },
   { id: 'profile', label: 'Profile' },
@@ -22,6 +22,39 @@ const STEPS: { id: Step; label: string }[] = [
   { id: 'payment', label: 'Fee' },
   { id: 'review', label: 'Review' },
 ];
+
+function profileFormError(err: unknown): string {
+  return getAuthErrorMessage(err);
+}
+
+function validateAccountStep(account: {
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  termsAccepted: boolean;
+}): string | null {
+  if (!account.firstName.trim()) return 'Enter a valid first name.';
+  if (!account.lastName.trim()) return 'Enter a valid last name.';
+  if (!account.displayName.trim()) return 'Display name is required.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account.email.trim())) {
+    return 'Enter a valid email address.';
+  }
+  const phone = account.phone.trim();
+  if (!/^[+\d][\d\s()-]{7,}$/.test(phone) || phone.replace(/\D/g, '').length < 9) {
+    return 'Enter a valid phone number.';
+  }
+  if (account.password.length < 8) return 'Password must be at least 8 characters.';
+  if (!/[A-Za-z]/.test(account.password) || !/[0-9]/.test(account.password)) {
+    return 'Password must include a letter and a number.';
+  }
+  if (account.password !== account.confirmPassword) return 'Passwords do not match.';
+  if (!account.termsAccepted) return 'Please accept the terms to continue.';
+  return null;
+}
 
 export const ProviderRegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -74,18 +107,12 @@ export const ProviderRegisterPage: React.FC = () => {
 
   const stepIndex = STEPS.findIndex((s) => s.id === step);
 
-  const errMsg = (e: unknown) =>
-    e instanceof ApiError ? e.message : getAuthErrorMessage(e);
-
   const onCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!account.termsAccepted) {
-      setError('Please accept the terms to continue.');
-      return;
-    }
-    if (account.password !== account.confirmPassword) {
-      setError('Passwords do not match.');
+    const localError = validateAccountStep(account);
+    if (localError) {
+      setError(localError);
       return;
     }
     setLoading(true);
@@ -93,7 +120,7 @@ export const ProviderRegisterPage: React.FC = () => {
       await providerApi.register({
         firstName: account.firstName.trim(),
         lastName: account.lastName.trim(),
-        displayName: account.displayName.trim() || `${account.firstName} ${account.lastName}`.trim(),
+        displayName: account.displayName.trim(),
         email: account.email.trim(),
         phone: account.phone.trim(),
         password: account.password,
@@ -103,13 +130,13 @@ export const ProviderRegisterPage: React.FC = () => {
       await refreshSession();
       setProfile((p) => ({
         ...p,
-        displayName: account.displayName.trim() || `${account.firstName} ${account.lastName}`.trim(),
+        displayName: account.displayName.trim(),
       }));
       setStep('phone');
       const sent = await providerApi.sendPhoneCode();
       if (sent.demoCode) setDemoPhoneCode(sent.demoCode);
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -126,7 +153,7 @@ export const ProviderRegisterPage: React.FC = () => {
       const sent = await providerApi.sendEmailCode();
       if (sent.demoToken) setDemoEmailToken(sent.demoToken);
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -141,7 +168,7 @@ export const ProviderRegisterPage: React.FC = () => {
       await refreshSession();
       setStep('profile');
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -171,7 +198,7 @@ export const ProviderRegisterPage: React.FC = () => {
       });
       setStep('identity');
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -196,7 +223,7 @@ export const ProviderRegisterPage: React.FC = () => {
       const pay = await providerApi.getPayment();
       setPaymentMessage(pay.message);
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -210,7 +237,7 @@ export const ProviderRegisterPage: React.FC = () => {
       setPaymentMessage(pay.message);
       setStep('review');
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -223,7 +250,7 @@ export const ProviderRegisterPage: React.FC = () => {
       await providerApi.submitReview();
       navigate('/provider/dashboard', { replace: true });
     } catch (err) {
-      setError(errMsg(err));
+      setError(profileFormError(err));
     } finally {
       setLoading(false);
     }
@@ -248,11 +275,11 @@ export const ProviderRegisterPage: React.FC = () => {
 
       <main className="max-w-2xl mx-auto px-4 py-10">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
-          Provider registration
+          Create Your Profile
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Create your marketplace profile</h1>
+        <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Create Your Dark Secret Profile</h1>
         <p className="mt-2 text-sm text-zinc-400">
-          Separate from client registration. Verification requires phone, email, identity and admin review.
+          Create your public profile, verify your contact details and complete verification to earn the verified badge.
         </p>
 
         <ol className="mt-6 flex flex-wrap gap-2">
@@ -279,7 +306,7 @@ export const ProviderRegisterPage: React.FC = () => {
         <div className="mt-6 rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8">
           {step === 'account' && (
             <form onSubmit={onCreateAccount} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">Step 1 — Account</h2>
+              <h2 className="text-lg font-semibold text-white">Step 1 — Your Details</h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 <input className={field} placeholder="First name" required value={account.firstName}
                   onChange={(e) => setAccount({ ...account, firstName: e.target.value })} />
@@ -306,7 +333,7 @@ export const ProviderRegisterPage: React.FC = () => {
                 I accept the Terms and Privacy Policy. My profile starts unverified.
               </label>
               <button disabled={loading} type="submit" className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white disabled:opacity-60">
-                {loading ? 'Creating…' : 'Create provider account'}
+                {loading ? 'Creating…' : 'Create Your Profile'}
               </button>
             </form>
           )}
@@ -329,7 +356,7 @@ export const ProviderRegisterPage: React.FC = () => {
                     const sent = await providerApi.sendPhoneCode();
                     if (sent.demoCode) setDemoPhoneCode(sent.demoCode);
                   } catch (err) {
-                    setError(errMsg(err));
+                    setError(profileFormError(err));
                   }
                 }} className="flex-1 min-h-[44px] rounded-full border border-white/15 text-xs uppercase tracking-widest">
                   Resend
@@ -359,7 +386,7 @@ export const ProviderRegisterPage: React.FC = () => {
                     const sent = await providerApi.sendEmailCode();
                     if (sent.demoToken) setDemoEmailToken(sent.demoToken);
                   } catch (err) {
-                    setError(errMsg(err));
+                    setError(profileFormError(err));
                   }
                 }} className="flex-1 min-h-[44px] rounded-full border border-white/15 text-xs uppercase tracking-widest">
                   Resend
@@ -373,7 +400,7 @@ export const ProviderRegisterPage: React.FC = () => {
 
           {step === 'profile' && (
             <form onSubmit={onSaveProfile} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">Step 4 — Provider profile</h2>
+              <h2 className="text-lg font-semibold text-white">Step 4 — Your Profile</h2>
               <p className="text-sm text-zinc-400">Saved as unverified until admin approval.</p>
               <input className={field} placeholder="Display name" required value={profile.displayName}
                 onChange={(e) => setProfile({ ...profile, displayName: e.target.value })} />

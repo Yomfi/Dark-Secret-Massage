@@ -64,8 +64,8 @@ export type MarketplaceProfile = {
 };
 
 export const PROFILE_TYPE_LABELS: Record<MarketplaceProfileType, string> = {
-  massage_provider: 'Massage Provider',
-  wellness_provider: 'Wellness Provider',
+  massage_provider: 'Massage',
+  wellness_provider: 'Wellness',
   matchmaking_profile: 'Matchmaking',
   social_profile: 'Friendship',
   dating_profile: 'Dating / Connection',

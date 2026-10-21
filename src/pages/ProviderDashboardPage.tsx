@@ -37,7 +37,7 @@ const ProviderDashboardInner: React.FC = () => {
     if (!isAuthenticated) return;
     const role = user?.role || '';
     if (role !== 'massage_provider' && role !== 'provider') {
-      setError('This dashboard is for provider accounts. Register as a provider to continue.');
+      setError('This area is for profile accounts. Create your profile to continue.');
       return;
     }
     providerApi
@@ -51,14 +51,14 @@ const ProviderDashboardInner: React.FC = () => {
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <p className="text-zinc-300">{error}</p>
         <Link to="/provider/register" className="mt-4 inline-block text-purple-300 text-sm uppercase tracking-widest">
-          Provider registration →
+          Create Your Profile →
         </Link>
       </div>
     );
   }
 
   if (!data) {
-    return <div className="px-4 py-16 text-center text-zinc-500">Loading verification status…</div>;
+    return <div className="px-4 py-16 text-center text-zinc-500">Loading profile verification…</div>;
   }
 
   const p = data.progress;
@@ -75,8 +75,8 @@ const ProviderDashboardInner: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <p className="text-xs uppercase tracking-[0.28em] text-purple-300">Provider dashboard</p>
-      <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Verification progress</h1>
+      <p className="text-xs uppercase tracking-[0.28em] text-purple-300">My Profile</p>
+      <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Profile Verification</h1>
 
       {data.isVerified ? (
         <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-5 flex items-start gap-3">

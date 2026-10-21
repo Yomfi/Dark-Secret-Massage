@@ -64,7 +64,7 @@ const Inner: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-4">
-      <h1 className="text-2xl font-bold text-white">Provider verification review</h1>
+      <h1 className="text-2xl font-bold text-white">Profile Verification</h1>
       {error && <p className="text-sm text-rose-300">{error}</p>}
       {rows.length === 0 ? (
         <p className="text-zinc-500 text-sm">No provider verification records yet. Run the SQL migration and register a provider.</p>
