@@ -1,21 +1,31 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Search } from 'lucide-react';
 import { cityExplorePath, searchCities, type MarketplaceCity } from '../../data/locations';
+
+export type CitySearchHandle = {
+  submit: () => void;
+};
 
 type CitySearchProps = {
   variant?: 'hero' | 'toolbar';
   initialSlug?: string;
   onNavigate?: (slug: string) => void;
   className?: string;
+  /** When false, only the location field is rendered (Search lives in its own toolbar column). */
+  showSubmitButton?: boolean;
 };
 
-export const CitySearch: React.FC<CitySearchProps> = ({
-  variant = 'hero',
-  initialSlug,
-  onNavigate,
-  className = '',
-}) => {
+export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function CitySearch(
+  {
+    variant = 'hero',
+    initialSlug,
+    onNavigate,
+    className = '',
+    showSubmitButton,
+  },
+  ref,
+) {
   const navigate = useNavigate();
   const listId = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -24,6 +34,8 @@ export const CitySearch: React.FC<CitySearchProps> = ({
   const [selected, setSelected] = useState<MarketplaceCity | null>(null);
   const [highlight, setHighlight] = useState(0);
 
+  const isHero = variant === 'hero';
+  const withButton = showSubmitButton ?? isHero;
   const suggestions = searchCities(query, 8);
 
   useEffect(() => {
@@ -59,7 +71,8 @@ export const CitySearch: React.FC<CitySearchProps> = ({
     if (city) go(city);
   };
 
-  const isHero = variant === 'hero';
+  useImperativeHandle(ref, () => ({ submit }), [selected, query, suggestions]);
+
   const showList = open && suggestions.length > 0;
 
   // Hero: in-flow list reserves vertical space so trust/next sections never sit under it.
@@ -71,16 +84,16 @@ export const CitySearch: React.FC<CitySearchProps> = ({
   return (
     <div
       ref={wrapRef}
-      className={`relative w-full ${isHero ? 'z-30' : 'z-20'} ${className}`}
+      className={`relative w-full min-w-0 ${isHero ? 'z-30' : 'z-20'} ${className}`}
     >
       <div
         className={
           isHero
             ? 'flex flex-col sm:flex-row gap-2 sm:gap-0 w-full rounded-2xl sm:rounded-full border border-white/15 bg-black/50 backdrop-blur-xl p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
-            : 'flex flex-col sm:flex-row gap-2 sm:gap-0 w-full rounded-xl border border-white/10 bg-white/[0.04] p-1'
+            : 'flex w-full items-center rounded-xl border border-white/10 bg-white/[0.04] px-3 min-h-[44px]'
         }
       >
-        <label className="flex flex-1 items-center gap-2 px-3 sm:px-4 min-h-[48px]">
+        <label className={`flex flex-1 items-center gap-2 min-w-0 ${isHero ? 'px-3 sm:px-4 min-h-[48px]' : ''}`}>
           <MapPin className="w-4 h-4 text-purple-300 shrink-0" aria-hidden />
           <input
             type="text"
@@ -113,21 +126,23 @@ export const CitySearch: React.FC<CitySearchProps> = ({
                 setOpen(false);
               }
             }}
-            className="flex-1 bg-transparent border-0 outline-none text-sm sm:text-base text-white placeholder:text-zinc-500"
+            className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm sm:text-base text-white placeholder:text-zinc-500"
           />
         </label>
-        <button
-          type="button"
-          onClick={submit}
-          className={
-            isHero
-              ? 'inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl sm:rounded-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold tracking-wide transition-colors'
-              : 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-wider transition-colors'
-          }
-        >
-          <Search className="w-4 h-4" />
-          Search
-        </button>
+        {withButton && (
+          <button
+            type="button"
+            onClick={submit}
+            className={
+              isHero
+                ? 'inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl sm:rounded-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold tracking-wide transition-colors'
+                : 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-wider transition-colors shrink-0'
+            }
+          >
+            <Search className="w-4 h-4" />
+            Search
+          </button>
+        )}
       </div>
 
       {showList && (
@@ -152,4 +167,4 @@ export const CitySearch: React.FC<CitySearchProps> = ({
       )}
     </div>
   );
-};
+});
