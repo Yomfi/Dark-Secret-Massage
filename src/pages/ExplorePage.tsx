@@ -75,6 +75,9 @@ export const ExplorePage: React.FC = () => {
           </p>
           <p className="mt-3 text-xs text-zinc-500">
             {results.length} {results.length === 1 ? 'result' : 'results'}
+            {filters.providerType && filters.providerType !== 'all'
+              ? ` · ${filters.providerType}`
+              : ''}
             {filters.service ? ` · ${filters.service}` : ''}
             {filters.gender && filters.gender !== 'all' ? ` · ${filters.gender}` : ''}
             <span className="ml-2 text-zinc-600">(demo profiles)</span>

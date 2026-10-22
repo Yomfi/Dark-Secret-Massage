@@ -5,6 +5,7 @@ import type { MarketplaceAvailability } from '../../data/marketplaceProfiles';
 import type {
   MarketplaceFilters,
   MarketplaceGenderFilter,
+  MarketplaceProviderTypeFilter,
   MarketplaceSort,
 } from '../../lib/marketplace';
 import { CitySearch, type CitySearchHandle } from './CitySearch';
@@ -15,6 +16,12 @@ type Props = {
   onChange: (next: MarketplaceFilters) => void;
   onCityChange: (slug: string) => void;
 };
+
+const PROVIDER_TYPES: { value: MarketplaceProviderTypeFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'individuals', label: 'Individuals' },
+  { value: 'agencies', label: 'Agencies' },
+];
 
 const GENDERS: { value: MarketplaceGenderFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -56,7 +63,7 @@ function FilterFields({
       className={
         isSheet
           ? 'flex flex-col gap-3'
-          : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-8 gap-3 items-end'
+          : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-9 gap-3 items-end'
       }
     >
       <div className={`min-w-0 ${isSheet ? '' : 'col-span-2 lg:col-span-1 xl:col-span-1'}`}>
@@ -68,6 +75,26 @@ function FilterFields({
           initialSlug={citySlug}
           onNavigate={onCityChange}
         />
+      </div>
+
+      <div className="min-w-0">
+        <label className={labelClass}>Provider type</label>
+        <select
+          value={filters.providerType || 'all'}
+          onChange={(e) =>
+            onChange({
+              ...filters,
+              providerType: e.target.value as MarketplaceProviderTypeFilter,
+            })
+          }
+          className={fieldClass}
+        >
+          {PROVIDER_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="min-w-0">

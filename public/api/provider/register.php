@@ -8,7 +8,32 @@ ds_rate_limit('provider_register', 15, 15 * 60);
 
 $body = ds_json_body();
 $input = ds_validate_register($body);
-$displayName = trim((string) ($body['displayName'] ?? ($input['firstName'] . ' ' . $input['lastName'])));
+
+$providerType = strtolower(trim((string) ($body['providerType'] ?? 'individual')));
+if (!in_array($providerType, ['individual', 'agency'], true)) {
+    ds_error(400, 'VALIDATION_ERROR', 'Select how you are registering: individual or agency.');
+}
+
+$gender = strtolower(trim((string) ($body['gender'] ?? '')));
+if ($providerType === 'individual' && !in_array($gender, ['female', 'male'], true)) {
+    ds_error(400, 'VALIDATION_ERROR', 'Select gender: female or male.');
+}
+if ($providerType === 'agency') {
+    $gender = '';
+}
+
+$businessName = trim((string) ($body['businessName'] ?? ''));
+$displayName = trim((string) ($body['displayName'] ?? ''));
+if ($providerType === 'agency') {
+    if ($businessName === '') {
+        ds_error(400, 'VALIDATION_ERROR', 'Enter your agency / business name.');
+    }
+    if ($displayName === '') {
+        $displayName = $businessName;
+    }
+} elseif ($displayName === '') {
+    $displayName = trim($input['firstName'] . ' ' . $input['lastName']);
+}
 if ($displayName === '' || strlen($displayName) > 120) {
     ds_error(400, 'VALIDATION_ERROR', 'Enter a valid display name.');
 }
@@ -97,11 +122,34 @@ try {
 
     if (ds_table_exists('provider_profiles')) {
         $slug = ds_unique_provider_slug($displayName);
-        $pdo->prepare(
-            'INSERT INTO provider_profiles
-             (id, user_id, slug, display_name, city, country, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, \'Ghana\', ?, ?)'
-        )->execute([ds_new_id(), $id, $slug, $displayName, 'Accra', $now, $now]);
+        if (ds_column_exists('provider_profiles', 'provider_type')) {
+            $pdo->prepare(
+                'INSERT INTO provider_profiles
+                 (id, user_id, slug, display_name, provider_type, gender, business_name,
+                  contact_first_name, contact_last_name, city, country, profile_completion,
+                  created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'Ghana\', 10, ?, ?)'
+            )->execute([
+                ds_new_id(),
+                $id,
+                $slug,
+                $displayName,
+                $providerType,
+                $gender !== '' ? $gender : null,
+                $providerType === 'agency' ? $businessName : null,
+                $input['firstName'],
+                $input['lastName'],
+                'Accra',
+                $now,
+                $now,
+            ]);
+        } else {
+            $pdo->prepare(
+                'INSERT INTO provider_profiles
+                 (id, user_id, slug, display_name, city, country, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, \'Ghana\', ?, ?)'
+            )->execute([ds_new_id(), $id, $slug, $displayName, 'Accra', $now, $now]);
+        }
     }
 
     $pdo->commit();
@@ -123,5 +171,7 @@ if (!$user) {
 ds_login_user($user);
 ds_success([
     'user' => ds_user_dto($user),
+    'providerType' => $providerType,
+    'gender' => $gender !== '' ? $gender : null,
     'nextStep' => 'phone_verification',
 ], 201);

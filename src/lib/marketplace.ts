@@ -4,11 +4,13 @@ import { profileOffersService } from '../data/serviceCategories';
 export type MarketplaceSort = 'recommended' | 'recent' | 'price_asc' | 'price_desc';
 
 export type MarketplaceGenderFilter = 'all' | 'women' | 'men';
+export type MarketplaceProviderTypeFilter = 'all' | 'individuals' | 'agencies';
 
 export type MarketplaceFilters = {
   /** Specific massage service label (e.g. Swedish Massage) */
   service?: string | null;
   gender?: MarketplaceGenderFilter | null;
+  providerType?: MarketplaceProviderTypeFilter | null;
   minPrice?: number | null;
   maxPrice?: number | null;
   availability?: MarketplaceAvailability | 'any' | null;
@@ -31,13 +33,26 @@ export function availabilityLabel(value: MarketplaceAvailability): string {
   }
 }
 
-export function genderLabel(gender: MarketplaceProfile['gender']): string {
-  return gender === 'men' ? 'Men' : 'Women';
+export function genderLabel(gender: MarketplaceProfile['gender'] | undefined | null): string {
+  if (gender === 'men' || gender === 'male') return 'Men';
+  if (gender === 'women' || gender === 'female') return 'Women';
+  return '';
+}
+
+export function providerKindLabel(kind: MarketplaceProfile['providerKind'] | undefined): string {
+  return kind === 'agency' ? 'Massage Agency' : 'Individual Massage Professional';
 }
 
 export function serviceSettingLabel(settings: MarketplaceProfile['serviceSetting']): string {
-  const map = { studio: 'Studio', in_home: 'In-home', flexible: 'Flexible' } as const;
-  return settings.map((s) => map[s]).join(' · ');
+  const map: Record<string, string> = {
+    studio: 'Studio',
+    in_home: 'In-home',
+    home_visit: 'Home Visit',
+    hotel_visit: 'Hotel Visit',
+    client_location: 'Client Location',
+    flexible: 'Flexible',
+  };
+  return settings.map((s) => map[s] || s).join(' · ');
 }
 
 export function whatsappEnquiryUrl(phone: string, _displayName?: string): string {
@@ -54,8 +69,28 @@ export function filterAndSortProfiles(
 ): MarketplaceProfile[] {
   let result = [...profiles];
 
+  if (filters.providerType && filters.providerType !== 'all') {
+    const wantAgency = filters.providerType === 'agencies';
+    result = result.filter((p) => (p.providerKind === 'agency') === wantAgency);
+  }
+
   if (filters.gender && filters.gender !== 'all') {
-    result = result.filter((p) => p.gender === filters.gender);
+    const wantFemale = filters.gender === 'women';
+    result = result.filter((p) => {
+      if (p.providerKind === 'agency') {
+        const team = p.teamMembers || [];
+        if (team.length === 0) return false;
+        return team.some((m) =>
+          wantFemale
+            ? m.gender === 'women' || m.gender === 'female'
+            : m.gender === 'men' || m.gender === 'male',
+        );
+      }
+      const g = p.gender;
+      return wantFemale
+        ? g === 'women' || g === 'female'
+        : g === 'men' || g === 'male';
+    });
   }
 
   if (filters.service) {
@@ -100,9 +135,18 @@ export function parseExploreSearchParams(params: URLSearchParams): MarketplaceFi
   const gender: MarketplaceGenderFilter | null =
     genderRaw === 'women' || genderRaw === 'men' || genderRaw === 'all' ? genderRaw : null;
 
+  const providerTypeRaw = params.get('type');
+  const providerType: MarketplaceProviderTypeFilter | null =
+    providerTypeRaw === 'individuals' ||
+    providerTypeRaw === 'agencies' ||
+    providerTypeRaw === 'all'
+      ? providerTypeRaw
+      : null;
+
   return {
     service: params.get('service'),
     gender,
+    providerType,
     minPrice: min ? Number(min) : null,
     maxPrice: max ? Number(max) : null,
     availability: (params.get('availability') as MarketplaceAvailability | 'any' | null) || null,
@@ -114,6 +158,7 @@ export function buildExploreSearchParams(filters: MarketplaceFilters): URLSearch
   const p = new URLSearchParams();
   if (filters.service) p.set('service', String(filters.service));
   if (filters.gender && filters.gender !== 'all') p.set('gender', filters.gender);
+  if (filters.providerType && filters.providerType !== 'all') p.set('type', filters.providerType);
   if (filters.minPrice != null && !Number.isNaN(filters.minPrice)) p.set('min', String(filters.minPrice));
   if (filters.maxPrice != null && !Number.isNaN(filters.maxPrice)) p.set('max', String(filters.maxPrice));
   if (filters.availability && filters.availability !== 'any') p.set('availability', filters.availability);

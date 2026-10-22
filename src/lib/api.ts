@@ -165,11 +165,23 @@ export type RegisterBody = {
 
 export type ProviderRegisterBody = RegisterBody & {
   displayName: string;
+  providerType: 'individual' | 'agency';
+  gender?: 'female' | 'male';
+  businessName?: string;
 };
 
 export type ProviderDashboardDto = {
   user: AuthUserDto;
-  profile: { id: string; slug: string; displayName: string; completed: boolean } | null;
+  profile: {
+    id: string;
+    slug: string;
+    displayName: string;
+    completed: boolean;
+    providerType?: string;
+    gender?: string | null;
+    businessName?: string | null;
+    profileCompletion?: number;
+  } | null;
   verification: {
     status: string;
     identityStatus: string;
@@ -226,7 +238,12 @@ export const providerApi = {
     ),
   getProfile: () => apiRequest<{ profile: Record<string, unknown> | null }>('/provider/profile.php'),
   saveProfile: (body: Record<string, unknown>) =>
-    apiRequest<{ saved: boolean; nextStep: string }>('/provider/profile.php', {
+    apiRequest<{
+      saved: boolean;
+      nextStep: string;
+      profileCompletion?: number;
+      profile?: Record<string, unknown> | null;
+    }>('/provider/profile.php', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -267,6 +284,18 @@ export const providerApi = {
       { method: 'POST', body: '{}' },
     ),
   dashboard: () => apiRequest<ProviderDashboardDto>('/provider/dashboard.php'),
+  listTeam: () =>
+    apiRequest<{ teamMembers: Array<Record<string, unknown>> }>('/provider/team.php'),
+  saveTeamMember: (body: Record<string, unknown>) =>
+    apiRequest<{ saved: boolean; id: string; teamMembers: Array<Record<string, unknown>> }>(
+      '/provider/team.php',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+  deleteTeamMember: (id: string) =>
+    apiRequest<{ deleted: boolean; teamMembers: Array<Record<string, unknown>> }>(
+      '/provider/team.php',
+      { method: 'DELETE', body: JSON.stringify({ id }) },
+    ),
 };
 
 export const adminProviderApi = {

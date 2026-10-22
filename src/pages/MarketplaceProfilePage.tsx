@@ -23,6 +23,7 @@ import {
   availabilityLabel,
   formatPrice,
   genderLabel,
+  providerKindLabel,
   serviceSettingLabel,
   whatsappEnquiryUrl,
 } from '../lib/marketplace';
@@ -462,7 +463,14 @@ export const MarketplaceProfilePage: React.FC = () => {
           <div className="space-y-5">
             <header>
               <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/90">
-                Massage · {genderLabel(profile.gender)}
+                {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
+                {profile.providerKind !== 'agency' && genderLabel(profile.gender)
+                  ? ` · ${genderLabel(profile.gender)}`
+                  : ''}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                {providerKindLabel(profile.providerKind)}
+                {profile.providerKind === 'agency' ? ` · ${profile.city}` : ''}
               </p>
               <h1 className="mt-2 text-3xl sm:text-4xl font-semibold text-white tracking-tight uppercase inline-flex items-center gap-2 flex-wrap">
                 {profile.displayName}
@@ -521,14 +529,19 @@ export const MarketplaceProfilePage: React.FC = () => {
             </h2>
             <dl>
               <DetailRow label="Display name" value={profile.displayName} />
-              <DetailRow label="Gender" value={genderLabel(profile.gender)} />
+              <DetailRow label="Provider type" value={providerKindLabel(profile.providerKind)} />
+              {profile.providerKind !== 'agency' && (
+                <DetailRow label="Gender" value={genderLabel(profile.gender)} />
+              )}
               <DetailRow label="Age" value={profile.age} />
               <DetailRow label="City" value={profile.city} />
               <DetailRow label="Country" value={profile.country} />
               <DetailRow label="Languages" value={profile.languages?.join(', ')} />
               <DetailRow label="Massage services" value={profile.services.join(', ')} />
+              <DetailRow label="Experience" value={profile.yearsExperience != null ? `${profile.yearsExperience} years` : null} />
               <DetailRow label="Availability" value={availabilityLabel(profile.availability)} />
               <DetailRow label="Available days" value={profile.availableDays} />
+              <DetailRow label="Opening hours" value={profile.workingHours} />
               <DetailRow label="Service setting" value={serviceSettingLabel(profile.serviceSetting)} />
               <DetailRow label="Service area" value={profile.serviceArea} />
               <DetailRow
@@ -545,6 +558,56 @@ export const MarketplaceProfilePage: React.FC = () => {
               />
             </dl>
           </section>
+
+          {profile.providerKind === 'agency' && profile.teamMembers && profile.teamMembers.length > 0 && (
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-4">
+                Meet our massage professionals
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {profile.teamMembers
+                  .filter((m) => m.status !== 'inactive')
+                  .map((member) => (
+                    <article
+                      key={member.id}
+                      className="rounded-xl border border-white/10 bg-black/20 overflow-hidden"
+                    >
+                      {member.profileImage && (
+                        <PortraitMedia
+                          src={member.profileImage}
+                          alt={member.displayName}
+                          aspectClassName="aspect-[4/3]"
+                        />
+                      )}
+                      <div className="p-4">
+                        <p className="text-sm font-semibold text-white uppercase tracking-wide">
+                          {member.displayName}
+                        </p>
+                        <p className="mt-1 text-[10px] uppercase tracking-widest text-zinc-500">
+                          {genderLabel(member.gender)}
+                          {member.yearsExperience != null ? ` · ${member.yearsExperience} yrs` : ''}
+                        </p>
+                        {member.bio && (
+                          <p className="mt-2 text-xs text-zinc-400 leading-relaxed">{member.bio}</p>
+                        )}
+                        {member.services && member.services.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1">
+                            {member.services.slice(0, 3).map((s) => (
+                              <span
+                                key={s}
+                                className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-purple-400/25 text-purple-100"
+                              >
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+              </div>
+            </section>
+          )}
 
           {isProvider && profile.serviceOfferings && profile.serviceOfferings.length > 0 && (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">

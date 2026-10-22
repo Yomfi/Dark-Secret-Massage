@@ -97,3 +97,41 @@ function ds_table_exists(string $table): bool
     $stmt->execute([$table]);
     return (bool) $stmt->fetch();
 }
+
+/** @return array<string, true> */
+function ds_table_columns(string $table): array
+{
+    static $cache = [];
+    if (isset($cache[$table])) {
+        return $cache[$table];
+    }
+
+    $pdo = ds_pdo();
+    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $cols = [];
+
+    if ($driver === 'sqlite') {
+        $rows = $pdo->query('PRAGMA table_info(' . str_replace('`', '', $table) . ')')->fetchAll();
+        foreach ($rows as $row) {
+            $cols[(string) $row['name']] = true;
+        }
+    } else {
+        $stmt = $pdo->prepare(
+            'SELECT COLUMN_NAME FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = ?'
+        );
+        $stmt->execute([$table]);
+        foreach ($stmt->fetchAll() as $row) {
+            $cols[(string) $row['COLUMN_NAME']] = true;
+        }
+    }
+
+    $cache[$table] = $cols;
+    return $cols;
+}
+
+function ds_column_exists(string $table, string $column): bool
+{
+    $cols = ds_table_columns($table);
+    return isset($cols[$column]);
+}

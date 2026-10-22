@@ -23,9 +23,11 @@ export const MASSAGE_SERVICE_OPTIONS = [
   'Relaxation Massage',
   'Aromatherapy',
   'Sports Massage',
+  'Hot Stone Massage',
   'Home Massage',
   'Couples Massage',
   'Spa Session',
+  'Other Massage Service',
 ] as const;
 
 export type MassageServiceOption = (typeof MASSAGE_SERVICE_OPTIONS)[number];

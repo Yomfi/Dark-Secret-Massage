@@ -9,9 +9,30 @@ export type MarketplaceProfileType =
   | 'social_profile'
   | 'dating_profile';
 
-export type MarketplaceGender = 'women' | 'men';
+export type MarketplaceGender = 'women' | 'men' | 'female' | 'male';
 
-export type ServiceSetting = 'studio' | 'in_home' | 'flexible';
+export type MarketplaceProviderKind = 'individual' | 'agency';
+
+export type ServiceSetting =
+  | 'studio'
+  | 'in_home'
+  | 'home_visit'
+  | 'hotel_visit'
+  | 'client_location'
+  | 'flexible'
+  | string;
+
+export type AgencyTeamMember = {
+  id: string;
+  displayName: string;
+  gender: MarketplaceGender;
+  bio?: string;
+  profileImage?: string;
+  services?: string[];
+  yearsExperience?: number;
+  availability?: string;
+  status?: 'active' | 'inactive';
+};
 
 export type MarketplaceAvailability = 'today' | 'this_week' | 'flexible';
 
@@ -26,7 +47,9 @@ export type MarketplaceProfile = {
   slug: string;
   displayName: string;
   profileType: MarketplaceProfileType;
-  gender: MarketplaceGender;
+  /** Public marketplace kind — individual masseuse or agency */
+  providerKind: MarketplaceProviderKind;
+  gender?: MarketplaceGender;
   citySlug: string;
   city: string;
   region: string;
@@ -63,6 +86,9 @@ export type MarketplaceProfile = {
   relationshipIntention?: string;
   preferredConnection?: string;
   socialPreference?: string;
+  teamMembers?: AgencyTeamMember[];
+  workingHours?: string;
+  yearsExperience?: number;
   isDemo: true;
   createdAt: string;
 };
@@ -87,6 +113,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'ama-k',
     displayName: 'Ama K.',
     profileType: 'massage_provider',
+    providerKind: 'individual',
     gender: 'women',
     citySlug: 'accra',
     city: 'Accra',
@@ -135,6 +162,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'akosua-m',
     displayName: 'Akosua M.',
     profileType: 'wellness_provider',
+    providerKind: 'individual',
     gender: 'women',
     citySlug: 'accra',
     city: 'East Legon',
@@ -182,6 +210,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'kwame-m',
     displayName: 'Kwame M.',
     profileType: 'massage_provider',
+    providerKind: 'individual',
     gender: 'men',
     citySlug: 'accra',
     city: 'Accra',
@@ -228,6 +257,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'kofi-a',
     displayName: 'Kofi A.',
     profileType: 'massage_provider',
+    providerKind: 'individual',
     gender: 'men',
     citySlug: 'accra',
     city: 'East Legon',
@@ -272,6 +302,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'yaw-b',
     displayName: 'Yaw B.',
     profileType: 'wellness_provider',
+    providerKind: 'individual',
     gender: 'men',
     citySlug: 'accra',
     city: 'Accra',
@@ -316,6 +347,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'serwaa-a',
     displayName: 'Serwaa A.',
     profileType: 'wellness_provider',
+    providerKind: 'individual',
     gender: 'women',
     citySlug: 'tema',
     city: 'Tema',
@@ -361,6 +393,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'esi-k',
     displayName: 'Esi K.',
     profileType: 'massage_provider',
+    providerKind: 'individual',
     gender: 'women',
     citySlug: 'tema',
     city: 'Tema',
@@ -406,6 +439,7 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     slug: 'esi-b',
     displayName: 'Esi B.',
     profileType: 'massage_provider',
+    providerKind: 'individual',
     gender: 'women',
     citySlug: 'kumasi',
     city: 'Kumasi',
@@ -447,6 +481,75 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
     interests: ['Wellness', 'Music', 'Travel'],
     isDemo: true,
     createdAt: '2026-09-28',
+  },
+  {
+    id: 'demo-serenity-touch',
+    slug: 'serenity-touch-spa',
+    displayName: 'Serenity Touch Spa',
+    profileType: 'wellness_provider',
+    providerKind: 'agency',
+    citySlug: 'accra',
+    city: 'East Legon',
+    region: 'Greater Accra',
+    country: 'Ghana',
+    nationality: 'Ghanaian',
+    shortBio: 'Massage agency offering studio and home-visit sessions with a vetted team in East Legon.',
+    about:
+      'Serenity Touch Spa is a private massage agency in East Legon. We list experienced massage professionals for studio appointments, home visits and hotel sessions — with clear pricing and professional standards.',
+    services: ['Swedish Massage', 'Deep Tissue Massage', 'Spa Session', 'Home Massage', 'Couples Massage'],
+    serviceOfferings: [
+      { name: 'Swedish Massage', durationMinutes: 60, priceFrom: 380 },
+      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 450 },
+      { name: 'Spa Session', durationMinutes: 90, priceFrom: 560 },
+      { name: 'Home Massage', durationMinutes: 90, priceFrom: 520 },
+    ],
+    primaryCategory: 'spa',
+    startingPrice: 380,
+    currency: 'GHS',
+    availability: 'today',
+    availableDays: 'Mon–Sun',
+    workingHours: '9:00 – 20:00',
+    yearsExperience: 6,
+    serviceSetting: ['studio', 'home_visit', 'hotel_visit'],
+    serviceArea: 'East Legon · Accra · Airport Residential',
+    primaryImage: '/spa_treatment_room.jpg',
+    gallery: [
+      '/spa_treatment_room.jpg',
+      '/profiles/demo-lifestyle-lounge.jpg',
+      '/profiles/demo-gallery-cafe.jpg',
+    ],
+    phone: '+233200000300',
+    whatsapp: '+233200000300',
+    publicContactEnabled: true,
+    verified: true,
+    featured: true,
+    languages: ['English', 'Twi'],
+    teamMembers: [
+      {
+        id: 'team-ama',
+        displayName: 'Ama',
+        gender: 'women',
+        bio: 'Swedish and relaxation specialist.',
+        profileImage: '/profiles/demo-ama-k.jpg',
+        services: ['Swedish Massage', 'Relaxation Massage'],
+        yearsExperience: 4,
+        availability: 'today',
+        status: 'active',
+      },
+      {
+        id: 'team-kwame',
+        displayName: 'Kwame',
+        gender: 'men',
+        bio: 'Deep tissue and sports recovery.',
+        profileImage: '/profiles/demo-kwame-m.jpg',
+        services: ['Deep Tissue Massage', 'Sports Massage'],
+        yearsExperience: 5,
+        availability: 'this_week',
+        status: 'active',
+      },
+    ],
+    isDemo: true,
+    createdAt: '2026-10-12',
   },
 ];
 

@@ -7,6 +7,7 @@ import {
   availabilityLabel,
   formatPrice,
   genderLabel,
+  providerKindLabel,
   serviceSettingLabel,
 } from '../../lib/marketplace';
 import { PortraitMedia } from './PortraitMedia';
@@ -64,7 +65,10 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.2em] text-purple-300/80 mb-1">
-              Massage · {genderLabel(profile.gender)}
+              {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
+              {profile.providerKind !== 'agency' && genderLabel(profile.gender)
+                ? ` · ${genderLabel(profile.gender)}`
+                : ''}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-xl font-semibold text-white tracking-tight uppercase">
@@ -75,6 +79,10 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
             <div className="mt-1.5">
               <VerifiedBadge verified={profile.verified} />
             </div>
+            <p className="mt-1 text-xs text-zinc-400">
+              {providerKindLabel(profile.providerKind)}
+              {profile.providerKind === 'agency' ? ` · ${profile.city}` : ''}
+            </p>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
               <MapPin className="w-3.5 h-3.5 text-purple-300 shrink-0" />
               {profile.city}, {profile.country}

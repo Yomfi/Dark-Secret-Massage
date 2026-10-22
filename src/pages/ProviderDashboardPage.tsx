@@ -102,6 +102,26 @@ const ProviderDashboardInner: React.FC = () => {
         </div>
       )}
 
+      {data.profile && (
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-widest text-zinc-400">
+            <span>Profile completion</span>
+            <span className="text-purple-200">{data.profile.profileCompletion ?? 0}%</span>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full bg-purple-500"
+              style={{ width: `${data.profile.profileCompletion ?? 0}%` }}
+            />
+          </div>
+          <p className="mt-3 text-sm text-zinc-400">
+            {data.profile.providerType === 'agency' ? 'Agency' : 'Individual'}
+            {data.profile.businessName ? ` · ${data.profile.businessName}` : ''}
+            {data.profile.gender ? ` · ${data.profile.gender}` : ''}
+          </p>
+        </div>
+      )}
+
       <div className="mt-6 rounded-2xl border border-white/10 bg-[#0a0a10] p-5">
         <ProgressRow label="Account Created" done={p.accountCreated} />
         <ProgressRow label="Phone Verified" done={p.phoneVerified} />

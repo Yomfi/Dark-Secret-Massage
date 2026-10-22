@@ -116,39 +116,150 @@ function ds_json_decode_field($value, $fallback = [])
     return is_array($decoded) ? $decoded : $fallback;
 }
 
+/**
+ * Profile completeness 0–100 based on provider type requirements.
+ */
+function ds_provider_completion_percent(array $profile): int
+{
+    $type = (string) ($profile['provider_type'] ?? 'individual');
+    $checks = [];
+
+    if ($type === 'agency') {
+        $checks[] = trim((string) ($profile['business_name'] ?? $profile['display_name'] ?? '')) !== '';
+        $checks[] = trim((string) ($profile['contact_first_name'] ?? '')) !== ''
+            || trim((string) ($profile['display_name'] ?? '')) !== '';
+        $checks[] = trim((string) ($profile['city'] ?? '')) !== '';
+        $checks[] = trim((string) ($profile['primary_image'] ?? $profile['cover_image'] ?? '')) !== '';
+        $checks[] = trim((string) ($profile['about'] ?? '')) !== '';
+        $services = ds_json_decode_field($profile['services_json'] ?? null);
+        $checks[] = is_array($services) && count($services) > 0;
+        $checks[] = isset($profile['starting_price']) && $profile['starting_price'] !== null && $profile['starting_price'] !== '';
+    } else {
+        $checks[] = ($profile['provider_type'] ?? 'individual') === 'individual';
+        $checks[] = in_array(($profile['gender'] ?? ''), ['female', 'male'], true);
+        $checks[] = trim((string) ($profile['display_name'] ?? '')) !== '';
+        $checks[] = true; // phone lives on user; counted as present once registered
+        $checks[] = trim((string) ($profile['city'] ?? '')) !== '';
+        $checks[] = trim((string) ($profile['primary_image'] ?? '')) !== '';
+        $checks[] = trim((string) ($profile['about'] ?? '')) !== '';
+        $services = ds_json_decode_field($profile['services_json'] ?? null);
+        $checks[] = is_array($services) && count($services) > 0;
+        $rates = ds_json_decode_field($profile['rates_json'] ?? null);
+        $checks[] = (isset($profile['starting_price']) && $profile['starting_price'] !== null && $profile['starting_price'] !== '')
+            || (is_array($rates) && count($rates) > 0);
+    }
+
+    $done = 0;
+    foreach ($checks as $ok) {
+        if ($ok) {
+            $done++;
+        }
+    }
+    $total = count($checks);
+    return $total > 0 ? (int) round(($done / $total) * 100) : 0;
+}
+
+function ds_provider_profile_complete_enough(array $profile): bool
+{
+    return ds_provider_completion_percent($profile) >= 85;
+}
+
+function ds_agency_team_members(string $agencyProfileId, bool $activeOnly = true): array
+{
+    if (!ds_table_exists('agency_team_members')) {
+        return [];
+    }
+    $sql = 'SELECT * FROM agency_team_members WHERE agency_profile_id = ?';
+    if ($activeOnly) {
+        $sql .= " AND status = 'active'";
+    }
+    $sql .= ' ORDER BY sort_order ASC, created_at ASC';
+    $stmt = ds_pdo()->prepare($sql);
+    $stmt->execute([$agencyProfileId]);
+    $rows = $stmt->fetchAll() ?: [];
+    $out = [];
+    foreach ($rows as $row) {
+        $out[] = [
+            'id' => $row['id'],
+            'displayName' => $row['display_name'],
+            'gender' => $row['gender'],
+            'bio' => $row['bio'],
+            'profileImage' => $row['profile_image'],
+            'gallery' => ds_json_decode_field($row['gallery_json'] ?? null),
+            'services' => ds_json_decode_field($row['services_json'] ?? null),
+            'yearsExperience' => isset($row['years_experience']) ? (int) $row['years_experience'] : null,
+            'availability' => $row['availability'],
+            'pricing' => ds_json_decode_field($row['pricing_json'] ?? null),
+            'inheritAgencyRate' => !empty($row['inherit_agency_rate']),
+            'status' => $row['status'] ?? 'active',
+        ];
+    }
+    return $out;
+}
+
 function ds_provider_public_dto(?array $profile, ?array $verification, array $user): array
 {
     $status = (string) ($verification['verification_status'] ?? 'unverified');
     $verified = $status === 'verified';
 
+    $waNumber = trim((string) ($profile['whatsapp_number'] ?? ''));
+    if ($waNumber === '') {
+        $waNumber = (string) ($user['phone'] ?? '');
+    }
+
     $publicPhone = !empty($profile['public_phone']) && !empty($user['phone']);
-    $publicWa = !empty($profile['public_whatsapp']) && !empty($user['phone']);
+    $publicWa = !empty($profile['public_whatsapp']) && $waNumber !== '';
     $publicEmail = !empty($profile['public_email']);
 
-    return [
+    $providerType = (string) ($profile['provider_type'] ?? 'individual');
+    $displayName = $providerType === 'agency' && !empty($profile['business_name'])
+        ? (string) $profile['business_name']
+        : ($profile['display_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')));
+
+    $dto = [
         'id' => $profile['id'] ?? null,
         'slug' => $profile['slug'] ?? null,
-        'displayName' => $profile['display_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
+        'providerType' => $providerType,
+        'gender' => $profile['gender'] ?? null,
+        'businessName' => $profile['business_name'] ?? null,
+        'displayName' => $displayName,
         'city' => $profile['city'] ?? null,
         'region' => $profile['region'] ?? null,
         'country' => $profile['country'] ?? 'Ghana',
+        'areaNeighbourhood' => $profile['area_neighbourhood'] ?? null,
+        'serviceArea' => $profile['service_area'] ?? null,
         'about' => $profile['about'] ?? null,
         'services' => ds_json_decode_field($profile['services_json'] ?? null),
+        'rates' => ds_json_decode_field($profile['rates_json'] ?? null),
         'startingPrice' => isset($profile['starting_price']) ? (float) $profile['starting_price'] : null,
         'currency' => $profile['currency'] ?? 'GHS',
         'availability' => $profile['availability'] ?? null,
+        'workingDays' => $profile['working_days'] ?? null,
+        'workingHours' => $profile['working_hours'] ?? null,
+        'yearsExperience' => isset($profile['years_experience']) ? (int) $profile['years_experience'] : null,
         'serviceSetting' => ds_json_decode_field($profile['service_setting_json'] ?? null),
         'languages' => ds_json_decode_field($profile['languages_json'] ?? null),
         'primaryImage' => $profile['primary_image'] ?? null,
+        'coverImage' => $profile['cover_image'] ?? null,
         'gallery' => ds_json_decode_field($profile['gallery_json'] ?? null),
+        'age' => isset($profile['age']) ? (int) $profile['age'] : null,
+        'profileCompletion' => isset($profile['profile_completion'])
+            ? (int) $profile['profile_completion']
+            : ds_provider_completion_percent($profile ?? []),
         'publicContactEnabled' => $publicPhone || $publicWa || $publicEmail,
         'phone' => $publicPhone ? ($user['phone'] ?? null) : null,
-        'whatsapp' => $publicWa ? ($user['phone'] ?? null) : null,
+        'whatsapp' => $publicWa ? $waNumber : null,
         'contactEmail' => $publicEmail ? ($user['email'] ?? null) : null,
         'verified' => $verified,
         'verificationStatus' => $status,
-        // Never expose identity documents, admin notes, or ID numbers.
+        'teamMembers' => [],
     ];
+
+    if ($providerType === 'agency' && !empty($profile['id'])) {
+        $dto['teamMembers'] = ds_agency_team_members((string) $profile['id'], true);
+    }
+
+    return $dto;
 }
 
 function ds_provider_dashboard_dto(array $user, ?array $profile, array $verification): array
@@ -160,13 +271,19 @@ function ds_provider_dashboard_dto(array $user, ?array $profile, array $verifica
     $paymentOk = ($verification['payment_status'] ?? '') === 'paid';
     $status = (string) ($verification['verification_status'] ?? 'unverified');
 
+    $completion = $profile ? ds_provider_completion_percent($profile) : 0;
+
     return [
         'user' => ds_user_dto($user),
         'profile' => $profile ? [
             'id' => $profile['id'],
             'slug' => $profile['slug'],
             'displayName' => $profile['display_name'],
+            'providerType' => $profile['provider_type'] ?? 'individual',
+            'gender' => $profile['gender'] ?? null,
+            'businessName' => $profile['business_name'] ?? null,
             'completed' => $profileOk,
+            'profileCompletion' => $completion,
         ] : null,
         'verification' => [
             'status' => $status,
