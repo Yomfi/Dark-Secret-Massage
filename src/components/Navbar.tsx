@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 interface NavbarProps {
-  onOpenMatchmaking: () => void;
   onOpenBooking: () => void;
   onOpenDashboard: () => void;
   isAuthenticated?: boolean;
@@ -13,7 +12,6 @@ const linkClass =
   'text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300/90 hover:text-purple-300 transition-colors duration-200 whitespace-nowrap cursor-pointer';
 
 export const Navbar: React.FC<NavbarProps> = ({
-  onOpenMatchmaking,
   onOpenBooking,
   onOpenDashboard,
   isAuthenticated = false,
@@ -33,6 +31,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     navigate('/explore/accra');
   };
 
+  const goCreateProfile = () => {
+    setMobileMenuOpen(false);
+    navigate('/provider/register');
+  };
+
   const shellClass = [
     'relative w-[90%] max-w-5xl mx-auto rounded-full border backdrop-blur-xl transition-all duration-300',
     isScrolled
@@ -43,7 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-3 sm:pt-4 pointer-events-none">
       <div className={`${shellClass} pointer-events-auto`}>
-        {/* Desktop / large tablet+: true 3-zone bar */}
         <div className="hidden xl:grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-5 py-2.5 min-h-[52px]">
           <nav className="flex items-center justify-start gap-3.5 min-w-0">
             <Link to="/" className={linkClass}>
@@ -55,9 +57,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link to="/massage" className={linkClass}>
               Massage
             </Link>
-            <button type="button" onClick={onOpenMatchmaking} className={linkClass}>
-              Matchmaking
-            </button>
             <a href="/#safety" className={linkClass}>
               Safety
             </a>
@@ -74,7 +73,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </Link>
 
-          <div className="flex items-center justify-end gap-2.5 min-w-0">
+          <div className="flex items-center justify-end gap-2 min-w-0">
+            <Link
+              to="/provider/register"
+              className="inline-flex items-center px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-purple-300 transition-colors duration-200 whitespace-nowrap"
+            >
+              Create Profile
+            </Link>
             <button
               type="button"
               onClick={onOpenDashboard}
@@ -93,7 +98,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Mobile / tablet: logo centered, controls on sides */}
         <div className="xl:hidden relative flex items-center justify-between gap-2 px-3 sm:px-4 py-2 min-h-[48px]">
           <button
             type="button"
@@ -155,16 +159,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Massage
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenMatchmaking();
-              }}
-              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
-            >
-              Matchmaking
-            </button>
             <a
               href="/#safety"
               onClick={() => setMobileMenuOpen(false)}
@@ -172,6 +166,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Safety
             </a>
+            <button
+              type="button"
+              onClick={goCreateProfile}
+              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
+            >
+              Create Profile
+            </button>
           </nav>
           <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2.5">
             <button

@@ -6,7 +6,7 @@ export const SafetyTrust: React.FC = () => {
     {
       icon: UserCheck,
       title: 'Verified Profiles',
-      description: 'Verification helps create a more trusted matchmaking community.',
+      description: 'Verification helps create a more trusted massage marketplace.',
       tag: 'Verification available',
     },
     {

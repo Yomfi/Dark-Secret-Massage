@@ -363,7 +363,6 @@ export const MarketplaceProfilePage: React.FC = () => {
 
   const navProps = {
     onOpenBooking: () => navigate('/book-massage'),
-    onOpenMatchmaking: () => navigate('/find-a-life-partner'),
     onOpenDashboard: () =>
       navigate(isAuthenticated ? '/dashboard' : '/login?redirect=/dashboard'),
     isAuthenticated,
@@ -568,21 +567,6 @@ export const MarketplaceProfilePage: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
-
-          {!isProvider && (
-            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-1">
-                Connection preferences
-              </h2>
-              <dl>
-                <DetailRow label="Looking for" value={profile.lookingFor} />
-                <DetailRow label="Relationship intention" value={profile.relationshipIntention} />
-                <DetailRow label="Preferred connection" value={profile.preferredConnection} />
-                <DetailRow label="Social preference" value={profile.socialPreference} />
-                <DetailRow label="Interests" value={profile.interests?.join(', ')} />
-              </dl>
             </section>
           )}
 

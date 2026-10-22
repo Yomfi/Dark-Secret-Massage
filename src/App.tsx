@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
+import { SafetyTrust } from './components/SafetyTrust';
 import { Footer } from './components/Footer';
 import { ClientDashboard } from './components/ClientDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { MassageBookingPage } from './pages/MassageBookingPage';
 import { MassagePage } from './pages/MassagePage';
-import { MatchDiscoveryPage } from './pages/MatchDiscoveryPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -18,8 +18,7 @@ import { ProviderRegisterPage } from './pages/ProviderRegisterPage';
 import { ProviderDashboardPage } from './pages/ProviderDashboardPage';
 import { AdminProviderReviewsPage } from './pages/AdminProviderReviewsPage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
-import { MatchmakingProfile, BookingRequest } from './lib/bookingAndMatchmaking';
-import { MATCHMAKING_PROFILES } from './data/mockData';
+import { BookingRequest } from './lib/bookingAndMatchmaking';
 import type { MassageBookingRecord } from './lib/massageBooking';
 
 export type StoredBooking = BookingRequest & {
@@ -29,8 +28,6 @@ export type StoredBooking = BookingRequest & {
   reference?: string;
   clientEmail?: string;
 };
-
-const FIND_PARTNER_PATH = '/find-a-life-partner';
 
 function HomePage({
   onOpenDashboard,
@@ -42,16 +39,17 @@ function HomePage({
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
+  useEffect(() => {
+    document.title = 'Dark Secret — Massage Services Near You';
+  }, []);
+
   const goBook = (serviceId?: string) => {
     navigate(bookMassagePath(serviceId));
   };
 
-  const goMatchmaking = () => navigate(FIND_PARTNER_PATH);
-
   return (
     <div className="relative min-h-screen flex flex-col">
       <Navbar
-        onOpenMatchmaking={goMatchmaking}
         onOpenBooking={() => goBook()}
         onOpenDashboard={onOpenDashboard}
         isAuthenticated={isAuthenticated}
@@ -59,13 +57,10 @@ function HomePage({
 
       <main className="flex-1 flex flex-col">
         <Hero />
+        <SafetyTrust />
       </main>
 
-      <Footer
-        onOpenMatchmaking={goMatchmaking}
-        onOpenBooking={() => goBook()}
-        onOpenDashboard={onOpenDashboard}
-      />
+      <Footer onOpenBooking={() => goBook()} onOpenDashboard={onOpenDashboard} />
     </div>
   );
 }
@@ -87,17 +82,6 @@ function AppRoutes() {
       clientPhone: '+233 24 555 0192',
       totalGHS: 975,
       status: 'confirmed',
-    },
-  ]);
-
-  const [userIntroductions] = useState<
-    Array<{ profile: MatchmakingProfile; note: string; status: string; date: string }>
-  >([
-    {
-      profile: MATCHMAKING_PROFILES[0],
-      note: 'Looking forward to meeting an authentic professional committed to enduring family values.',
-      status: 'Under Concierge Review',
-      date: 'Oct 17, 2026',
     },
   ]);
 
@@ -141,15 +125,9 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route
-        path={FIND_PARTNER_PATH}
-        element={
-          <ProtectedRoute>
-            <MatchDiscoveryPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/matchmaking" element={<Navigate to={FIND_PARTNER_PATH} replace />} />
+      {/* Matchmaking retired from public experience — source preserved in src/_archived/matchmaking */}
+      <Route path="/find-a-life-partner" element={<Navigate to="/explore" replace />} />
+      <Route path="/matchmaking" element={<Navigate to="/explore" replace />} />
       <Route
         path="/book-massage"
         element={
@@ -184,10 +162,8 @@ function AppRoutes() {
           <ProtectedRoute>
             <ClientDashboard
               onBackToHome={() => navigate('/')}
-              onOpenMatchmaking={() => navigate(FIND_PARTNER_PATH)}
               onOpenBooking={() => navigate('/book-massage')}
               userBookings={userBookings}
-              userIntroductions={userIntroductions}
             />
           </ProtectedRoute>
         }

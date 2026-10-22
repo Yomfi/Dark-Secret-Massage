@@ -206,16 +206,16 @@ export const HOW_IT_WORKS_STEPS = [
   {
     number: '01',
     title: 'Private Verification & Onboarding',
-    description: 'Every applicant undergoes confidential government ID verification, professional background screening, and a private intake consultation to protect client privacy and community safety.',
+    description: 'Providers undergo confidential identity checks and profile review before appearing publicly, protecting client privacy and marketplace safety.',
   },
   {
     number: '02',
-    title: 'Choose Your Intentional Pathway',
-    description: 'Select your independent service: curated matrimonial introductions based on faith, values and life goals; or therapeutic wellness massage with certified, licensed therapists.',
+    title: 'Browse Massage Professionals',
+    description: 'Search by city for therapeutic wellness massage with certified, licensed therapists — in studio or at home.',
   },
   {
     number: '03',
-    title: 'Experience Discretion & Excellence',
-    description: 'Enjoy confidential bespoke introductions in private settings, or reserve tranquil in-home and sanctuary wellness sessions with full safety assurances and zero public exposure.',
+    title: 'Book with Discretion & Care',
+    description: 'Reserve tranquil in-home and sanctuary wellness sessions with full safety assurances and private booking details.',
   },
 ];

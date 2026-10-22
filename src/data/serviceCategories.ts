@@ -3,7 +3,9 @@ export type ServiceCategoryId =
   | 'spa'
   | 'home-massage'
   | 'couples-massage'
+  /** @deprecated Hidden from public explore — preserved for archived data compatibility */
   | 'matchmaking'
+  /** @deprecated Hidden from public explore — preserved for archived data compatibility */
   | 'friendship';
 
 export type ServiceCategory = {
@@ -14,6 +16,7 @@ export type ServiceCategory = {
   subcategories: string[];
 };
 
+/** Public massage/wellness categories only (matchmaking removed from live explore). */
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
   {
     id: 'massage',
@@ -48,20 +51,6 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     label: 'Couples Massage',
     description: 'Shared wellness sessions for two.',
     subcategories: ['Couples Massage'],
-  },
-  {
-    id: 'matchmaking',
-    slug: 'matchmaking',
-    label: 'Matchmaking / Marriage',
-    description: 'Marriage-focused and serious relationship introductions.',
-    subcategories: ['Marriage-focused', 'Serious Relationship'],
-  },
-  {
-    id: 'friendship',
-    slug: 'friendship',
-    label: 'Friendship / Social Connection',
-    description: 'Genuine friendship and social connection.',
-    subcategories: ['Friendship', 'Social Connection'],
   },
 ];
 

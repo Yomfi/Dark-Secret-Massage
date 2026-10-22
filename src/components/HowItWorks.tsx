@@ -4,18 +4,18 @@ export const HowItWorks: React.FC = () => {
   const steps = [
     {
       number: '01',
-      title: 'CREATE YOUR PROFILE',
-      description: 'Tell us who you are and what you are looking for.',
+      title: 'SEARCH YOUR CITY',
+      description: 'Browse professional massage and wellness providers near you.',
     },
     {
       number: '02',
-      title: 'CHOOSE YOUR PATH',
-      description: 'Explore marriage-focused matchmaking or professional massage services.',
+      title: 'CHOOSE A PROVIDER',
+      description: 'Review services, availability, and verified profiles.',
     },
     {
       number: '03',
-      title: 'CONNECT OR BOOK',
-      description: 'Connect privately or reserve a trusted massage service.',
+      title: 'BOOK A SESSION',
+      description: 'Reserve a trusted massage appointment in studio or at home.',
     },
   ];
 

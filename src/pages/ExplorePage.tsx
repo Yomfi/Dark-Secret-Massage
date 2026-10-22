@@ -33,7 +33,7 @@ export const ExplorePage: React.FC = () => {
     const cityName = city?.name || citySlug;
     const title = serviceMeta
       ? `${serviceMeta.label} in ${cityName} | Dark Secret`
-      : `Available Services in ${cityName} | Dark Secret`;
+      : `Massage Professionals in ${cityName} | Dark Secret`;
     document.title = title;
   }, [city, citySlug, serviceMeta]);
 
@@ -54,7 +54,6 @@ export const ExplorePage: React.FC = () => {
 
       <Navbar
         onOpenBooking={() => navigate('/book-massage')}
-        onOpenMatchmaking={() => navigate('/find-a-life-partner')}
         onOpenDashboard={() =>
           navigate(isAuthenticated ? '/dashboard' : '/login?redirect=/dashboard')
         }
@@ -75,7 +74,7 @@ export const ExplorePage: React.FC = () => {
             Available in {city?.name || citySlug}
           </h1>
           <p className="mt-2 text-sm sm:text-base text-zinc-400 max-w-2xl">
-            Discover massage, wellness and meaningful connections near you.
+            Discover professional massage and wellness services near you.
           </p>
           <p className="mt-3 text-xs text-zinc-500">
             {results.length} {results.length === 1 ? 'result' : 'results'}

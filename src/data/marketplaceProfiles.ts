@@ -66,10 +66,16 @@ export type MarketplaceProfile = {
 export const PROFILE_TYPE_LABELS: Record<MarketplaceProfileType, string> = {
   massage_provider: 'Massage',
   wellness_provider: 'Wellness',
-  matchmaking_profile: 'Matchmaking',
-  social_profile: 'Friendship',
-  dating_profile: 'Dating / Connection',
+  matchmaking_profile: 'Massage', // archived type — not shown publicly
+  social_profile: 'Massage',
+  dating_profile: 'Massage',
 };
+
+const PUBLIC_PROFILE_TYPES: MarketplaceProfileType[] = ['massage_provider', 'wellness_provider'];
+
+export function isPublicMassageProfile(profile: MarketplaceProfile): boolean {
+  return PUBLIC_PROFILE_TYPES.includes(profile.profileType);
+}
 
 export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
   {
@@ -470,11 +476,15 @@ export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
 ];
 
 export function findMarketplaceProfile(slug: string): MarketplaceProfile | undefined {
-  return MARKETPLACE_PROFILES.find((p) => p.slug === slug);
+  const profile = MARKETPLACE_PROFILES.find((p) => p.slug === slug);
+  if (!profile || !isPublicMassageProfile(profile)) return undefined;
+  return profile;
 }
 
 export function profilesForCity(citySlug: string): MarketplaceProfile[] {
-  return MARKETPLACE_PROFILES.filter((p) => p.citySlug === citySlug.toLowerCase());
+  return MARKETPLACE_PROFILES.filter(
+    (p) => p.citySlug === citySlug.toLowerCase() && isPublicMassageProfile(p),
+  );
 }
 
 /** Preserve explore filter context for previous/next browsing when provided. */
@@ -483,7 +493,9 @@ export function siblingProfiles(
   citySlug: string,
   filterService?: string | null,
 ): MarketplaceProfile[] {
-  let list = MARKETPLACE_PROFILES.filter((p) => p.citySlug === citySlug);
+  let list = MARKETPLACE_PROFILES.filter(
+    (p) => p.citySlug === citySlug && isPublicMassageProfile(p),
+  );
   if (filterService) {
     list = list.filter((p) => p.primaryCategory === filterService);
   }

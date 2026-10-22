@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
-  Heart,
   Calendar,
   MessageSquare,
   Lock,
@@ -17,42 +16,30 @@ import {
   Bell,
   Settings,
 } from 'lucide-react';
-import { MatchmakingProfile, BookingRequest } from '../lib/bookingAndMatchmaking';
-import { MATCHMAKING_PROFILES, CERTIFIED_THERAPISTS } from '../data/mockData';
-import { VisualMedia } from './VisualMedia';
+import { BookingRequest } from '../lib/bookingAndMatchmaking';
 
 interface ClientDashboardProps {
   onBackToHome: () => void;
-  onOpenMatchmaking: () => void;
   onOpenBooking: () => void;
   userBookings: Array<
     BookingRequest & { totalGHS: number; id: string; status?: string; reference?: string }
   >;
-  userIntroductions: Array<{ profile: MatchmakingProfile; note: string; status: string; date: string }>;
 }
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   onBackToHome,
-  onOpenMatchmaking,
   onOpenBooking,
   userBookings,
-  userIntroductions,
 }) => {
   const [searchParams] = useSearchParams();
   const initialTab =
-    searchParams.get('tab') === 'massage'
-      ? 'massage'
-      : ('matchmaking' as 'matchmaking' | 'massage' | 'messages' | 'privacy');
-  const [activeTab, setActiveTab] = useState<'matchmaking' | 'massage' | 'messages' | 'privacy'>(
-    initialTab
-  );
+    searchParams.get('tab') === 'messages'
+      ? 'messages'
+      : searchParams.get('tab') === 'privacy'
+        ? 'privacy'
+        : 'massage';
+  const [activeTab, setActiveTab] = useState<'massage' | 'messages' | 'privacy'>(initialTab);
   const [messages, setMessages] = useState<Array<{ sender: string; text: string; time: string; isUser: boolean }>>([
-    {
-      sender: 'Relationship Concierge',
-      text: 'Good afternoon, Mr. Mensah. Your credentials have been authenticated. We are currently curating an introduction with a senior counsel based in Airport Residential who shares your Methodist faith and family vision.',
-      time: '10:14 AM',
-      isUser: false,
-    },
     {
       sender: 'Wellness Director',
       text: 'Your upcoming Deep Tissue Recovery session with Akua Darko, RMT is confirmed. Our therapist will arrive equipped with organic Ghanaian shea infusions and sterile clinical linens.',
@@ -137,18 +124,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* Navigation Tabs */}
         <div className="flex overflow-x-auto space-x-2 border-b border-white/[0.08] pb-4 mb-8">
           <button
-            onClick={() => setActiveTab('matchmaking')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'matchmaking'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-950/50'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Heart className="w-4 h-4" />
-            <span>Matrimonial Introductions ({userIntroductions.length})</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('massage')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'massage'
@@ -185,105 +160,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </button>
         </div>
 
-        {/* Tab 1: Matchmaking Introductions */}
-        {activeTab === 'matchmaking' && (
-          <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white">
-                  Your Matrimonial Introductions
-                </h2>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                  Private introductions are arranged only upon mutual consent and identity vetting.
-                </p>
-              </div>
-              <button
-                onClick={onOpenMatchmaking}
-                className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white bg-purple-600 hover:bg-purple-500 rounded-full transition-all cursor-pointer self-start sm:self-auto"
-              >
-                + Browse Verified Candidates
-              </button>
-            </div>
-
-            {/* List of active introduction requests */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userIntroductions.map((intro, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <VisualMedia
-                        type={`avatar-${intro.profile.avatarSeed}` as any}
-                        className="w-12 h-12"
-                        alt={intro.profile.fullName}
-                      />
-                      <div>
-                        <div className="text-base font-bold text-white">
-                          {intro.profile.fullName} ({intro.profile.age})
-                        </div>
-                        <div className="text-xs text-zinc-400">{intro.profile.profession}</div>
-                      </div>
-                    </div>
-                    <span className="text-[11px] font-medium text-amber-400 bg-amber-950/40 border border-amber-500/20 px-2.5 py-1 rounded-full">
-                      {intro.status}
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-zinc-300 bg-black/40 p-3.5 rounded-xl border border-white/5">
-                    <span className="text-zinc-500 block mb-1">Your confidential note:</span>
-                    "{intro.note}"
-                  </div>
-
-                  <div className="pt-2 flex items-center justify-between text-xs text-zinc-500">
-                    <span>Dispatched on {intro.date}</span>
-                    <span className="text-purple-400 font-medium">Liaison Reviewing</span>
-                  </div>
-                </div>
-              ))}
-
-              {/* Sample pre-existing curated match */}
-              <div className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <VisualMedia
-                      type="avatar-ama"
-                      className="w-12 h-12"
-                      alt="Ama Serwaa Mensah"
-                    />
-                    <div>
-                      <div className="text-base font-bold text-white">
-                        Ama Serwaa Mensah (29)
-                      </div>
-                      <div className="text-xs text-zinc-400">Senior Corporate Counsel · Accra</div>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-                    Mutual Match Accepted
-                  </span>
-                </div>
-
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  Both parties have approved private dining coordination. Your concierge has reserved a quiet
-                  table at Villa Monticello, Airport Residential for Saturday at 7:30 PM.
-                </p>
-
-                <div className="pt-2 flex items-center justify-between text-xs">
-                  <span className="text-zinc-400">Curated Date: This Saturday</span>
-                  <button
-                    onClick={() => setActiveTab('messages')}
-                    className="text-purple-400 hover:text-purple-300 font-medium uppercase tracking-wider text-[11px]"
-                  >
-                    View Concierge Plan →
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Massage Bookings */}
         {activeTab === 'massage' && (
           <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -454,7 +330,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             >
               <input
                 type="text"
-                placeholder="Message your relationship liaison or wellness director..."
+                placeholder="Message your wellness director..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/10 rounded-full text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
@@ -484,7 +360,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   <div>
                     <div className="text-sm font-semibold text-white">Discreet Anonymous Mode</div>
                     <div className="text-xs text-zinc-400">
-                      Hides career specific names from potential matches until mutual introduction approval.
+                      Keeps booking details private and limits what appears on shared statements.
                     </div>
                   </div>
                   <button

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { HeartHandshake, Sparkles, Briefcase } from 'lucide-react';
+import { Sparkles, UserRound } from 'lucide-react';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import type { OnboardingChoice } from '../lib/api';
 
@@ -12,25 +12,18 @@ const OPTIONS: {
   to: string;
 }[] = [
   {
-    choice: 'find_partner',
-    title: 'Find a Life Partner',
-    detail: 'Explore verified, marriage-focused introductions.',
-    icon: HeartHandshake,
-    to: '/find-a-life-partner',
-  },
-  {
     choice: 'book_massage',
     title: 'Book a Massage',
-    detail: 'Browse therapies and reserve a professional session.',
+    detail: 'Browse massage professionals and services near you.',
     icon: Sparkles,
-    to: '/massage',
+    to: '/explore/accra',
   },
   {
     choice: 'become_provider',
-    title: 'Become a Massage Provider',
-    detail: 'Express interest in joining as a reviewed provider.',
-    icon: Briefcase,
-    to: '/massage',
+    title: 'Create Your Profile',
+    detail: 'Offer massage services and build your public profile.',
+    icon: UserRound,
+    to: '/provider/register',
   },
 ];
 
@@ -80,7 +73,7 @@ export const OnboardingPage: React.FC = () => {
           What would you like to do?
         </h1>
         <p className="mt-3 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
-          You can use more than one service later. Choose where to begin.
+          Choose how you would like to get started.
         </p>
 
         {error && (
@@ -103,7 +96,9 @@ export const OnboardingPage: React.FC = () => {
                   <Icon className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-semibold text-white">{title}</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold text-white uppercase tracking-wide">
+                    {title}
+                  </h2>
                   <p className="mt-1 text-base text-zinc-400 font-normal">{detail}</p>
                   {loadingChoice === choice && (
                     <p className="mt-2 text-sm text-purple-300">Saving preference…</p>

@@ -6,8 +6,8 @@ export const VisualGallery: React.FC = () => {
     {
       id: 1,
       type: 'gallery-dinner' as const,
-      category: 'PRIVATE CONNECTIONS',
-      title: 'Meaningful Introductions',
+      category: 'IN-STUDIO CARE',
+      title: 'Professional Treatment Rooms',
     },
     {
       id: 2,
@@ -33,7 +33,7 @@ export const VisualGallery: React.FC = () => {
           Curated spaces. Undisturbed peace.
         </h2>
         <p className="mt-4 text-lg sm:text-xl text-zinc-300 font-normal leading-relaxed">
-          Calm, discreet environments selected for intentional connection and restorative recovery.
+          Calm, discreet environments selected for restorative massage and wellness.
         </p>
       </div>
 

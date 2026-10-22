@@ -5,8 +5,6 @@ import { motion } from 'motion/react';
 import { CitySearch } from './marketplace/CitySearch';
 
 interface HeroProps {
-  onOpenMatchmaking?: () => void;
-  onOpenBooking?: () => void;
   verifiedCount?: string;
 }
 
@@ -46,10 +44,10 @@ export const Hero: React.FC<HeroProps> = ({
           transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl font-bold tracking-tight text-white leading-[1.07] mb-6 font-sans drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
         >
-          Find the right service,
+          Find professional massage
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
-            connection or experience
+            and wellness
           </span>
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
@@ -63,7 +61,7 @@ export const Hero: React.FC<HeroProps> = ({
           transition={{ duration: 0.7, delay: 0.5 }}
           className="text-base sm:text-lg md:text-xl text-zinc-300/90 max-w-2xl mx-auto leading-relaxed font-normal mb-8 sm:mb-10 text-balance drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
         >
-          Search by city for massage, wellness and meaningful connections — browse freely, register when you are ready.
+          Search by city for professional massage and wellness services — browse freely, create a profile when you are ready.
         </motion.p>
 
         <motion.div
@@ -157,7 +155,7 @@ export const Hero: React.FC<HeroProps> = ({
         </div>
 
         <p className="text-[11px] sm:text-xs text-zinc-400 max-w-lg leading-relaxed font-light">
-          Building meaningful connections and accessing trusted wellness services across Accra, Kumasi & diaspora.
+          Discover trusted massage and wellness professionals across Accra, Tema, Kumasi and beyond.
         </p>
       </motion.div>
     </section>
