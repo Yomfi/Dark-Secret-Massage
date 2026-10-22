@@ -55,7 +55,7 @@ export const Footer: React.FC<FooterProps> = ({
             </li>
             <li>
               <Link to="/provider/register" className="hover:text-white transition-colors">
-                Create Your Profile
+                Become a Massage Provider
               </Link>
             </li>
           </ul>

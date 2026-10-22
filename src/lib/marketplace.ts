@@ -1,10 +1,14 @@
 import type { MarketplaceAvailability, MarketplaceProfile } from '../data/marketplaceProfiles';
-import type { ServiceCategoryId } from '../data/serviceCategories';
+import { profileOffersService } from '../data/serviceCategories';
 
 export type MarketplaceSort = 'recommended' | 'recent' | 'price_asc' | 'price_desc';
 
+export type MarketplaceGenderFilter = 'all' | 'women' | 'men';
+
 export type MarketplaceFilters = {
-  service?: ServiceCategoryId | string | null;
+  /** Specific massage service label (e.g. Swedish Massage) */
+  service?: string | null;
+  gender?: MarketplaceGenderFilter | null;
   minPrice?: number | null;
   maxPrice?: number | null;
   availability?: MarketplaceAvailability | 'any' | null;
@@ -27,6 +31,10 @@ export function availabilityLabel(value: MarketplaceAvailability): string {
   }
 }
 
+export function genderLabel(gender: MarketplaceProfile['gender']): string {
+  return gender === 'men' ? 'Men' : 'Women';
+}
+
 export function serviceSettingLabel(settings: MarketplaceProfile['serviceSetting']): string {
   const map = { studio: 'Studio', in_home: 'In-home', flexible: 'Flexible' } as const;
   return settings.map((s) => map[s]).join(' · ');
@@ -46,9 +54,13 @@ export function filterAndSortProfiles(
 ): MarketplaceProfile[] {
   let result = [...profiles];
 
+  if (filters.gender && filters.gender !== 'all') {
+    result = result.filter((p) => p.gender === filters.gender);
+  }
+
   if (filters.service) {
-    const key = filters.service.toLowerCase();
-    result = result.filter((p) => p.primaryCategory === key);
+    const selected = filters.service;
+    result = result.filter((p) => profileOffersService(p.services, p.serviceOfferings, selected));
   }
 
   if (filters.minPrice != null && !Number.isNaN(filters.minPrice)) {
@@ -84,8 +96,13 @@ export function filterAndSortProfiles(
 export function parseExploreSearchParams(params: URLSearchParams): MarketplaceFilters {
   const min = params.get('min');
   const max = params.get('max');
+  const genderRaw = params.get('gender');
+  const gender: MarketplaceGenderFilter | null =
+    genderRaw === 'women' || genderRaw === 'men' || genderRaw === 'all' ? genderRaw : null;
+
   return {
     service: params.get('service'),
+    gender,
     minPrice: min ? Number(min) : null,
     maxPrice: max ? Number(max) : null,
     availability: (params.get('availability') as MarketplaceAvailability | 'any' | null) || null,
@@ -96,6 +113,7 @@ export function parseExploreSearchParams(params: URLSearchParams): MarketplaceFi
 export function buildExploreSearchParams(filters: MarketplaceFilters): URLSearchParams {
   const p = new URLSearchParams();
   if (filters.service) p.set('service', String(filters.service));
+  if (filters.gender && filters.gender !== 'all') p.set('gender', filters.gender);
   if (filters.minPrice != null && !Number.isNaN(filters.minPrice)) p.set('min', String(filters.minPrice));
   if (filters.maxPrice != null && !Number.isNaN(filters.maxPrice)) p.set('max', String(filters.maxPrice));
   if (filters.availability && filters.availability !== 'any') p.set('availability', filters.availability);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { VisualMedia } from './VisualMedia';
 import { ShieldCheck, Sparkles, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -22,7 +23,7 @@ export const Hero: React.FC<HeroProps> = ({
         <VisualMedia
           type="hero-cinematic"
           className="w-full h-full"
-          alt="Cinematic portrait of an elegant Ghanaian couple in warm low-key lounge ambiance"
+          alt="Warm ambient lounge atmosphere for discovering massage professionals near you"
         />
       </motion.div>
 
@@ -44,11 +45,7 @@ export const Hero: React.FC<HeroProps> = ({
           transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl font-bold tracking-tight text-white leading-[1.07] mb-6 font-sans drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
         >
-          Find professional massage
-          <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
-            and wellness
-          </span>
+          Find a masseuse
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
             in your city.
@@ -61,22 +58,39 @@ export const Hero: React.FC<HeroProps> = ({
           transition={{ duration: 0.7, delay: 0.5 }}
           className="text-base sm:text-lg md:text-xl text-zinc-300/90 max-w-2xl mx-auto leading-relaxed font-normal mb-8 sm:mb-10 text-balance drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
         >
-          Search by city for professional massage and wellness services — browse freely, create a profile when you are ready.
+          Search by location and discover massage professionals available near you.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-30 w-full max-w-xl mx-auto mb-7 sm:mb-8"
+          className="relative z-30 w-full max-w-xl mx-auto mb-6 sm:mb-7"
         >
           <CitySearch variant="hero" />
         </motion.div>
 
         <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.75 }}
+          className="relative z-20 mb-7 sm:mb-8 flex flex-col items-center gap-2.5"
+        >
+          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.28em] text-zinc-300 drop-shadow-md">
+            Are you a massage provider?
+          </p>
+          <Link
+            to="/provider/register"
+            className="inline-flex items-center justify-center min-h-[44px] px-6 rounded-full border border-white/20 bg-white/[0.06] hover:bg-white/[0.1] hover:border-purple-400/40 text-white text-xs font-semibold uppercase tracking-[0.18em] transition-colors"
+          >
+            Create Your Profile
+          </Link>
+        </motion.div>
+
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.8 }}
+          transition={{ duration: 0.7, delay: 0.85 }}
           className="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-7 text-[11px] sm:text-xs uppercase tracking-[0.22em] text-zinc-300 font-medium drop-shadow-md"
         >
           <div className="inline-flex items-center gap-2">

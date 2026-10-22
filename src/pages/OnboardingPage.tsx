@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Sparkles, UserRound } from 'lucide-react';
+import { Search, UserRound } from 'lucide-react';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import type { OnboardingChoice } from '../lib/api';
 
@@ -13,15 +13,15 @@ const OPTIONS: {
 }[] = [
   {
     choice: 'book_massage',
-    title: 'Book a Massage',
-    detail: 'Browse massage professionals and services near you.',
-    icon: Sparkles,
-    to: '/explore/accra',
+    title: 'Search for a Masseuse',
+    detail: 'Find massage professionals available near you.',
+    icon: Search,
+    to: '/explore',
   },
   {
     choice: 'become_provider',
-    title: 'Create Your Profile',
-    detail: 'Offer massage services and build your public profile.',
+    title: 'Become a Massage Provider',
+    detail: 'Create a public profile and offer your massage services.',
     icon: UserRound,
     to: '/provider/register',
   },
@@ -73,7 +73,7 @@ export const OnboardingPage: React.FC = () => {
           What would you like to do?
         </h1>
         <p className="mt-3 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
-          Choose how you would like to get started.
+          Choose how you would like to continue.
         </p>
 
         {error && (

@@ -1,8 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { SERVICE_CATEGORIES } from '../../data/serviceCategories';
+import { MASSAGE_SERVICE_OPTIONS } from '../../data/serviceCategories';
 import type { MarketplaceAvailability } from '../../data/marketplaceProfiles';
-import type { MarketplaceFilters, MarketplaceSort } from '../../lib/marketplace';
+import type {
+  MarketplaceFilters,
+  MarketplaceGenderFilter,
+  MarketplaceSort,
+} from '../../lib/marketplace';
 import { CitySearch, type CitySearchHandle } from './CitySearch';
 
 type Props = {
@@ -11,6 +15,12 @@ type Props = {
   onChange: (next: MarketplaceFilters) => void;
   onCityChange: (slug: string) => void;
 };
+
+const GENDERS: { value: MarketplaceGenderFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'women', label: 'Women' },
+  { value: 'men', label: 'Men' },
+];
 
 const AVAILABILITY: { value: MarketplaceAvailability | 'any'; label: string }[] = [
   { value: 'any', label: 'Any' },
@@ -46,7 +56,7 @@ function FilterFields({
       className={
         isSheet
           ? 'flex flex-col gap-3'
-          : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3 items-end'
+          : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-8 gap-3 items-end'
       }
     >
       <div className={`min-w-0 ${isSheet ? '' : 'col-span-2 lg:col-span-1 xl:col-span-1'}`}>
@@ -61,6 +71,26 @@ function FilterFields({
       </div>
 
       <div className="min-w-0">
+        <label className={labelClass}>Gender</label>
+        <select
+          value={filters.gender || 'all'}
+          onChange={(e) =>
+            onChange({
+              ...filters,
+              gender: e.target.value as MarketplaceGenderFilter,
+            })
+          }
+          className={fieldClass}
+        >
+          {GENDERS.map((g) => (
+            <option key={g.value} value={g.value}>
+              {g.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="min-w-0">
         <label className={labelClass}>Service</label>
         <select
           value={filters.service || ''}
@@ -68,9 +98,9 @@ function FilterFields({
           className={fieldClass}
         >
           <option value="">All services</option>
-          {SERVICE_CATEGORIES.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
+          {MASSAGE_SERVICE_OPTIONS.map((label) => (
+            <option key={label} value={label}>
+              {label}
             </option>
           ))}
         </select>

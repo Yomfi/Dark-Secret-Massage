@@ -51,7 +51,7 @@ const ProviderDashboardInner: React.FC = () => {
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <p className="text-zinc-300">{error}</p>
         <Link to="/provider/register" className="mt-4 inline-block text-purple-300 text-sm uppercase tracking-widest">
-          Create Your Profile →
+          Become a Massage Provider →
         </Link>
       </div>
     );

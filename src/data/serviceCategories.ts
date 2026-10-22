@@ -16,7 +16,21 @@ export type ServiceCategory = {
   subcategories: string[];
 };
 
-/** Public massage/wellness categories only (matchmaking removed from live explore). */
+/** Flat massage service options shown in Explore filters. */
+export const MASSAGE_SERVICE_OPTIONS = [
+  'Swedish Massage',
+  'Deep Tissue Massage',
+  'Relaxation Massage',
+  'Aromatherapy',
+  'Sports Massage',
+  'Home Massage',
+  'Couples Massage',
+  'Spa Session',
+] as const;
+
+export type MassageServiceOption = (typeof MASSAGE_SERVICE_OPTIONS)[number];
+
+/** Public massage/wellness categories (legacy grouping for profile primaryCategory). */
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
   {
     id: 'massage',
@@ -43,7 +57,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     slug: 'home-massage',
     label: 'Home Massage',
     description: 'In-home professional massage sessions.',
-    subcategories: ['In-home Massage'],
+    subcategories: ['In-home Massage', 'Home Massage'],
   },
   {
     id: 'couples-massage',
@@ -58,4 +72,27 @@ export function findServiceCategory(slugOrId: string | null | undefined): Servic
   if (!slugOrId) return undefined;
   const key = slugOrId.toLowerCase();
   return SERVICE_CATEGORIES.find((c) => c.id === key || c.slug === key);
+}
+
+/** Match a profile against a selected Explore service label. */
+export function profileOffersService(
+  services: string[],
+  offerings: { name: string }[] | undefined,
+  selected: string,
+): boolean {
+  const needle = selected.toLowerCase();
+  const haystack = [
+    ...services,
+    ...(offerings?.map((o) => o.name) ?? []),
+  ].map((s) => s.toLowerCase());
+
+  return haystack.some(
+    (s) =>
+      s === needle ||
+      s.includes(needle) ||
+      needle.includes(s) ||
+      (needle.includes('home') && s.includes('home')) ||
+      (needle.includes('spa') && s.includes('spa')) ||
+      (needle.includes('aromatherapy') && s.includes('aroma')),
+  );
 }

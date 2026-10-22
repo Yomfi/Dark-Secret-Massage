@@ -2,8 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone } from 'lucide-react';
 import { motion } from 'motion/react';
-import { PROFILE_TYPE_LABELS, type MarketplaceProfile } from '../../data/marketplaceProfiles';
-import { availabilityLabel, formatPrice, serviceSettingLabel } from '../../lib/marketplace';
+import type { MarketplaceProfile } from '../../data/marketplaceProfiles';
+import {
+  availabilityLabel,
+  formatPrice,
+  genderLabel,
+  serviceSettingLabel,
+} from '../../lib/marketplace';
 import { PortraitMedia } from './PortraitMedia';
 import { VerifiedBadge, VerifiedNameCheck } from './VerifiedBadge';
 
@@ -15,7 +20,6 @@ type Props = {
 export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) => {
   const price = formatPrice(profile.startingPrice, profile.currency);
   const thumbs = profile.gallery.filter((src) => src !== profile.primaryImage).slice(0, 3);
-  const typeLabel = PROFILE_TYPE_LABELS[profile.profileType];
 
   return (
     <motion.article
@@ -59,7 +63,9 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
       <div className="flex-1 flex flex-col p-5 sm:p-6 gap-3 min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-purple-300/80 mb-1">{typeLabel}</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-purple-300/80 mb-1">
+              Massage · {genderLabel(profile.gender)}
+            </p>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-xl font-semibold text-white tracking-tight uppercase">
                 {profile.displayName}

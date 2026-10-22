@@ -275,11 +275,11 @@ export const ProviderRegisterPage: React.FC = () => {
 
       <main className="max-w-2xl mx-auto px-4 py-10">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
-          Create Your Profile
+          Provider registration
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Create Your Dark Secret Profile</h1>
+        <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Become a Massage Provider</h1>
         <p className="mt-2 text-sm text-zinc-400">
-          Create your public profile, verify your contact details and complete verification to earn the verified badge.
+          Create your public profile, list your massage services and complete verification to earn the verified badge.
         </p>
 
         <ol className="mt-6 flex flex-wrap gap-2">
@@ -333,7 +333,7 @@ export const ProviderRegisterPage: React.FC = () => {
                 I accept the Terms and Privacy Policy. My profile starts unverified.
               </label>
               <button disabled={loading} type="submit" className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white disabled:opacity-60">
-                {loading ? 'Creating…' : 'Create Your Profile'}
+                {loading ? 'Creating…' : 'Continue'}
               </button>
             </form>
           )}

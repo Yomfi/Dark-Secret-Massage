@@ -6,7 +6,6 @@ import { ExploreFilters } from '../components/marketplace/ExploreFilters';
 import { MarketplaceProfileCard } from '../components/marketplace/MarketplaceProfileCard';
 import { findCityBySlug } from '../data/locations';
 import { profilesForCity } from '../data/marketplaceProfiles';
-import { findServiceCategory } from '../data/serviceCategories';
 import {
   buildExploreSearchParams,
   filterAndSortProfiles,
@@ -27,15 +26,13 @@ export const ExplorePage: React.FC = () => {
   const cityProfiles = useMemo(() => profilesForCity(citySlug), [citySlug]);
   const results = useMemo(() => filterAndSortProfiles(cityProfiles, filters), [cityProfiles, filters]);
 
-  const serviceMeta = findServiceCategory(filters.service);
-
   useEffect(() => {
     const cityName = city?.name || citySlug;
-    const title = serviceMeta
-      ? `${serviceMeta.label} in ${cityName} | Dark Secret`
+    const title = filters.service
+      ? `${filters.service} in ${cityName} | Dark Secret`
       : `Massage Professionals in ${cityName} | Dark Secret`;
     document.title = title;
-  }, [city, citySlug, serviceMeta]);
+  }, [city, citySlug, filters.service]);
 
   const updateFilters = (next: MarketplaceFilters) => {
     setSearchParams(buildExploreSearchParams(next), { replace: true });
@@ -71,14 +68,15 @@ export const ExplorePage: React.FC = () => {
         <header className="mt-8 mb-6">
           <p className="text-[11px] uppercase tracking-[0.28em] text-purple-300/80 mb-2">Explore</p>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-            Available in {city?.name || citySlug}
+            Massage Professionals in {city?.name || citySlug}
           </h1>
           <p className="mt-2 text-sm sm:text-base text-zinc-400 max-w-2xl">
-            Discover professional massage and wellness services near you.
+            Discover massage professionals available near you.
           </p>
           <p className="mt-3 text-xs text-zinc-500">
             {results.length} {results.length === 1 ? 'result' : 'results'}
-            {serviceMeta ? ` · ${serviceMeta.label}` : ''}
+            {filters.service ? ` · ${filters.service}` : ''}
+            {filters.gender && filters.gender !== 'all' ? ` · ${filters.gender}` : ''}
             <span className="ml-2 text-zinc-600">(demo profiles)</span>
           </p>
         </header>

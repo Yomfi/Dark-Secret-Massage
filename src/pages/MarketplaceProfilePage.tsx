@@ -16,14 +16,13 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import {
   findMarketplaceProfile,
-  PROFILE_TYPE_LABELS,
   siblingProfiles,
   type MarketplaceProfile,
 } from '../data/marketplaceProfiles';
-import { findServiceCategory } from '../data/serviceCategories';
 import {
   availabilityLabel,
   formatPrice,
+  genderLabel,
   serviceSettingLabel,
   whatsappEnquiryUrl,
 } from '../lib/marketplace';
@@ -368,13 +367,12 @@ export const MarketplaceProfilePage: React.FC = () => {
     isAuthenticated,
   };
 
-  const category = profile ? findServiceCategory(profile.primaryCategory) : undefined;
   const filterService = searchParams.get('service');
   const backCity = searchParams.get('from') || profile?.citySlug || 'accra';
 
   const siblings = useMemo(() => {
     if (!profile) return [];
-    return siblingProfiles(profile, profile.citySlug, filterService);
+    return siblingProfiles(profile.citySlug, profile.slug, filterService);
   }, [profile, filterService]);
 
   const siblingIndex = siblings.findIndex((p) => p.slug === profile?.slug);
@@ -394,8 +392,8 @@ export const MarketplaceProfilePage: React.FC = () => {
       document.title = 'Profile not found | Dark Secret';
       return;
     }
-    document.title = `${profile.displayName} — ${category?.label || 'Profile'} in ${profile.city} | Dark Secret`;
-  }, [profile, category]);
+    document.title = `${profile.displayName} — Massage in ${profile.city} | Dark Secret`;
+  }, [profile]);
 
   if (!profile) {
     return (
@@ -415,7 +413,6 @@ export const MarketplaceProfilePage: React.FC = () => {
   }
 
   const images = profile.gallery.length ? profile.gallery : [profile.primaryImage];
-  const typeLabel = PROFILE_TYPE_LABELS[profile.profileType];
   const isProvider =
     profile.profileType === 'massage_provider' || profile.profileType === 'wellness_provider';
 
@@ -464,7 +461,9 @@ export const MarketplaceProfilePage: React.FC = () => {
 
           <div className="space-y-5">
             <header>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/90">{typeLabel}</p>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/90">
+                Massage · {genderLabel(profile.gender)}
+              </p>
               <h1 className="mt-2 text-3xl sm:text-4xl font-semibold text-white tracking-tight uppercase inline-flex items-center gap-2 flex-wrap">
                 {profile.displayName}
                 <VerifiedNameCheck verified={profile.verified} />
@@ -521,23 +520,28 @@ export const MarketplaceProfilePage: React.FC = () => {
               Profile details
             </h2>
             <dl>
-              <DetailRow label="Profile type" value={typeLabel} />
-              <DetailRow label="City" value={profile.city} />
-              <DetailRow label="Region" value={profile.region} />
-              <DetailRow label="Country" value={profile.country} />
-              <DetailRow label="Nationality" value={profile.nationality} />
+              <DetailRow label="Display name" value={profile.displayName} />
+              <DetailRow label="Gender" value={genderLabel(profile.gender)} />
               <DetailRow label="Age" value={profile.age} />
+              <DetailRow label="City" value={profile.city} />
+              <DetailRow label="Country" value={profile.country} />
               <DetailRow label="Languages" value={profile.languages?.join(', ')} />
-              <DetailRow label="Occupation" value={profile.occupation} />
-              <DetailRow label="Height" value={profile.height} />
-              <DetailRow label="Smoking" value={profile.smoking} />
+              <DetailRow label="Massage services" value={profile.services.join(', ')} />
               <DetailRow label="Availability" value={availabilityLabel(profile.availability)} />
               <DetailRow label="Available days" value={profile.availableDays} />
               <DetailRow label="Service setting" value={serviceSettingLabel(profile.serviceSetting)} />
               <DetailRow label="Service area" value={profile.serviceArea} />
               <DetailRow
-                label="Starting rate"
+                label="Rates"
                 value={formatPrice(profile.startingPrice, profile.currency)}
+              />
+              <DetailRow
+                label="Verification status"
+                value={profile.verified ? 'Verified' : 'Unverified'}
+              />
+              <DetailRow
+                label="Public contact"
+                value={profile.publicContactEnabled ? 'Enabled' : 'Not published'}
               />
             </dl>
           </section>
@@ -567,24 +571,6 @@ export const MarketplaceProfilePage: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
-
-          {isProvider && profile.interests && profile.interests.length > 0 && (
-            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-3">
-                Interests
-              </h2>
-              <div className="flex flex-wrap gap-1.5">
-                {profile.interests.map((item) => (
-                  <span
-                    key={item}
-                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/10 text-zinc-300"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
             </section>
           )}
 

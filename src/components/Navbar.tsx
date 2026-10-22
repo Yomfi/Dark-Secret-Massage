@@ -31,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     navigate('/explore/accra');
   };
 
-  const goCreateProfile = () => {
+  const goBecomeProvider = () => {
     setMobileMenuOpen(false);
     navigate('/provider/register');
   };
@@ -78,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               to="/provider/register"
               className="inline-flex items-center px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-purple-300 transition-colors duration-200 whitespace-nowrap"
             >
-              Create Profile
+              Become a Provider
             </Link>
             <button
               type="button"
@@ -168,10 +168,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </a>
             <button
               type="button"
-              onClick={goCreateProfile}
+              onClick={goBecomeProvider}
               className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
             >
-              Create Profile
+              Become a Provider
             </button>
           </nav>
           <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2.5">
