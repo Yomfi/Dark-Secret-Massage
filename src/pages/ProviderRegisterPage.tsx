@@ -101,6 +101,8 @@ type TeamDraft = {
   services: string[];
   yearsExperience: string;
   availability: string;
+  ratesNote: string;
+  status: 'active' | 'inactive';
 };
 
 export const ProviderRegisterPage: React.FC = () => {
@@ -170,6 +172,8 @@ export const ProviderRegisterPage: React.FC = () => {
     services: [],
     yearsExperience: '',
     availability: 'flexible',
+    ratesNote: '',
+    status: 'active',
   });
 
   const [identity, setIdentity] = useState({
@@ -379,8 +383,11 @@ export const ProviderRegisterPage: React.FC = () => {
         services: teamDraft.services,
         yearsExperience: teamDraft.yearsExperience ? Number(teamDraft.yearsExperience) : null,
         availability: teamDraft.availability,
-        inheritAgencyRate: true,
-        status: 'active',
+        pricing: teamDraft.ratesNote.trim()
+          ? [{ note: teamDraft.ratesNote.trim() }]
+          : [],
+        inheritAgencyRate: !teamDraft.ratesNote.trim(),
+        status: teamDraft.status,
         profileImage: '/profiles/demo-ama-k.jpg',
       });
       setSavedTeam(res.teamMembers || []);
@@ -391,6 +398,8 @@ export const ProviderRegisterPage: React.FC = () => {
         services: [],
         yearsExperience: '',
         availability: 'flexible',
+        ratesNote: '',
+        status: 'active',
       });
     } catch (err) {
       setError(profileFormError(err));
@@ -539,7 +548,7 @@ export const ProviderRegisterPage: React.FC = () => {
                       As an Individual
                     </p>
                     <p className="mt-1 text-sm text-zinc-400">
-                      I provide massage services personally.
+                      I personally provide massage services.
                     </p>
                   </div>
                 </div>
@@ -563,7 +572,7 @@ export const ProviderRegisterPage: React.FC = () => {
                       As an Agency
                     </p>
                     <p className="mt-1 text-sm text-zinc-400">
-                      I manage a massage business or team of massage professionals.
+                      I manage a massage business or team.
                     </p>
                   </div>
                 </div>
@@ -1106,6 +1115,45 @@ export const ProviderRegisterPage: React.FC = () => {
                       }`}
                     >
                       {label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  className={field}
+                  type="number"
+                  min={0}
+                  placeholder="Years experience"
+                  value={teamDraft.yearsExperience}
+                  onChange={(e) => setTeamDraft({ ...teamDraft, yearsExperience: e.target.value })}
+                />
+                <select
+                  className={field}
+                  value={teamDraft.availability}
+                  onChange={(e) => setTeamDraft({ ...teamDraft, availability: e.target.value })}
+                >
+                  <option value="today">Available today</option>
+                  <option value="this_week">This week</option>
+                  <option value="flexible">Flexible</option>
+                </select>
+                <input
+                  className={field}
+                  placeholder="Rates note (or leave blank to inherit agency rates)"
+                  value={teamDraft.ratesNote}
+                  onChange={(e) => setTeamDraft({ ...teamDraft, ratesNote: e.target.value })}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  {(['active', 'inactive'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setTeamDraft({ ...teamDraft, status: s })}
+                      className={`min-h-[44px] rounded-xl border text-xs uppercase tracking-widest ${
+                        teamDraft.status === s
+                          ? 'border-purple-400/40 bg-purple-500/20 text-white'
+                          : 'border-white/10 text-zinc-400'
+                      }`}
+                    >
+                      {s}
                     </button>
                   ))}
                 </div>
