@@ -251,12 +251,15 @@ async function main() {
 
   const stamp = Date.now();
   const email = `mail_smoke_${stamp}@example.com`;
+  // Monotonic suffix so fixtures never collide on the users.phone unique index.
+  let phoneSeq = 0;
+  const nextPhoneSuffix = () => `${String(stamp).slice(-6)}${String((phoneSeq += 1)).padStart(2, '0')}`;
 
   let php = await bootPhpServer(devEnv);
   try {
     // 1 — registration renders and delivers a confirmation email
     let seen = outboxSnapshot();
-    const reg = await request('POST', '/auth/register', { body: registerBody(email, String(stamp).slice(-8)) });
+    const reg = await request('POST', '/auth/register', { body: registerBody(email, nextPhoneSuffix()) });
     check('register returns 201', reg.status === 201, `got ${reg.status}: ${reg.text}`);
     check('register reports the confirmation email was sent', reg.json?.data?.verificationEmailSent === true);
 
@@ -356,7 +359,7 @@ async function main() {
     // 4 — provider verification code flow
     const providerEmail = `mail_provider_dev_${stamp}@example.com`;
     const regProvider = await request('POST', '/auth/register', {
-      body: registerBody(providerEmail, String(stamp).slice(-8, -1) + '1'),
+      body: registerBody(providerEmail, nextPhoneSuffix()),
     });
     check('provider registration returns 201', regProvider.status === 201, regProvider.text);
     await promoteToProvider(providerEmail);
@@ -423,7 +426,7 @@ async function main() {
   const prodEmail = `mail_prod_${stamp}@example.com`;
   try {
     const regProd = await request('POST', '/auth/register', {
-      body: registerBody(prodEmail, String(stamp).slice(-8, -2) + '11'),
+      body: registerBody(prodEmail, nextPhoneSuffix()),
     });
     check('account creation survives delivery failure', regProd.status === 201, regProd.text);
     check('failed confirmation is reported truthfully', regProd.json?.data?.verificationEmailSent === false);
