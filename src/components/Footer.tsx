@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
+import { SocialLinks } from './SocialLinks';
 
 interface FooterProps {
   onOpenBooking?: () => void;
@@ -30,6 +31,7 @@ export const Footer: React.FC<FooterProps> = ({
             <MapPin className="w-3.5 h-3.5 text-purple-400" />
             <span>Accra · Tema · Kumasi & across Ghana</span>
           </div>
+          <SocialLinks />
         </div>
 
         <div className="md:col-span-3 space-y-3">
