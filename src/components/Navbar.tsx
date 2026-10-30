@@ -65,11 +65,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Link
             to="/"
             className="group flex items-center justify-center gap-2 shrink-0 px-2"
-            aria-label="Dark Secret home"
+            aria-label="Massager Studio home"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.75)] transition-transform duration-200 group-hover:scale-110" />
-            <span className="text-[13px] font-semibold tracking-[0.32em] uppercase text-white">
-              DARK SECRET
+            <span className="text-[12px] font-semibold tracking-[0.26em] uppercase text-white whitespace-nowrap">
+              MASSAGER STUDIO
             </span>
           </Link>
 
@@ -112,12 +112,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Link
             to="/"
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 group flex items-center gap-2"
-            aria-label="Dark Secret home"
+            aria-label="Massager Studio home"
             onClick={() => setMobileMenuOpen(false)}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.75)]" />
-            <span className="text-xs sm:text-sm font-semibold tracking-[0.28em] uppercase text-white whitespace-nowrap">
-              DARK SECRET
+            <span className="text-[10px] sm:text-[13px] font-semibold tracking-normal sm:tracking-[0.22em] uppercase text-white whitespace-nowrap">
+              MASSAGER STUDIO
             </span>
           </Link>
 

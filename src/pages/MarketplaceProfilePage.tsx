@@ -48,6 +48,9 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
 
 type PendingContact = 'call' | 'whatsapp' | 'enquire';
 
+/** Public enquiry mailbox (separate from system and business-enquiry addresses). */
+const CONTACT_EMAIL = 'contact@massagerstudio.com';
+
 function ContactPanel({
   profile,
   stickyMobile,
@@ -73,11 +76,11 @@ function ContactPanel({
       return;
     }
     if (action === 'enquire') {
-      const subject = encodeURIComponent(`Enquiry: ${profile.displayName} on Dark Secret`);
+      const subject = encodeURIComponent(`Enquiry: ${profile.displayName} on Massager Studio`);
       const body = encodeURIComponent(
-        `Hello, I found your profile on Dark Secret and would like to enquire.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
+        `Hello, I found your profile on Massager Studio and would like to enquire.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
       );
-      window.location.href = `mailto:hello@darksecret.app?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
     }
   };
 
@@ -176,7 +179,7 @@ function ContactPanel({
           )}
           {!profile.publicContactEnabled && (
             <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-              Direct phone and WhatsApp are private for this profile. Use Enquire to reach Dark Secret.
+              Direct phone and WhatsApp are private for this profile. Use Enquire to reach Massager Studio.
             </p>
           )}
           {profile.verified && profile.publicContactEnabled && profile.phone && (
@@ -390,10 +393,10 @@ export const MarketplaceProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (!profile) {
-      document.title = 'Profile not found | Dark Secret';
+      document.title = 'Profile not found | Massager Studio';
       return;
     }
-    document.title = `${profile.displayName} — Massage in ${profile.city} | Dark Secret`;
+    document.title = `${profile.displayName} — Massage in ${profile.city} | Massager Studio`;
   }, [profile]);
 
   if (!profile) {

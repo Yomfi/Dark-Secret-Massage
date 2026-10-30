@@ -29,8 +29,8 @@ export const ExplorePage: React.FC = () => {
   useEffect(() => {
     const cityName = city?.name || citySlug;
     const title = filters.service
-      ? `${filters.service} in ${cityName} | Dark Secret`
-      : `Massage Professionals in ${cityName} | Dark Secret`;
+      ? `${filters.service} in ${cityName} | Massager Studio`
+      : `Massage Professionals in ${cityName} | Massager Studio`;
     document.title = title;
   }, [city, citySlug, filters.service]);
 

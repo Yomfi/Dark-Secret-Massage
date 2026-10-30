@@ -40,7 +40,14 @@ function ds_config(): array
         'cookie_path' => '/',
         'session_lifetime' => (int) (getenv('DS_SESSION_LIFETIME') ?: 60 * 60 * 24 * 30),
         'app_env' => getenv('DS_APP_ENV') ?: 'production',
-        'app_url' => getenv('DS_APP_URL') ?: 'https://dartscret.havensnet.com',
+        'app_url' => getenv('DS_APP_URL') ?: 'https://massagerstudio.com',
+        // Recipient mailboxes. Operational addresses only — not sender/SMTP settings.
+        // No email transport is wired yet; token endpoints do not send mail.
+        'info_email' => getenv('DS_INFO_EMAIL') ?: 'info@massagerstudio.com',
+        'admin_email' => getenv('DS_ADMIN_EMAIL') ?: 'admin@massagerstudio.com',
+        'contact_email' => getenv('DS_CONTACT_EMAIL') ?: 'contact@massagerstudio.com',
+        // Sender (From) is configured separately and stays empty until mail is wired.
+        'mail_from' => getenv('DS_MAIL_FROM') ?: '',
     ];
 
     $localFile = __DIR__ . '/config.local.php';

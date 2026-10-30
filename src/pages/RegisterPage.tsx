@@ -54,7 +54,7 @@ export const RegisterPage: React.FC = () => {
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.28em] uppercase text-white">Dark Secret</span>
+          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
         </Link>
       </header>
 
@@ -65,7 +65,7 @@ export const RegisterPage: React.FC = () => {
         >
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">Create account</p>
-            <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Join Dark Secret</h1>
+            <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Join Massager Studio</h1>
             <p className="mt-2 text-base text-zinc-400 font-normal">
               Account creation is simple. Pathway preferences come next.
             </p>
@@ -103,7 +103,7 @@ export const RegisterPage: React.FC = () => {
               onChange={(e) => patch({ termsAccepted: e.target.checked })}
               className="mt-1 accent-purple-500"
             />
-            <span>I accept the Dark Secret terms and privacy policy.</span>
+            <span>I accept the Massager Studio terms and privacy policy.</span>
           </label>
 
           <button

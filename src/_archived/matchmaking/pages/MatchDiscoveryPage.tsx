@@ -99,10 +99,10 @@ export const MatchDiscoveryPage: React.FC = () => {
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060608]/92 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3 px-4 sm:px-5 h-14 sm:h-16">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Dark Secret home">
+            <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Massager Studio home">
               <span className="w-2 h-2 rounded-full bg-purple-500" />
               <span className="text-xs sm:text-sm font-bold tracking-[0.24em] uppercase text-white">
-                Dark Secret
+                Massager Studio
               </span>
             </Link>
             <span className="hidden sm:block h-4 w-px bg-white/15" />

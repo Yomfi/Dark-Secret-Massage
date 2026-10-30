@@ -29,7 +29,7 @@ export const ForgotPasswordPage: React.FC = () => {
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.28em] uppercase text-white">Dark Secret</span>
+          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12">

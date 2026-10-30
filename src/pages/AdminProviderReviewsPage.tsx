@@ -127,7 +127,7 @@ export const AdminProviderReviewsPage: React.FC = () => (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
         <Link to="/" className="text-sm font-bold tracking-[0.28em] uppercase text-white">
-          Dark Secret Admin
+          Massager Studio Admin
         </Link>
       </header>
       <Inner />

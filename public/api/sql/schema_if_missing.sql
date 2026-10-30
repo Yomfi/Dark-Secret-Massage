@@ -1,4 +1,4 @@
--- Safe schema bootstrap for Dark Secret auth (Hostinger MySQL).
+-- Safe schema bootstrap for Massager Studio auth (Hostinger MySQL).
 -- Uses CREATE TABLE IF NOT EXISTS — does NOT drop or reset existing data.
 -- Run once in phpMyAdmin / MySQL if tables are not already present
 -- (e.g. after prior Prisma migrate deploy, tables already exist — skip this).

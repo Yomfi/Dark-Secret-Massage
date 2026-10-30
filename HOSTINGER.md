@@ -1,6 +1,6 @@
-# Dark Secret — Hostinger PHP + MySQL (same origin)
+# Massager Studio — Hostinger PHP + MySQL (same origin)
 
-Production origin: `https://dartscret.havensnet.com`
+Production origin: `https://massagerstudio.com`
 
 **Architecture:** Vite React SPA + PHP API under `/api/*` + Hostinger MySQL.  
 **No Node/Express runtime** is required for production.
@@ -11,7 +11,7 @@ The `server/` Express/Prisma tree remains in the repo for reference until a late
 
 | Field | Value |
 |--------|--------|
-| Domain | `dartscret.havensnet.com` |
+| Domain | `massagerstudio.com` |
 | Repository | `Yomfi/Dark-Secret-Massage` |
 | Branch | `main` |
 | Hosting type | **PHP / Apache** (standard web hosting — not Node.js) |
@@ -29,8 +29,8 @@ After build, `dist/` must contain:
 
 | Field | Value |
 |--------|--------|
-| Database | `u190513960_darksecret` |
-| User | `u190513960_darksecret` |
+| Database | `u190513960_darksecret` (legacy Hostinger name, retained) |
+| User | `u190513960_darksecret` (legacy Hostinger name, retained) |
 | Host | `localhost` |
 | Port | `3306` |
 
@@ -61,7 +61,7 @@ return [
   'cookie_secure' => true,
   'cookie_samesite' => 'Lax',
   'app_env' => 'production',
-  'app_url' => 'https://dartscret.havensnet.com',
+  'app_url' => 'https://massagerstudio.com',
 ];
 ```
 
@@ -73,6 +73,32 @@ Never commit `config.local.php` or the DB password.
 - `httpOnly`, `Secure` in production, `SameSite=Lax`, `path=/`
 - Passwords: `password_hash` / `password_verify` (bcrypt — compatible with prior bcryptjs hashes)
 - Same-origin frontend calls `/api` with `credentials: 'include'`
+
+## Email
+
+**No email is sent today.** `api/auth/forgot-password.php`, `api/auth/verify-email.php` and
+`api/provider/send-email-code.php` only create verification/reset tokens (returned directly in
+demo mode when `app_env` is not `production`), and the legacy Node `notificationService` is a
+stub that logs in development. Nothing in the app currently delivers mail.
+
+Recipient mailboxes (configured, used once a transport exists):
+
+| Address | Purpose |
+|--------|---------|
+| `info@massagerstudio.com` | System notifications and general operational email |
+| `admin@massagerstudio.com` | Official business enquiries, partnerships and collaborations |
+| `contact@massagerstudio.com` | Contact-form submissions and public enquiry mail (marketplace “Enquire” link) |
+
+Set them with `DS_INFO_EMAIL`, `DS_ADMIN_EMAIL` and `DS_CONTACT_EMAIL` (environment) or the
+matching keys in `config.local.php`. Sender/`From` (`DS_MAIL_FROM`) and any SMTP or API key are
+configured **separately** and must not reuse the recipient addresses.
+
+Still required before email works:
+
+1. Provision the three mailboxes on `massagerstudio.com` and publish SPF/DKIM records
+2. Choose a transport (Hostinger mail or an email API) and set the sender address + credentials
+3. Implement the send call in the token endpoints and the Node notification stub
+4. Write the message templates (verification, reset, receipt, operational notices)
 
 ## Endpoints
 
@@ -99,8 +125,8 @@ Never commit `config.local.php` or the DB password.
 3. Ensure `.htaccess` is uploaded
 4. Add `api/config/config.local.php` with DB password
 5. Confirm tables exist (or run `schema_if_missing.sql`)
-6. Verify `https://dartscret.havensnet.com/api/health`
-7. Verify `https://dartscret.havensnet.com/` loads the React app
+6. Verify `https://massagerstudio.com/api/health`
+7. Verify `https://massagerstudio.com/` loads the React app
 8. Verify register / login / me / logout
 
 ## Local frontend

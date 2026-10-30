@@ -1,4 +1,4 @@
--- Dark Secret — agency / individual provider extension (safe / additive).
+-- Massager Studio — agency / individual provider extension (safe / additive).
 -- Run manually in phpMyAdmin / MySQL after 20261021_provider_verification.sql.
 -- Does NOT drop existing tables or data.
 -- If a column already exists, skip that ALTER and continue.

@@ -19,8 +19,8 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="md:col-span-4 space-y-4">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span className="text-sm font-bold tracking-[0.3em] uppercase text-white font-sans">
-              DARK SECRET
+            <span className="text-sm font-bold tracking-[0.26em] uppercase text-white font-sans">
+              MASSAGER STUDIO
             </span>
           </div>
           <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-light max-w-sm">
@@ -121,7 +121,7 @@ export const Footer: React.FC<FooterProps> = ({
 
       <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
         <div>
-          © {new Date().getFullYear()} Dark Secret. All rights reserved. Confidentially operated.
+          © {new Date().getFullYear()} Massager Studio. All rights reserved. Confidentially operated.
         </div>
         <div className="flex items-center gap-6">
           <span>Encrypted 256-Bit SSL</span>

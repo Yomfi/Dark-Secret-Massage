@@ -24,10 +24,10 @@ export const MassagePage: React.FC = () => {
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#060608]/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="Dark Secret home">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="Massager Studio home">
             <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span className="text-sm font-bold tracking-[0.28em] uppercase text-white">
-              Dark Secret
+            <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">
+              Massager Studio
             </span>
           </Link>
           <nav className="flex items-center gap-4 sm:gap-6 text-sm font-semibold">
@@ -61,7 +61,7 @@ export const MassagePage: React.FC = () => {
 
       <footer className="border-t border-white/[0.06] py-8 px-4 text-center text-sm text-zinc-500 font-medium">
         <Link to="/" className="hover:text-zinc-300 transition-colors">
-          Return to Dark Secret home
+          Return to Massager Studio home
         </Link>
       </footer>
 

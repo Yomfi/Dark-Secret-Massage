@@ -21,6 +21,17 @@ return [
 
     // App
     'app_env' => 'production',    // production | development
-    'app_url' => 'https://dartscret.havensnet.com',
+    'app_url' => 'https://massagerstudio.com',
+
+    // Recipient mailboxes — operational addresses only, never SMTP credentials.
+    // info: system/operational notices · admin: business enquiries & partnerships
+    // contact: public contact-form and marketplace enquiry mail
+    'info_email' => 'info@massagerstudio.com',
+    'admin_email' => 'admin@massagerstudio.com',
+    'contact_email' => 'contact@massagerstudio.com',
+
+    // Sender / SMTP is separate from the recipients above. No mail is sent yet;
+    // set the From address and transport when delivery is implemented.
+    // 'mail_from' => '',
 ];
 

@@ -9,10 +9,10 @@ export const BookingHeader: React.FC = () => {
         <Link
           to="/"
           className="group flex items-center gap-2.5"
-          aria-label="Dark Secret home"
+          aria-label="Massager Studio home"
         >
           <span className="w-2 h-2 rounded-full bg-purple-500 group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-bold tracking-[0.28em] uppercase text-white">Dark Secret</span>
+          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
         </Link>
 
         <Link

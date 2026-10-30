@@ -28,10 +28,10 @@ export const UnverifiedContactModal: React.FC<Props> = ({ open, onCancel, onCont
           Proceed with caution
         </h2>
         <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
-          This profile has not yet completed Dark Secret verification.
+          This profile has not yet completed Massager Studio verification.
         </p>
         <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-          Dark Secret has not verified this provider&apos;s identity/profile information. Please use
+          Massager Studio has not verified this provider&apos;s identity/profile information. Please use
           your own judgement before making payments, sharing personal information or arranging a
           meeting.
         </p>

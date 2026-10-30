@@ -22,7 +22,7 @@ async function main() {
   // Bind all interfaces for Hostinger / containers. Port from env (default 3000).
   const host = process.env.HOST || '0.0.0.0';
   app.listen(env.port, host, () => {
-    console.info(`Dark Secret listening on ${host}:${env.port} (${env.nodeEnv})`);
+    console.info(`Massager Studio listening on ${host}:${env.port} (${env.nodeEnv})`);
   });
 }
 

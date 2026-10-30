@@ -92,7 +92,7 @@ const ProviderDashboardInner: React.FC = () => {
         </div>
       ) : (
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <p className="text-zinc-200 font-medium">Complete verification to receive the Dark Secret verified badge.</p>
+          <p className="text-zinc-200 font-medium">Complete verification to receive the Massager Studio verified badge.</p>
           <p className="mt-1 text-sm text-zinc-500">
             Status: <span className="text-zinc-300">{data.verification.status}</span>
             {data.verification.rejectionReason
@@ -161,7 +161,7 @@ export const ProviderDashboardPage: React.FC = () => (
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.28em] uppercase text-white">Dark Secret</span>
+          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
         </Link>
         <Link to="/" className="text-xs uppercase tracking-widest text-zinc-400 hover:text-white">
           Home

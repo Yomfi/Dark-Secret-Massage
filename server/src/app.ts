@@ -69,7 +69,7 @@ export function createApp() {
 
   // --- API routes first ---
   app.get('/api/health', (_req, res) => {
-    res.json({ success: true, data: { status: 'ok', service: 'dark-secret-api' } });
+    res.json({ success: true, data: { status: 'ok', service: 'massager-studio-api' } });
   });
 
   app.use('/api/auth', authRouter);

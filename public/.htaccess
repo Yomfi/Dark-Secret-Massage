@@ -1,4 +1,4 @@
-# Dark Secret — Hostinger Apache (PHP + Vite SPA)
+# Massager Studio — Hostinger Apache (PHP + Vite SPA)
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /

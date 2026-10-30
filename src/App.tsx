@@ -40,7 +40,7 @@ function HomePage({
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    document.title = 'Dark Secret — Massage Services Near You';
+    document.title = 'Massager Studio — Massage Services Near You';
   }, []);
 
   const goBook = (serviceId?: string) => {

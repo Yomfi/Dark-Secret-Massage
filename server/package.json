@@ -1,8 +1,8 @@
 {
-  "name": "dark-secret-api",
+  "name": "massager-studio-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Dark Secret authentication and API service",
+  "description": "Massager Studio authentication and API service",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

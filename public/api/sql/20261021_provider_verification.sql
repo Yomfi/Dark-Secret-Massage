@@ -1,4 +1,4 @@
--- Dark Secret — provider registration & verification (safe / additive).
+-- Massager Studio — provider registration & verification (safe / additive).
 -- Run manually in phpMyAdmin / MySQL. Does NOT drop existing tables or data.
 -- Compatible with existing users / auth schema.
 

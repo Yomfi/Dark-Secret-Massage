@@ -32,7 +32,7 @@ function parsePort(): number {
 }
 
 const defaultCors = isProd
-  ? 'https://dartscret.havensnet.com'
+  ? 'https://massagerstudio.com'
   : 'http://localhost:3000';
 
 export const env = {
@@ -50,7 +50,7 @@ export const env = {
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || '30d',
   cookieSecure: process.env.COOKIE_SECURE === 'true' || isProd,
   cookieSameSite: (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'strict' | 'none',
-  // Same-origin app: leave unset (host-only cookies on dartscret.havensnet.com)
+  // Same-origin app: leave unset (host-only cookies on massagerstudio.com)
   cookieDomain: process.env.COOKIE_DOMAIN || undefined,
   skipDbConnect: process.env.SKIP_DB_CONNECT === 'true',
 };

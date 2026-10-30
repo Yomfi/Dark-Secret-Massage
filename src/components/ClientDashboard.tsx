@@ -92,8 +92,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <div className="h-4 w-px bg-white/10 hidden sm:block" />
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-purple-500" />
-              <span className="text-sm font-bold tracking-[0.25em] uppercase text-white font-sans">
-                DARK SECRET
+              <span className="text-sm font-bold tracking-[0.22em] uppercase text-white font-sans">
+                MASSAGER STUDIO
               </span>
               <span className="text-[10px] uppercase font-mono tracking-wider text-purple-300 bg-purple-950/60 border border-purple-500/20 px-2 py-0.5 rounded-full ml-1">
                 Portal
@@ -269,7 +269,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Airport Residential Studio</span>
                   </span>
-                  <span className="text-zinc-500 font-mono text-[11px]">Ref: #DS-HOT-281</span>
+                  <span className="text-zinc-500 font-mono text-[11px]">Ref: #MS-HOT-281</span>
                 </div>
               </div>
             </div>
@@ -283,7 +283,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <div className="px-6 py-4 bg-[#09090e] border-b border-white/[0.08] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-950/80 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-sm">
-                  DS
+                  MS
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">
@@ -393,7 +393,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   <div>
                     <div className="text-sm font-semibold text-white">Billing Confidentiality</div>
                     <div className="text-xs text-zinc-400">
-                      Bank and card statements reflect discreet neutral descriptor "DS MGMT ACCRA".
+                      Bank and card statements reflect discreet neutral descriptor "MS MGMT ACCRA".
                     </div>
                   </div>
                   <span className="text-xs text-zinc-400 font-mono">Enforced</span>
