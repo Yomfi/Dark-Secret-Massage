@@ -76,29 +76,92 @@ Never commit `config.local.php` or the DB password.
 
 ## Email
 
-**No email is sent today.** `api/auth/forgot-password.php`, `api/auth/verify-email.php` and
-`api/provider/send-email-code.php` only create verification/reset tokens (returned directly in
-demo mode when `app_env` is not `production`), and the legacy Node `notificationService` is a
-stub that logs in development. Nothing in the app currently delivers mail.
+Transactional mail is delivered by `api/config/mailer.php` over **authenticated SMTP** using
+PHPMailer 7.1.1, vendored in `api/vendor/phpmailer` (no Composer on the host — see its
+`VENDORED.md`). TLS certificate verification is always enabled. Nothing is sent until
+`smtp_host`, `smtp_user`, `smtp_pass` and `mail_from` are set.
 
-Recipient mailboxes (configured, used once a transport exists):
+| Flow | Trigger | Sent to |
+|------|---------|---------|
+| Password reset | `POST /api/auth/forgot-password` | the requesting account's own address |
+| Account email confirmation | `POST /api/auth/register` | the new account's own address |
+| Provider verification code | `POST /api/provider/send-email-code` | the provider account's own address |
+| Provider submitted for review | `POST /api/provider/submit-review` | `info@massagerstudio.com` |
+
+Company mailboxes:
 
 | Address | Purpose |
 |--------|---------|
-| `info@massagerstudio.com` | System notifications and general operational email |
+| `info@massagerstudio.com` | System/operational notifications and the SMTP sender identity |
 | `admin@massagerstudio.com` | Official business enquiries, partnerships and collaborations |
-| `contact@massagerstudio.com` | Contact-form submissions and public enquiry mail (marketplace “Enquire” link) |
+| `contact@massagerstudio.com` | Public contact and enquiry mail; `Reply-To` on all system mail |
 
-Set them with `DS_INFO_EMAIL`, `DS_ADMIN_EMAIL` and `DS_CONTACT_EMAIL` (environment) or the
-matching keys in `config.local.php`. Sender/`From` (`DS_MAIL_FROM`) and any SMTP or API key are
-configured **separately** and must not reuse the recipient addresses.
+Email links are built from `app_url` only (never the request Host): `/reset-password?token=…`
+and `/verify-email?token=…` are real SPA routes, so the links open the app.
 
-Still required before email works:
+### Required configuration
 
-1. Provision the three mailboxes on `massagerstudio.com` and publish SPF/DKIM records
-2. Choose a transport (Hostinger mail or an email API) and set the sender address + credentials
-3. Implement the send call in the token endpoints and the Node notification stub
-4. Write the message templates (verification, reset, receipt, operational notices)
+Set these in `api/config/config.local.php` or as `DS_*` environment variables. Never commit
+the password, and never expose these keys to the frontend.
+
+| Key | Env | Value |
+|-----|-----|-------|
+| `smtp_host` | `DS_SMTP_HOST` | Hostinger SMTP host (confirm in hPanel → Emails) |
+| `smtp_port` | `DS_SMTP_PORT` | `465` (implicit TLS) or `587` (STARTTLS) |
+| `smtp_secure` | `DS_SMTP_SECURE` | `ssl` or `tls` |
+| `smtp_user` | `DS_SMTP_USER` | full mailbox address, e.g. `info@massagerstudio.com` |
+| `smtp_pass` | `DS_SMTP_PASS` | mailbox password from hPanel |
+| `mail_from` | `DS_MAIL_FROM` | `info@massagerstudio.com` (must match the authenticated mailbox) |
+| `mail_from_name` | `DS_MAIL_FROM_NAME` | `Massager Studio` |
+| `mail_reply_to` | `DS_MAIL_REPLY_TO` | `contact@massagerstudio.com` |
+| `smtp_timeout` | `DS_SMTP_TIMEOUT` | seconds, default `15` |
+| `mail_debug` | `DS_MAIL_DEBUG` | `0` normally; `1`+ writes the SMTP transcript to the private log |
+| `mail_transport` | `DS_MAIL_TRANSPORT` | leave unset (`smtp`) in production; `file` is a local-only outbox |
+
+### Delivery behaviour and diagnostics
+
+Every send attempt appends a JSON line to `api/storage/private/logs/mail.log` (recipient
+masked, no tokens or message bodies). `storage/` is blocked from HTTP access by `.htaccess`.
+
+- Password reset stays deliberately generic (no account enumeration). If delivery fails the
+  reset token is deleted so no dead link survives, and the failure is logged.
+- Registration still succeeds when mail fails; the response reports
+  `verificationEmailSent: false`.
+- Provider code requests return HTTP `503` (`EMAIL_DELIVERY_FAILED` or
+  `EMAIL_NOT_CONFIGURED`) in production instead of pretending the mail was sent. Development
+  returns the token so the flow stays testable.
+- The review notification never blocks a submission; `adminNotified` reports the outcome.
+
+### Still required on the host
+
+1. Confirm the SMTP host/port for `info@massagerstudio.com` in hPanel and enter the settings above.
+2. Publish SPF and DKIM records for `massagerstudio.com` so mail is not filtered.
+3. Send one test message, check hPanel → Emails → delivery log for SMTP acceptance, then check
+   the inbox (and junk folder) to confirm receipt.
+4. `admin@massagerstudio.com` has no automated sender yet — it is used for business
+   correspondence only. Do not assume an inbox workflow exists for it.
+5. `GET /api/config-status` reports `mail_configured`, `mail_transport` and the *names* of any
+   missing mail keys (never values), so you can confirm the config without guessing.
+
+### Local verification
+
+`npm run test:mail` boots the PHP API against SQLite in two modes:
+
+- **development + file transport** (`DS_MAIL_TRANSPORT=file`): rendered messages land in
+  `api/storage/private/outbox/*.eml`, so the whole pipeline is testable — headers, From/
+  Reply-To, branded HTML, plain-text alternative, reset/confirm/provider-code links, token
+  single-use, and the provider verification handshake.
+- **production + SMTP**: missing settings and an unreachable host must return `503`
+  (`EMAIL_NOT_CONFIGURED` / `EMAIL_DELIVERY_FAILED`), roll back the just-created token, and
+  never leak a token in the response.
+
+The file transport is refused whenever `app_env` is `production`, so it cannot silently
+replace SMTP on the host.
+
+**Not covered locally:** the actual SMTP conversation. The bundled `php-cli` (WASM) runtime has
+no working `stream_select`, which PHPMailer's SMTP client relies on, so it cannot complete a
+session even against a local sink. Do not treat a green local run as proof that mail is
+delivering — confirm acceptance on the host (step 3 above).
 
 ## Endpoints
 

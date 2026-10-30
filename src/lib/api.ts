@@ -136,6 +136,16 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
+  resetPassword: (body: { token: string; password: string; confirmPassword: string }) =>
+    apiRequest<{ message: string }>('/auth/reset-password.php', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  verifyEmail: (token: string) =>
+    apiRequest<{ user: AuthUserDto | null; verified: boolean }>('/auth/verify-email.php', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
 };
 
 export type OnboardingChoice = 'find_partner' | 'book_massage' | 'become_provider';

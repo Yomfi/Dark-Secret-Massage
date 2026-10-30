@@ -17,8 +17,9 @@ npm run build
 
 Deploy `dist/` to Hostinger PHP hosting. See [HOSTINGER.md](./HOSTINGER.md).
 
-Email: no delivery is wired yet. Recipient mailboxes (`info@`, `admin@`, `contact@massagerstudio.com`)
-and the remaining setup steps are in [HOSTINGER.md](./HOSTINGER.md#email).
+Email: transactional mail (password reset, email confirmation, provider verification code) is
+delivered over authenticated SMTP configured on the server; see
+[HOSTINGER.md](./HOSTINGER.md#email) for the required settings and diagnostics.
 
 ## Local frontend
 

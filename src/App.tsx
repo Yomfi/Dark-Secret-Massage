@@ -12,6 +12,8 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ExplorePage } from './pages/ExplorePage';
 import { MarketplaceProfilePage } from './pages/MarketplaceProfilePage';
 import { ProviderRegisterPage } from './pages/ProviderRegisterPage';
@@ -124,6 +126,8 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       {/* Matchmaking retired from public experience — source preserved in src/_archived/matchmaking */}
       <Route path="/find-a-life-partner" element={<Navigate to="/explore" replace />} />

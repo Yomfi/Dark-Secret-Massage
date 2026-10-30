@@ -84,6 +84,7 @@ try {
 }
 
 // Optional verification rows — never fail registration if these tables are missing.
+$emailRaw = null;
 try {
     if (ds_table_exists('email_verification_tokens')) {
         $emailRaw = bin2hex(random_bytes(32));
@@ -99,7 +100,8 @@ try {
         ]);
     }
 } catch (Throwable $e) {
-    // ignore
+    // No stored token means nothing to verify — skip the email too.
+    $emailRaw = null;
 }
 
 $user = ds_find_user_by_id($id);
@@ -107,5 +109,25 @@ if (!$user) {
     ds_error(500, 'INTERNAL_ERROR', 'Unable to create account.');
 }
 
+// Delivery failure must not undo a created account; report the outcome instead.
+$verificationEmailSent = false;
+if ($emailRaw !== null) {
+    $sent = ds_send_template(
+        'verify_account',
+        (string) ($user['email'] ?? $input['email']),
+        trim((string) ($user['first_name'] ?? $input['firstName'])),
+        [
+            'first_name' => (string) ($user['first_name'] ?? $input['firstName']),
+            'link' => ds_app_link('/verify-email', ['token' => $emailRaw]),
+            'expires_hours' => 24,
+        ],
+        ['user' => (string) $id]
+    );
+    $verificationEmailSent = $sent['sent'];
+}
+
 ds_login_user($user);
-ds_success(['user' => ds_user_dto($user)], 201);
+ds_success([
+    'user' => ds_user_dto($user),
+    'verificationEmailSent' => $verificationEmailSent,
+], 201);

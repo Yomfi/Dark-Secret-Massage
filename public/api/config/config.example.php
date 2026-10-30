@@ -30,8 +30,25 @@ return [
     'admin_email' => 'admin@massagerstudio.com',
     'contact_email' => 'contact@massagerstudio.com',
 
-    // Sender / SMTP is separate from the recipients above. No mail is sent yet;
-    // set the From address and transport when delivery is implemented.
-    // 'mail_from' => '',
+    // Transport: 'smtp' in production. 'file' writes messages to
+    // api/storage/private/outbox for local development only and is refused
+    // whenever app_env is production.
+    'mail_transport' => 'smtp',
+
+    // Authenticated SMTP transport. Server-only: never expose these to the browser.
+    // Values come from Hostinger hPanel → Emails → info@massagerstudio.com.
+    'smtp_host' => 'smtp.hostinger.com',            // confirm in hPanel
+    'smtp_port' => 465,                              // 465 = implicit TLS · 587 = STARTTLS
+    'smtp_secure' => 'ssl',                          // ssl | tls
+    'smtp_user' => 'info@massagerstudio.com',        // full mailbox address
+    'smtp_pass' => 'REPLACE_WITH_MAILBOX_PASSWORD',  // mailbox password, never commit
+    'smtp_timeout' => 15,
+
+    // Sender/From is separate from the recipient mailboxes above. It must match a
+    // mailbox you can authenticate as, or SPF/DMARC alignment fails.
+    'mail_from' => 'info@massagerstudio.com',
+    'mail_from_name' => 'Massager Studio',
+    'mail_reply_to' => 'contact@massagerstudio.com', // users reply to the public inbox
+    'mail_debug' => 0,                                // 1+ logs the SMTP transcript privately
 ];
 

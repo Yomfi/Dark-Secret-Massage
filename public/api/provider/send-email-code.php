@@ -27,17 +27,46 @@ $pdo->prepare(
      VALUES (?, ?, ?, ?, ?)'
 )->execute([ds_new_id(), $user['id'], $tokenHash, $expires, $now]);
 
-$payload = [
-    'sent' => true,
-    'expiresInSeconds' => 86400,
-    'message' => 'A verification link/token has been generated for your email.',
-    'emailConfigured' => false,
-];
+$sent = ds_send_template(
+    'provider_verify',
+    (string) ($user['email'] ?? ''),
+    trim((string) ($user['first_name'] ?? '')),
+    [
+        'first_name' => (string) ($user['first_name'] ?? ''),
+        'token' => $token,
+        'link' => ds_app_link('/provider/register'),
+        'expires_hours' => 24,
+    ],
+    ['user' => (string) $user['id']]
+);
 
-if (ds_otp_demo_mode()) {
-    $payload['demoMode'] = true;
-    $payload['demoToken'] = $token;
-    $payload['message'] = 'Demo verification mode: use the provided token. Email gateway not configured.';
+if ($sent['sent']) {
+    ds_success([
+        'sent' => true,
+        'expiresInSeconds' => 86400,
+        'emailConfigured' => true,
+        'message' => 'We sent a verification code to your email address.',
+    ]);
 }
 
-ds_success($payload);
+if (ds_is_prod()) {
+    // Do not hand out a token whose email never arrived.
+    $pdo->prepare('DELETE FROM email_verification_tokens WHERE token_hash = ?')->execute([$tokenHash]);
+    ds_error(
+        503,
+        $sent['code'] === 'not_configured' ? 'EMAIL_NOT_CONFIGURED' : 'EMAIL_DELIVERY_FAILED',
+        $sent['code'] === 'not_configured'
+            ? 'Email delivery is not configured yet. Please contact support.'
+            : 'We could not send the verification email. Please try again shortly.'
+    );
+}
+
+// Local/staging fallback: keep the flow usable without a real mailbox.
+ds_success([
+    'sent' => false,
+    'expiresInSeconds' => 86400,
+    'emailConfigured' => ds_mail_configured(),
+    'demoMode' => true,
+    'demoToken' => $token,
+    'message' => 'Email delivery unavailable in this environment (' . $sent['code'] . '). Use the provided token.',
+]);

@@ -13,3 +13,8 @@
 <IfModule mod_rewrite.c>
   RewriteRule ^config/(?!config\.example\.php$).+\.php$ - [F,L]
 </IfModule>
+
+# Never serve the vendored mailer, mail templates or storage contents over HTTP
+<IfModule mod_rewrite.c>
+  RewriteRule ^(vendor|templates|storage)(/|$) - [F,L]
+</IfModule>

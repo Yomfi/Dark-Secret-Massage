@@ -31,8 +31,26 @@ ds_pdo()->prepare(
      WHERE provider_user_id = ?'
 )->execute([$now, $now, $user['id']]);
 
+// Operational notification to info@. The submission itself must not fail if mail fails.
+$notice = ds_send_template(
+    'provider_review_notice',
+    (string) (ds_config()['info_email'] ?? 'info@massagerstudio.com'),
+    'Massager Studio Operations',
+    [
+        'provider_name' => (string) ($profile['display_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''))),
+        'provider_type' => (string) ($profile['provider_type'] ?? 'individual'),
+        'city' => (string) ($profile['city'] ?? ''),
+        'provider_email' => (string) ($user['email'] ?? ''),
+        'provider_id' => (string) $user['id'],
+        'submitted_at' => $now,
+        'review_link' => ds_app_link('/admin/provider-reviews'),
+    ],
+    ['user' => (string) $user['id']]
+);
+
 ds_success([
     'submitted' => true,
     'verificationStatus' => 'pending_review',
+    'adminNotified' => $notice['sent'],
     'message' => 'Your verification is awaiting admin review. Payment gateway integration is coming soon.',
 ]);

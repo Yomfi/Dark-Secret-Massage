@@ -28,9 +28,16 @@ $dbHostPresent = trim((string) ($cfg['db_host'] ?? '')) !== '';
 $dbNamePresent = trim((string) ($cfg['db_name'] ?? '')) !== '';
 $dbUserPresent = trim((string) ($cfg['db_user'] ?? '')) !== '';
 
+// Mail transport status: booleans and missing key *names* only, never values.
+$mailConfigured = ds_mail_configured();
+$mailMissing = ds_mail_missing_settings();
+
 // Flat JSON (not nested under data) — diagnostic only; no secrets.
 ds_json([
     'success' => true,
+    'mail_configured' => $mailConfigured,
+    'mail_transport' => (string) (ds_config()['mail_transport'] ?? 'smtp'),
+    'mail_missing_keys' => array_values($mailMissing),
     'config_local_exists' => $configLocalExists,
     'config_local_readable' => $configLocalReadable,
     'env_db_pass_present' => $envDbPassPresent,

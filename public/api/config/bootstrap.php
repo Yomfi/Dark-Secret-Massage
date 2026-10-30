@@ -11,6 +11,8 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/provider.php';
+require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/mail_templates.php';
 
 function ds_config(): array
 {
@@ -42,12 +44,26 @@ function ds_config(): array
         'app_env' => getenv('DS_APP_ENV') ?: 'production',
         'app_url' => getenv('DS_APP_URL') ?: 'https://massagerstudio.com',
         // Recipient mailboxes. Operational addresses only — not sender/SMTP settings.
-        // No email transport is wired yet; token endpoints do not send mail.
         'info_email' => getenv('DS_INFO_EMAIL') ?: 'info@massagerstudio.com',
         'admin_email' => getenv('DS_ADMIN_EMAIL') ?: 'admin@massagerstudio.com',
         'contact_email' => getenv('DS_CONTACT_EMAIL') ?: 'contact@massagerstudio.com',
-        // Sender (From) is configured separately and stays empty until mail is wired.
-        'mail_from' => getenv('DS_MAIL_FROM') ?: '',
+        // Transport: smtp (production) | file (local outbox, refused in production).
+        'mail_transport' => strtolower(trim((string) (getenv('DS_MAIL_TRANSPORT') ?: 'smtp'))),
+        // Authenticated SMTP transport (server-only; never sent to the browser).
+        'smtp_host' => getenv('DS_SMTP_HOST') ?: '',
+        'smtp_port' => (int) (getenv('DS_SMTP_PORT') ?: 465),
+        // ssl | tls | '' — an explicit empty value allows the loopback test sink.
+        'smtp_secure' => (static function () {
+            $value = getenv('DS_SMTP_SECURE');
+            return $value === false ? 'ssl' : strtolower(trim($value));
+        })(),
+        'smtp_user' => getenv('DS_SMTP_USER') ?: '',
+        'smtp_pass' => getenv('DS_SMTP_PASS') ?: '',
+        'smtp_timeout' => (int) (getenv('DS_SMTP_TIMEOUT') ?: 15),
+        'mail_from' => getenv('DS_MAIL_FROM') ?: 'info@massagerstudio.com',
+        'mail_from_name' => getenv('DS_MAIL_FROM_NAME') ?: 'Massager Studio',
+        'mail_reply_to' => getenv('DS_MAIL_REPLY_TO') ?: 'contact@massagerstudio.com',
+        'mail_debug' => (int) (getenv('DS_MAIL_DEBUG') ?: 0),
     ];
 
     $localFile = __DIR__ . '/config.local.php';

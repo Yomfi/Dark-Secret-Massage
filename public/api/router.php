@@ -45,6 +45,19 @@ if (isset($fileMap[$normalized . '.php'])) {
     return true;
 }
 
+// Direct script requests (the frontend calls /provider/send-email-code.php etc.).
+// Only real PHP files below public endpoint directories are executable; config,
+// vendor, sql and storage stay unreachable.
+$segment = explode('/', ltrim($normalized, '/'))[0] ?? '';
+$endpointDirs = ['auth', 'admin', 'provider'];
+if (in_array($segment, $endpointDirs, true) && str_ends_with($normalized, '.php')) {
+    $candidate = __DIR__ . $normalized;
+    if (is_file($candidate) && !str_contains($normalized, '..')) {
+        require $candidate;
+        return true;
+    }
+}
+
 http_response_code(404);
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode([

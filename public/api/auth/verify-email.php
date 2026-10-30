@@ -35,8 +35,11 @@ $ts = $now->format('Y-m-d H:i:s');
 $pdo = ds_pdo();
 try {
     $pdo->beginTransaction();
+    // CASE keeps the statement portable (MySQL in production, SQLite in tests).
     $pdo->prepare(
-        'UPDATE users SET email_verified_at = ?, account_status = IF(account_status = \'pending_verification\', \'active\', account_status), updated_at = ? WHERE id = ?'
+        'UPDATE users SET email_verified_at = ?, updated_at = ?, '
+        . 'account_status = CASE WHEN account_status = \'pending_verification\' THEN \'active\' ELSE account_status END '
+        . 'WHERE id = ?'
     )->execute([$ts, $ts, $row['user_id']]);
     $pdo->prepare('UPDATE email_verification_tokens SET used_at = ? WHERE id = ?')
         ->execute([$ts, $row['id']]);
