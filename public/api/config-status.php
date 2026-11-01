@@ -16,7 +16,7 @@ $localFile = __DIR__ . '/config/config.local.php';
 $configLocalExists = is_file($localFile);
 $configLocalReadable = $configLocalExists && is_readable($localFile);
 
-$envDbPass = getenv('DS_DB_PASS');
+$envDbPass = ds_env('DS_DB_PASS');
 $envDbPassPresent = ($envDbPass !== false && $envDbPass !== '');
 
 $cfg = ds_config();
@@ -42,6 +42,12 @@ ds_json([
     'config_local_readable' => $configLocalReadable,
     'env_db_pass_present' => $envDbPassPresent,
     'effective_db_pass_present' => $effectiveDbPassPresent,
+    'mail_env_sources' => [
+        'smtp_host' => ['getenv' => getenv('DS_SMTP_HOST') !== false, 'env' => isset($_ENV['DS_SMTP_HOST']), 'server' => isset($_SERVER['DS_SMTP_HOST'])],
+        'smtp_user' => ['getenv' => getenv('DS_SMTP_USER') !== false, 'env' => isset($_ENV['DS_SMTP_USER']), 'server' => isset($_SERVER['DS_SMTP_USER'])],
+        'smtp_pass' => ['getenv' => getenv('DS_SMTP_PASS') !== false, 'env' => isset($_ENV['DS_SMTP_PASS']), 'server' => isset($_SERVER['DS_SMTP_PASS'])],
+        'db_pass' => ['getenv' => getenv('DS_DB_PASS') !== false, 'env' => isset($_ENV['DS_DB_PASS']), 'server' => isset($_SERVER['DS_DB_PASS'])],
+    ],
     'db_host_present' => $dbHostPresent,
     'db_name_present' => $dbNamePresent,
     'db_user_present' => $dbUserPresent,

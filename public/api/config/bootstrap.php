@@ -14,6 +14,28 @@ require_once __DIR__ . '/provider.php';
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/mail_templates.php';
 
+/**
+ * Read a configuration variable from whichever source this host injects
+ * environment variables with: Apache SetEnv exposes values in $_SERVER,
+ * PHP-FPM may only populate $_ENV, and CLI uses getenv().
+ *
+ * @return string|false
+ */
+function ds_env(string $key)
+{
+    $value = getenv($key);
+    if (is_string($value)) {
+        return $value;
+    }
+    if (isset($_ENV[$key]) && is_string($_ENV[$key])) {
+        return $_ENV[$key];
+    }
+    if (isset($_SERVER[$key]) && is_string($_SERVER[$key])) {
+        return $_SERVER[$key];
+    }
+    return false;
+}
+
 function ds_config(): array
 {
     static $config = null;
@@ -22,57 +44,57 @@ function ds_config(): array
     }
 
     $defaults = [
-        'db_driver' => getenv('DS_DB_DRIVER') ?: 'mysql',
-        'sqlite_path' => getenv('DS_SQLITE_PATH') ?: '',
-        'db_host' => getenv('DS_DB_HOST') ?: 'localhost',
-        'db_port' => (int) (getenv('DS_DB_PORT') ?: 3306),
+        'db_driver' => ds_env('DS_DB_DRIVER') ?: 'mysql',
+        'sqlite_path' => ds_env('DS_SQLITE_PATH') ?: '',
+        'db_host' => ds_env('DS_DB_HOST') ?: 'localhost',
+        'db_port' => (int) (ds_env('DS_DB_PORT') ?: 3306),
         // Legacy Hostinger MySQL names — retain for production compatibility.
-        'db_name' => getenv('DS_DB_NAME') ?: 'u190513960_darksecret',
-        'db_user' => getenv('DS_DB_USER') ?: 'u190513960_darksecret',
-        'db_pass' => getenv('DS_DB_PASS') ?: '',
-        'session_name' => getenv('DS_SESSION_NAME') ?: 'ds_session',
+        'db_name' => ds_env('DS_DB_NAME') ?: 'u190513960_darksecret',
+        'db_user' => ds_env('DS_DB_USER') ?: 'u190513960_darksecret',
+        'db_pass' => ds_env('DS_DB_PASS') ?: '',
+        'session_name' => ds_env('DS_SESSION_NAME') ?: 'ds_session',
         // null = auto-detect HTTPS; set true/false in config.local.php to force
         'cookie_secure' => (static function () {
-            $env = getenv('DS_COOKIE_SECURE');
+            $env = ds_env('DS_COOKIE_SECURE');
             if ($env === false || $env === '') {
                 return null;
             }
             return filter_var($env, FILTER_VALIDATE_BOOLEAN);
         })(),
-        'cookie_samesite' => getenv('DS_COOKIE_SAMESITE') ?: 'Lax',
+        'cookie_samesite' => ds_env('DS_COOKIE_SAMESITE') ?: 'Lax',
         'cookie_path' => '/',
-        'session_lifetime' => (int) (getenv('DS_SESSION_LIFETIME') ?: 60 * 60 * 24 * 30),
-        'app_env' => getenv('DS_APP_ENV') ?: 'production',
-        'app_url' => getenv('DS_APP_URL') ?: 'https://massagerstudio.com',
+        'session_lifetime' => (int) (ds_env('DS_SESSION_LIFETIME') ?: 60 * 60 * 24 * 30),
+        'app_env' => ds_env('DS_APP_ENV') ?: 'production',
+        'app_url' => ds_env('DS_APP_URL') ?: 'https://massagerstudio.com',
         // Recipient mailboxes only — keep separate from mail_from / SMTP credentials.
-        'info_email' => getenv('DS_INFO_EMAIL') ?: 'info@massagerstudio.com',
-        'admin_email' => getenv('DS_ADMIN_EMAIL') ?: 'admin@massagerstudio.com',
-        'contact_email' => getenv('DS_CONTACT_EMAIL') ?: 'contact@massagerstudio.com',
+        'info_email' => ds_env('DS_INFO_EMAIL') ?: 'info@massagerstudio.com',
+        'admin_email' => ds_env('DS_ADMIN_EMAIL') ?: 'admin@massagerstudio.com',
+        'contact_email' => ds_env('DS_CONTACT_EMAIL') ?: 'contact@massagerstudio.com',
         // Transport: smtp (production) | file (local outbox, refused in production).
-        'mail_transport' => strtolower(trim((string) (getenv('DS_MAIL_TRANSPORT') ?: 'smtp'))),
+        'mail_transport' => strtolower(trim((string) (ds_env('DS_MAIL_TRANSPORT') ?: 'smtp'))),
         // Authenticated SMTP transport (server-only; never sent to the browser).
-        'smtp_host' => getenv('DS_SMTP_HOST') ?: '',
-        'smtp_port' => (int) (getenv('DS_SMTP_PORT') ?: 465),
+        'smtp_host' => ds_env('DS_SMTP_HOST') ?: '',
+        'smtp_port' => (int) (ds_env('DS_SMTP_PORT') ?: 465),
         // ssl | tls | '' — an explicit empty value allows the loopback test sink.
         'smtp_secure' => (static function () {
-            $value = getenv('DS_SMTP_SECURE');
+            $value = ds_env('DS_SMTP_SECURE');
             return $value === false ? 'ssl' : strtolower(trim($value));
         })(),
-        'smtp_user' => getenv('DS_SMTP_USER') ?: '',
-        'smtp_pass' => getenv('DS_SMTP_PASS') ?: '',
-        'smtp_timeout' => (int) (getenv('DS_SMTP_TIMEOUT') ?: 15),
-        'mail_from' => getenv('DS_MAIL_FROM') ?: 'info@massagerstudio.com',
-        'mail_from_name' => getenv('DS_MAIL_FROM_NAME') ?: 'Massager Studio',
-        'mail_reply_to' => getenv('DS_MAIL_REPLY_TO') ?: 'contact@massagerstudio.com',
-        'mail_debug' => (int) (getenv('DS_MAIL_DEBUG') ?: 0),
+        'smtp_user' => ds_env('DS_SMTP_USER') ?: '',
+        'smtp_pass' => ds_env('DS_SMTP_PASS') ?: '',
+        'smtp_timeout' => (int) (ds_env('DS_SMTP_TIMEOUT') ?: 15),
+        'mail_from' => ds_env('DS_MAIL_FROM') ?: 'info@massagerstudio.com',
+        'mail_from_name' => ds_env('DS_MAIL_FROM_NAME') ?: 'Massager Studio',
+        'mail_reply_to' => ds_env('DS_MAIL_REPLY_TO') ?: 'contact@massagerstudio.com',
+        'mail_debug' => (int) (ds_env('DS_MAIL_DEBUG') ?: 0),
         // Provider membership. Free by default: the fee can be switched back on
         // (DS_MEMBERSHIP_FEE_ENABLED=true) without a schema or code change.
         'membership_fee_enabled' => filter_var(
-            getenv('DS_MEMBERSHIP_FEE_ENABLED') ?: 'false',
+            ds_env('DS_MEMBERSHIP_FEE_ENABLED') ?: 'false',
             FILTER_VALIDATE_BOOLEAN
         ),
-        'membership_fee_amount' => (float) (getenv('DS_MEMBERSHIP_FEE_AMOUNT') ?: 100),
-        'membership_currency' => getenv('DS_MEMBERSHIP_CURRENCY') ?: 'GHS',
+        'membership_fee_amount' => (float) (ds_env('DS_MEMBERSHIP_FEE_AMOUNT') ?: 100),
+        'membership_currency' => ds_env('DS_MEMBERSHIP_CURRENCY') ?: 'GHS',
     ];
 
     $localFile = __DIR__ . '/config.local.php';
