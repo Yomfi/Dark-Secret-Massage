@@ -114,11 +114,16 @@ async function main() {
     setup.on('exit', (code) => (code === 0 ? resolve(out) : reject(new Error(out))));
   });
 
+  const rateLimitDir = path.join(apiRoot, 'storage', 'auth-smoke-rate');
+  fs.rmSync(rateLimitDir, { recursive: true, force: true });
+  fs.mkdirSync(rateLimitDir, { recursive: true });
+
   const env = {
     DS_DB_DRIVER: 'sqlite',
     DS_SQLITE_PATH: sqlitePath,
     DS_APP_ENV: 'development',
     DS_COOKIE_SECURE: 'false',
+    DS_RATE_LIMIT_DIR: rateLimitDir,
   };
 
   const server = runPhp(['-S', `127.0.0.1:${port}`, '-t', apiRoot, path.join(apiRoot, 'router.php')], env);

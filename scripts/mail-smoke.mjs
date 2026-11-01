@@ -237,6 +237,10 @@ async function main() {
 
   await setupDatabase();
 
+  const rateLimitDir = path.join(apiRoot, 'storage', 'mail-smoke-rate');
+  fs.rmSync(rateLimitDir, { recursive: true, force: true });
+  fs.mkdirSync(rateLimitDir, { recursive: true });
+
   const devEnv = {
     DS_DB_DRIVER: 'sqlite',
     DS_SQLITE_PATH: sqlitePath,
@@ -247,6 +251,7 @@ async function main() {
     DS_MAIL_FROM: 'info@massagerstudio.com',
     DS_MAIL_FROM_NAME: 'Massager Studio',
     DS_MAIL_REPLY_TO: 'contact@massagerstudio.com',
+    DS_RATE_LIMIT_DIR: rateLimitDir,
   };
 
   const stamp = Date.now();
@@ -407,19 +412,14 @@ async function main() {
 
   // 5 — production with an unreachable SMTP host
   const prodEnv = {
-    DS_DB_DRIVER: 'sqlite',
-    DS_SQLITE_PATH: sqlitePath,
+    ...devEnv,
     DS_APP_ENV: 'production',
-    DS_COOKIE_SECURE: 'false',
-    DS_APP_URL: 'https://massagerstudio.com',
     DS_MAIL_TRANSPORT: 'smtp',
     DS_SMTP_HOST: '127.0.0.1',
     DS_SMTP_PORT: String(smtpClosedPort),
     DS_SMTP_SECURE: 'ssl',
     DS_SMTP_USER: 'info@massagerstudio.com',
     DS_SMTP_PASS: 'local-test-password',
-    DS_MAIL_FROM: 'info@massagerstudio.com',
-    DS_MAIL_REPLY_TO: 'contact@massagerstudio.com',
   };
   php = await bootPhpServer(prodEnv);
 
