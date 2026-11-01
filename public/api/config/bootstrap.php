@@ -26,6 +26,7 @@ function ds_config(): array
         'sqlite_path' => getenv('DS_SQLITE_PATH') ?: '',
         'db_host' => getenv('DS_DB_HOST') ?: 'localhost',
         'db_port' => (int) (getenv('DS_DB_PORT') ?: 3306),
+        // Legacy Hostinger MySQL names — retain for production compatibility.
         'db_name' => getenv('DS_DB_NAME') ?: 'u190513960_darksecret',
         'db_user' => getenv('DS_DB_USER') ?: 'u190513960_darksecret',
         'db_pass' => getenv('DS_DB_PASS') ?: '',
@@ -43,7 +44,7 @@ function ds_config(): array
         'session_lifetime' => (int) (getenv('DS_SESSION_LIFETIME') ?: 60 * 60 * 24 * 30),
         'app_env' => getenv('DS_APP_ENV') ?: 'production',
         'app_url' => getenv('DS_APP_URL') ?: 'https://massagerstudio.com',
-        // Recipient mailboxes. Operational addresses only — not sender/SMTP settings.
+        // Recipient mailboxes only — keep separate from mail_from / SMTP credentials.
         'info_email' => getenv('DS_INFO_EMAIL') ?: 'info@massagerstudio.com',
         'admin_email' => getenv('DS_ADMIN_EMAIL') ?: 'admin@massagerstudio.com',
         'contact_email' => getenv('DS_CONTACT_EMAIL') ?: 'contact@massagerstudio.com',

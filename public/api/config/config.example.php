@@ -8,6 +8,7 @@ return [
     'db_driver' => 'mysql',
     'db_host' => 'localhost',
     'db_port' => 3306,
+    // Legacy Hostinger MySQL names — retain for production compatibility.
     'db_name' => 'u190513960_darksecret',
     'db_user' => 'u190513960_darksecret',
     'db_pass' => 'REPLACE_WITH_HOSTINGER_DB_PASSWORD',
@@ -23,9 +24,10 @@ return [
     'app_env' => 'production',    // production | development
     'app_url' => 'https://massagerstudio.com',
 
-    // Recipient mailboxes — operational addresses only, never SMTP credentials.
-    // info: system/operational notices · admin: business enquiries & partnerships
-    // contact: public contact-form and marketplace enquiry mail
+    // Recipient mailboxes only (never SMTP credentials). Keep separate from mail_from.
+    // info@   — system notifications and general operational email notifications
+    // admin@  — official business enquiries, partnerships and collaborations
+    // contact@ — contact-form submissions and public contact / marketplace enquiry mail
     'info_email' => 'info@massagerstudio.com',
     'admin_email' => 'admin@massagerstudio.com',
     'contact_email' => 'contact@massagerstudio.com',

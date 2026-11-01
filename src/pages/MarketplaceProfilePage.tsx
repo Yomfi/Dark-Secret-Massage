@@ -27,6 +27,7 @@ import {
   serviceSettingLabel,
   whatsappEnquiryUrl,
 } from '../lib/marketplace';
+import { marketplaceEnquireMailto } from '../lib/companyEmails';
 import { useAuth } from '../auth/AuthContext';
 import { PortraitMedia } from '../components/marketplace/PortraitMedia';
 import { VerifiedBadge, VerifiedNameCheck } from '../components/marketplace/VerifiedBadge';
@@ -47,9 +48,6 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
 }
 
 type PendingContact = 'call' | 'whatsapp' | 'enquire';
-
-/** Public enquiry mailbox (separate from system and business-enquiry addresses). */
-const CONTACT_EMAIL = 'contact@massagerstudio.com';
 
 function ContactPanel({
   profile,
@@ -76,11 +74,7 @@ function ContactPanel({
       return;
     }
     if (action === 'enquire') {
-      const subject = encodeURIComponent(`Enquiry: ${profile.displayName} on Massager Studio`);
-      const body = encodeURIComponent(
-        `Hello, I found your profile on Massager Studio and would like to enquire.\n\nProfile: ${profile.displayName}\nCity: ${profile.city}`,
-      );
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+      window.location.href = marketplaceEnquireMailto(profile.displayName, profile.city);
     }
   };
 

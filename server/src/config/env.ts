@@ -39,7 +39,7 @@ export const env = {
   port: parsePort(),
   nodeEnv,
   isProd,
-  databaseUrl: required('DATABASE_URL', 'mysql://root:root@127.0.0.1:3306/dark_secret'),
+  databaseUrl: required('DATABASE_URL', 'mysql://root:root@127.0.0.1:3306/massager_studio'),
   corsOrigins: (process.env.CORS_ORIGINS || defaultCors)
     .split(',')
     .map((s) => s.trim())

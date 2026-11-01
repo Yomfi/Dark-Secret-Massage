@@ -1,6 +1,6 @@
 # Massager Studio
 
-Private platform for intentional matrimonial matchmaking and professional massage wellness.
+Private platform for trusted professional massage and wellness services.
 
 ## Production (Hostinger PHP + MySQL)
 
@@ -8,7 +8,7 @@ Same origin: `https://massagerstudio.com`
 
 - Frontend: Vite React → `dist/`
 - Backend: PHP under `public/api/` (copied into `dist/api/` on build)
-- Database: Hostinger MySQL (`users` table shared with prior Prisma schema)
+- Database: Hostinger MySQL (legacy database/user names retained — see [HOSTINGER.md](./HOSTINGER.md))
 
 ```bash
 npm install
@@ -35,10 +35,13 @@ API client defaults to `/api` (same-origin).
 ## Routes
 
 - `/` homepage
+- `/explore/:city` massage marketplace
 - `/massage` explore services
 - `/book-massage` booking flow
-- `/find-a-life-partner` discovery (requires authentication)
+- `/provider/register` individual and agency provider registration
 - `/login` `/register` `/onboarding`
+
+Archived matchmaking UI remains under `src/_archived/matchmaking/` and is not part of the live public product.
 
 ## Legacy Node backend
 

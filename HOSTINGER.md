@@ -12,7 +12,7 @@ The `server/` Express/Prisma tree remains in the repo for reference until a late
 | Field | Value |
 |--------|--------|
 | Domain | `massagerstudio.com` |
-| Repository | `Yomfi/Dark-Secret-Massage` |
+| Repository | `Yomfi/Dark-Secret-Massage` (GitHub path retained; product brand is Massager Studio) |
 | Branch | `main` |
 | Hosting type | **PHP / Apache** (standard web hosting — not Node.js) |
 | Publish directory | `dist/` (or deploy `dist` contents to `public_html`) |
@@ -88,13 +88,13 @@ PHPMailer 7.1.1, vendored in `api/vendor/phpmailer` (no Composer on the host —
 | Provider verification code | `POST /api/provider/send-email-code` | the provider account's own address |
 | Provider submitted for review | `POST /api/provider/submit-review` | `info@massagerstudio.com` |
 
-Company mailboxes:
+Company mailboxes (recipients — keep separate from SMTP/`mail_from`):
 
 | Address | Purpose |
 |--------|---------|
-| `info@massagerstudio.com` | System/operational notifications and the SMTP sender identity |
-| `admin@massagerstudio.com` | Official business enquiries, partnerships and collaborations |
-| `contact@massagerstudio.com` | Public contact and enquiry mail; `Reply-To` on all system mail |
+| `info@massagerstudio.com` | Receives system notifications and general operational email notifications. Also used as the authenticated SMTP sender identity when configured. |
+| `admin@massagerstudio.com` | Receives official business enquiries, partnerships and collaborations (footer Partnerships mailto). |
+| `contact@massagerstudio.com` | Receives contact-form / public contact and marketplace “Enquire” mail. Also used as `Reply-To` on transactional system mail. |
 
 Email links are built from `app_url` only (never the request Host): `/reset-password?token=…`
 and `/verify-email?token=…` are real SPA routes, so the links open the app.
@@ -138,8 +138,9 @@ masked, no tokens or message bodies). `storage/` is blocked from HTTP access by 
 2. Publish SPF and DKIM records for `massagerstudio.com` so mail is not filtered.
 3. Send one test message, check hPanel → Emails → delivery log for SMTP acceptance, then check
    the inbox (and junk folder) to confirm receipt.
-4. `admin@massagerstudio.com` has no automated sender yet — it is used for business
-   correspondence only. Do not assume an inbox workflow exists for it.
+4. Create/verify the three Hostinger mailboxes (`info@`, `admin@`, `contact@`). SMTP
+   authentication typically uses `info@` as `smtp_user` / `mail_from`. Recipient routing
+   still uses the three addresses above. Do not assume delivery works until step 3 passes.
 5. `GET /api/config-status` reports `mail_configured`, `mail_transport` and the *names* of any
    missing mail keys (never values), so you can confirm the config without guessing.
 

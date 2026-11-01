@@ -1,4 +1,5 @@
-# Optional local MySQL for development
+# Optional local MySQL for development (not production Hostinger credentials).
+# Production still uses the legacy Hostinger DB/user names documented in HOSTINGER.md.
 services:
   mysql:
     image: mysql:8.4
@@ -7,11 +8,11 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: dark_secret
-      MYSQL_USER: dark_secret
-      MYSQL_PASSWORD: dark_secret
+      MYSQL_DATABASE: massager_studio
+      MYSQL_USER: massager_studio
+      MYSQL_PASSWORD: massager_studio
     volumes:
-      - dark_secret_mysql:/var/lib/mysql
+      - massager_studio_mysql:/var/lib/mysql
 
 volumes:
-  dark_secret_mysql:
+  massager_studio_mysql:

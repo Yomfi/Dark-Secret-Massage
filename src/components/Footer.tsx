@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 import { SocialLinks } from './SocialLinks';
+import { partnershipMailto, publicContactMailto } from '../lib/companyEmails';
 
 interface FooterProps {
   onOpenBooking?: () => void;
@@ -113,6 +114,16 @@ export const Footer: React.FC<FooterProps> = ({
               <Link to="/register" className="hover:text-white transition-colors">
                 Register
               </Link>
+            </li>
+            <li>
+              <a href={publicContactMailto()} className="hover:text-white transition-colors">
+                Contact
+              </a>
+            </li>
+            <li>
+              <a href={partnershipMailto()} className="hover:text-white transition-colors">
+                Partnerships
+              </a>
             </li>
             <li>
               <span className="text-zinc-400">Private & Secure</span>

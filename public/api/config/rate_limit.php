@@ -8,7 +8,8 @@ declare(strict_types=1);
 function ds_rate_limit(string $bucket, int $max, int $windowSeconds): void
 {
     $ip = preg_replace('/[^a-zA-Z0-9_.:-]/', '_', ds_client_ip()) ?: 'unknown';
-    $dir = sys_get_temp_dir() . '/darksecret_rate';
+    // Internal temp bucket name only — not user-facing branding.
+    $dir = sys_get_temp_dir() . '/massagerstudio_rate';
     if (!is_dir($dir)) {
         @mkdir($dir, 0700, true);
     }
