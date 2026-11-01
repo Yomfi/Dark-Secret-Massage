@@ -134,13 +134,19 @@ masked, no tokens or message bodies). `storage/` is blocked from HTTP access by 
 
 ### Still required on the host
 
-1. Confirm the SMTP host/port for `info@massagerstudio.com` in hPanel and enter the settings above.
-2. Publish SPF and DKIM records for `massagerstudio.com` so mail is not filtered.
-3. Send one test message, check hPanel → Emails → delivery log for SMTP acceptance, then check
-   the inbox (and junk folder) to confirm receipt.
-4. Create/verify the three Hostinger mailboxes (`info@`, `admin@`, `contact@`). SMTP
-   authentication typically uses `info@` as `smtp_user` / `mail_from`. Recipient routing
-   still uses the three addresses above. Do not assume delivery works until step 3 passes.
+The three mailboxes (`info@`, `admin@`, `contact@`) already exist. SMTP authentication
+should use `info@massagerstudio.com` as `smtp_user` / `mail_from`. Recipient routing still
+uses the three addresses for their assigned purposes.
+
+1. Confirm the SMTP host/port for `info@massagerstudio.com` in hPanel → Emails (typically
+   `smtp.hostinger.com`, port `465` / `ssl`, or `587` / `tls`).
+2. Copy `api/config/config.example.php` to `api/config/config.local.php` on the server and
+   enter `smtp_pass` (and any differing host/port values) **privately** — never commit it
+   and never paste the password into chat.
+3. Publish SPF and DKIM records for `massagerstudio.com` so mail is not filtered.
+4. On the host (native PHP), run `php api/tools/send-smtp-test.php` (or `npm run test:smtp`
+   where native PHP is available). SMTP acceptance ≠ confirmed inbox receipt — also check
+   the `info@` inbox and junk folder.
 5. `GET /api/config-status` reports `mail_configured`, `mail_transport` and the *names* of any
    missing mail keys (never values), so you can confirm the config without guessing.
 

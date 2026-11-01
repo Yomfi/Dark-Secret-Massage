@@ -1,6 +1,6 @@
 /**
- * Stubbed notification providers.
- * Replace with real email/SMS integrations later — do not call providers from controllers.
+ * Legacy Node stubs only. Production transactional email is delivered by the
+ * PHP API (public/api/config/mailer.php + PHPMailer). Do not wire SMTP here.
  */
 
 export async function sendPasswordResetEmail(email: string, resetToken: string): Promise<void> {

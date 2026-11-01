@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "php:lint": "node node_modules/php-cli/php-cli.js -v >/dev/null 2>&1 && find public/api -name '*.php' -print0 | xargs -0 -n1 node node_modules/php-cli/php-cli.js -l || (command -v php >/dev/null && find public/api -name '*.php' -print0 | xargs -0 -n1 php -l) || echo 'PHP lint skipped'",
     "test:auth": "node scripts/auth-smoke.mjs",
-    "test:mail": "node scripts/mail-smoke.mjs"
+    "test:mail": "node scripts/mail-smoke.mjs",
+    "test:smtp": "node scripts/smtp-acceptance.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

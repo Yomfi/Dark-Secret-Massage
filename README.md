@@ -18,8 +18,10 @@ npm run build
 Deploy `dist/` to Hostinger PHP hosting. See [HOSTINGER.md](./HOSTINGER.md).
 
 Email: transactional mail (password reset, email confirmation, provider verification code) is
-delivered over authenticated SMTP configured on the server; see
-[HOSTINGER.md](./HOSTINGER.md#email) for the required settings and diagnostics.
+delivered by the PHP API over authenticated SMTP; see
+[HOSTINGER.md](./HOSTINGER.md#email). Local checks: `npm run test:mail` (file transport +
+failure paths) and `npm run test:smtp` (real SMTP acceptance when native PHP + mailbox
+credentials are available). The legacy `server/` Node tree does not send production mail.
 
 ## Local frontend
 

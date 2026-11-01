@@ -124,6 +124,7 @@ function ds_mail_write_outbox(string $toEmail, string $toName, array $message, a
     }
 
     $settings = ds_mail_settings();
+    $boundary = 'ms_' . bin2hex(random_bytes(12));
     $headers = [
         'Date: ' . date(DATE_RFC2822),
         'From: ' . $settings['from_name'] . ' <' . $settings['from'] . '>',
@@ -132,14 +133,24 @@ function ds_mail_write_outbox(string $toEmail, string $toName, array $message, a
         'Subject: ' . $message['subject'],
         'Message-ID: <' . bin2hex(random_bytes(8)) . '@massagerstudio.com>',
         'MIME-Version: 1.0',
-        'Content-Type: text/html; charset=UTF-8',
+        'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
         'X-Massager-Studio-Transport: local-outbox',
     ];
+
+    $body = '--' . $boundary . "\r\n"
+        . "Content-Type: text/plain; charset=UTF-8\r\n"
+        . "Content-Transfer-Encoding: 8bit\r\n\r\n"
+        . $message['text'] . "\r\n"
+        . '--' . $boundary . "\r\n"
+        . "Content-Type: text/html; charset=UTF-8\r\n"
+        . "Content-Transfer-Encoding: 8bit\r\n\r\n"
+        . $message['html'] . "\r\n"
+        . '--' . $boundary . "--\r\n";
 
     $file = $dir . '/' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(3)) . '.eml';
     $written = @file_put_contents(
         $file,
-        implode("\r\n", $headers) . "\r\n\r\n" . $message['html'],
+        implode("\r\n", $headers) . "\r\n\r\n" . $body,
         LOCK_EX
     );
 
