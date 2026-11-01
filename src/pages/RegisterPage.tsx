@@ -1,7 +1,8 @@
-import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
+import { AuthLayout } from '../components/layout/AuthLayout';
+import { Alert, Button, CheckboxField, TextField } from '../components/ui';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -33,7 +34,7 @@ export const RegisterPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
@@ -42,7 +43,10 @@ export const RegisterPage: React.FC = () => {
         confirmPassword: form.confirmPassword,
         termsAccepted: true,
       });
-      navigate('/onboarding', { replace: true });
+      // Email verification is the registration gate; the phone is contact info only.
+      navigate(result.verificationEmailSent ? '/verify-email?sent=1' : '/verify-email?sent=0', {
+        replace: true,
+      });
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -51,104 +55,95 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
-          <BrandLogo variant="plate" withWordmark markHeight={26} />
-        </Link>
-      </header>
+    <AuthLayout
+      width="lg"
+      title="Create your account"
+      description="Account creation is simple. Your pathway preferences come next."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="font-semibold text-brand-gold-light hover:text-brand-gold">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        {error ? <Alert variant="error">{error}</Alert> : null}
 
-      <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <form
-          onSubmit={onSubmit}
-          className="w-full max-w-lg rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8 space-y-4"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">Create account</p>
-            <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Join Massager Studio</h1>
-            <p className="mt-2 text-base text-zinc-400 font-normal">
-              Account creation is simple. Pathway preferences come next.
-            </p>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            label="First name"
+            name="firstName"
+            autoComplete="given-name"
+            required
+            value={form.firstName}
+            onChange={(e) => patch({ firstName: e.target.value })}
+          />
+          <TextField
+            label="Last name"
+            name="lastName"
+            autoComplete="family-name"
+            required
+            value={form.lastName}
+            onChange={(e) => patch({ lastName: e.target.value })}
+          />
+        </div>
 
-          {error && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200 font-medium">
-              {error}
-            </div>
-          )}
+        <TextField
+          label="Email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={form.email}
+          onChange={(e) => patch({ email: e.target.value })}
+        />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="First name" value={form.firstName} onChange={(v) => patch({ firstName: v })} />
-            <Field label="Last name" value={form.lastName} onChange={(v) => patch({ lastName: v })} />
-          </div>
-          <Field label="Email" type="email" value={form.email} onChange={(v) => patch({ email: v })} />
-          <Field label="Phone" value={form.phone} onChange={(v) => patch({ phone: v })} placeholder="+233…" />
-          <Field
+        <TextField
+          label="Phone"
+          name="phone"
+          type="tel"
+          autoComplete="tel"
+          placeholder="+233…"
+          required
+          value={form.phone}
+          onChange={(e) => patch({ phone: e.target.value })}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
             label="Password"
+            name="password"
             type="password"
+            autoComplete="new-password"
+            required
+            hint="At least 8 characters, with a letter and a number."
             value={form.password}
-            onChange={(v) => patch({ password: v })}
+            onChange={(e) => patch({ password: e.target.value })}
           />
-          <Field
+          <TextField
             label="Confirm password"
+            name="confirmPassword"
             type="password"
+            autoComplete="new-password"
+            required
             value={form.confirmPassword}
-            onChange={(v) => patch({ confirmPassword: v })}
+            onChange={(e) => patch({ confirmPassword: e.target.value })}
           />
+        </div>
 
-          <label className="flex items-start gap-3 text-sm text-zinc-300 font-medium cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.termsAccepted}
-              onChange={(e) => patch({ termsAccepted: e.target.checked })}
-              className="mt-1 accent-brand-gold"
-            />
-            <span>I accept the Massager Studio terms and privacy policy.</span>
-          </label>
+        <CheckboxField
+          name="terms"
+          checked={form.termsAccepted}
+          onChange={(e) => patch({ termsAccepted: e.target.checked })}
+          label="I accept the Massager Studio terms and privacy policy."
+        />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 cursor-pointer"
-          >
-            {loading ? 'Creating account…' : 'Create account'}
-          </button>
-
-          <p className="text-sm text-zinc-400 text-center">
-            Already have an account?{' '}
-            <Link to="/login" className="text-brand-gold-light font-semibold hover:text-brand-gold-light">
-              Sign in
-            </Link>
-          </p>
-        </form>
-      </main>
-    </div>
+        <Button type="submit" fullWidth loading={loading} loadingLabel="Creating account">
+          Create account
+        </Button>
+      </form>
+    </AuthLayout>
   );
 };
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="block text-sm font-semibold text-zinc-200 mb-1.5">{label}</span>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
-      />
-    </label>
-  );
-}

@@ -98,6 +98,17 @@ function ds_require_user(): array
     return $user;
 }
 
+/**
+ * Email confirmation is the account gate for both customers and providers.
+ * A phone number is contact information only and is never a gate.
+ */
+function ds_require_verified_email(array $user): void
+{
+    if (empty($user['email_verified_at'])) {
+        ds_error(403, 'EMAIL_NOT_VERIFIED', 'Confirm your email address to continue.');
+    }
+}
+
 function ds_find_user_by_id(string $id): ?array
 {
     $stmt = ds_pdo()->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');

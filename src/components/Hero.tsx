@@ -1,177 +1,83 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { VisualMedia } from './VisualMedia';
-import { ShieldCheck, Sparkles, Lock } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { CitySearch } from './marketplace/CitySearch';
+import { buttonClass } from './ui/Button';
+import { Container } from './ui/Layout';
 
 interface HeroProps {
   verifiedCount?: string;
 }
 
-export const Hero: React.FC<HeroProps> = ({
-  verifiedCount = '1,200+',
-}) => {
+export const Hero: React.FC<HeroProps> = ({ verifiedCount = '1,200+' }) => {
   return (
-    <section className="relative min-h-[100svh] flex-1 flex flex-col justify-between pt-28 sm:pt-32 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 overflow-x-hidden select-none">
-      <motion.div
-        initial={{ opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute inset-0 z-0 w-full h-full pointer-events-none overflow-hidden"
-      >
+    <section className="relative isolate flex min-h-[92svh] flex-col justify-center overflow-hidden pb-14 pt-28 sm:pb-16 sm:pt-32">
+      <div className="absolute inset-0 -z-10">
         <VisualMedia
           type="hero-cinematic"
-          className="w-full h-full"
+          className="h-full w-full"
           alt="Warm ambient lounge atmosphere for discovering massage professionals near you"
         />
-      </motion.div>
-
-      <div className="flex-1 flex flex-col items-center justify-center text-center max-w-4xl mx-auto my-auto z-10 py-6 sm:py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-5 sm:mb-6 inline-flex items-center gap-2"
-        >
-          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.38em] text-brand-gold-light drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-sans">
-            DISCOVER NEAR YOU
-          </span>
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl font-bold tracking-tight text-white leading-[1.07] mb-6 font-sans drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
-        >
-          Find a masseuse
-          <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-zinc-300">
-            in your city.
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5 }}
-          className="text-base sm:text-lg md:text-xl text-zinc-300/90 max-w-2xl mx-auto leading-relaxed font-normal mb-8 sm:mb-10 text-balance drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
-        >
-          Search by location and discover massage professionals available near you.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-30 w-full max-w-xl mx-auto mb-6 sm:mb-7"
-        >
-          <CitySearch variant="hero" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.75 }}
-          className="relative z-20 mb-7 sm:mb-8 flex flex-col items-center gap-2.5"
-        >
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.28em] text-zinc-300 drop-shadow-md">
-            Are you a massage provider?
-          </p>
-          <Link
-            to="/provider/register"
-            className="inline-flex items-center justify-center min-h-[44px] px-6 rounded-full border border-white/20 bg-white/[0.06] hover:bg-white/[0.1] hover:border-brand-gold/40 text-white text-xs font-semibold uppercase tracking-[0.18em] transition-colors"
-          >
-            Create Your Profile
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.85 }}
-          className="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-7 text-[11px] sm:text-xs uppercase tracking-[0.22em] text-zinc-300 font-medium drop-shadow-md"
-        >
-          <div className="inline-flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-brand-gold" />
-            <span>VERIFIED PROFILES</span>
-          </div>
-          <span className="text-zinc-600 hidden sm:inline" aria-hidden="true">
-            ·
-          </span>
-          <div className="inline-flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-brand-gold" />
-            <span>TRUSTED PROVIDERS</span>
-          </div>
-          <span className="text-zinc-600 hidden sm:inline" aria-hidden="true">
-            ·
-          </span>
-          <div className="inline-flex items-center gap-2">
-            <Lock className="w-4 h-4 text-brand-gold" />
-            <span>PRIVATE & SECURE</span>
-          </div>
-        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-surface/80 via-brand-surface/72 to-brand-surface" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.95 }}
-        className="w-full max-w-2xl mx-auto z-10 pt-2 flex flex-col items-center justify-center text-center"
-      >
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2">
-          <svg
-            className="w-5 h-6 text-brand-gold/70 shrink-0 hidden sm:block"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M7 21c-.8-1.5-1.5-3.5-1.5-6 0-5 3.5-9 8.5-11" />
-            <path d="M6 14c1.5-1 3-1.5 5-.5" />
-            <path d="M7 10c1.8-.7 3.5-1 5 0" />
-            <path d="M9 6c1.5-.5 3-.5 4.5.5" />
-          </svg>
+      <Container>
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+            Discover near you
+          </p>
 
-          <div className="flex -space-x-2.5 overflow-hidden p-0.5">
-            <VisualMedia type="avatar-ama" className="w-8 h-8 ring-2 ring-[#070709]" alt="Ama" />
-            <VisualMedia type="avatar-kwame" className="w-8 h-8 ring-2 ring-[#070709]" alt="Kwame" />
-            <VisualMedia type="avatar-abena" className="w-8 h-8 ring-2 ring-[#070709]" alt="Abena" />
-            <VisualMedia type="avatar-elikem" className="w-8 h-8 ring-2 ring-[#070709]" alt="Elikem" />
-            <VisualMedia type="avatar-yaa" className="w-8 h-8 ring-2 ring-[#070709]" alt="Yaa" />
+          <h1 className="text-[2.25rem] font-semibold leading-[1.08] tracking-[-0.03em] text-white text-balance sm:text-5xl lg:text-[3.6rem]">
+            Find a massage professional in your city.
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-zinc-300 sm:text-base">
+            Search by location and discover massage professionals available near you.
+          </p>
+
+          <div className="relative z-30 mx-auto mt-7 w-full max-w-xl">
+            <CitySearch variant="hero" />
           </div>
 
-          <div className="text-left">
-            <div className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-              {verifiedCount} verified Ghanaians
-            </div>
+          <div className="mt-5 flex flex-col items-center gap-3">
+            <Link
+              to="/provider/register"
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+            >
+              Are you a provider? Create your profile
+            </Link>
           </div>
 
-          <svg
-            className="w-5 h-6 text-brand-gold/70 shrink-0 scale-x-[-1] hidden sm:block"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M7 21c-.8-1.5-1.5-3.5-1.5-6 0-5 3.5-9 8.5-11" />
-            <path d="M6 14c1.5-1 3-1.5 5-.5" />
-            <path d="M7 10c1.8-.7 3.5-1 5 0" />
-            <path d="M9 6c1.5-.5 3-.5 4.5.5" />
-          </svg>
+          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[12.5px] text-zinc-400">
+            <li className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-brand-gold-light" aria-hidden />
+              Verified profiles
+            </li>
+            <li className="inline-flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-brand-gold-light" aria-hidden />
+              Reviewed providers
+            </li>
+            <li className="inline-flex items-center gap-1.5">
+              <Lock className="h-4 w-4 text-brand-gold-light" aria-hidden />
+              Private booking details
+            </li>
+          </ul>
         </div>
 
-        <p className="text-[11px] sm:text-xs text-zinc-400 max-w-lg leading-relaxed font-light">
-          Discover trusted massage and wellness professionals across Accra, Tema, Kumasi and beyond.
-        </p>
-      </motion.div>
+        <div className="mx-auto mt-10 flex max-w-xl items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur">
+          <div className="flex -space-x-2 overflow-hidden">
+            <VisualMedia type="avatar-ama" className="h-8 w-8 ring-2 ring-brand-surface" alt="Ama" />
+            <VisualMedia type="avatar-kwame" className="h-8 w-8 ring-2 ring-brand-surface" alt="Kwame" />
+            <VisualMedia type="avatar-abena" className="h-8 w-8 ring-2 ring-brand-surface" alt="Abena" />
+            <VisualMedia type="avatar-elikem" className="h-8 w-8 ring-2 ring-brand-surface" alt="Elikem" />
+            <VisualMedia type="avatar-yaa" className="h-8 w-8 ring-2 ring-brand-surface" alt="Yaa" />
+          </div>
+          <p className="text-[13px] text-zinc-300">
+            <span className="font-semibold text-white">{verifiedCount}</span> verified Ghanaians
+          </p>
+        </div>
+      </Container>
     </section>
   );
 };

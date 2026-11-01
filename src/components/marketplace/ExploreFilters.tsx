@@ -9,6 +9,8 @@ import type {
   MarketplaceSort,
 } from '../../lib/marketplace';
 import { CitySearch, type CitySearchHandle } from './CitySearch';
+import { Button } from '../ui/Button';
+import { SelectField, TextField } from '../ui/Field';
 
 type Props = {
   citySlug: string;
@@ -18,19 +20,19 @@ type Props = {
 };
 
 const PROVIDER_TYPES: { value: MarketplaceProviderTypeFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'All providers' },
   { value: 'individuals', label: 'Individuals' },
   { value: 'agencies', label: 'Agencies' },
 ];
 
 const GENDERS: { value: MarketplaceGenderFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'Any gender' },
   { value: 'women', label: 'Women' },
   { value: 'men', label: 'Men' },
 ];
 
 const AVAILABILITY: { value: MarketplaceAvailability | 'any'; label: string }[] = [
-  { value: 'any', label: 'Any' },
+  { value: 'any', label: 'Any availability' },
   { value: 'today', label: 'Available today' },
   { value: 'this_week', label: 'This week' },
   { value: 'flexible', label: 'Flexible' },
@@ -39,90 +41,67 @@ const AVAILABILITY: { value: MarketplaceAvailability | 'any'; label: string }[] 
 const SORTS: { value: MarketplaceSort; label: string }[] = [
   { value: 'recommended', label: 'Recommended' },
   { value: 'recent', label: 'Recently added' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
+  { value: 'price_asc', label: 'Price: low to high' },
+  { value: 'price_desc', label: 'Price: high to low' },
 ];
 
-const fieldClass =
-  'w-full min-h-[44px] h-11 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-zinc-200 outline-none focus:border-brand-gold/40';
-
-const labelClass = 'block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5';
-
-function FilterFields({
-  filters,
-  onChange,
-  citySlug,
-  onCityChange,
-  layout,
-}: Props & { layout: 'toolbar' | 'sheet' }) {
+function FilterFields({ filters, onChange, citySlug, onCityChange, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
   const citySearchRef = useRef<CitySearchHandle>(null);
   const isSheet = layout === 'sheet';
 
   return (
-    <div
-      className={
-        isSheet
-          ? 'flex flex-col gap-3'
-          : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-9 gap-3 items-end'
-      }
-    >
-      <div className={`min-w-0 ${isSheet ? '' : 'col-span-2 lg:col-span-1 xl:col-span-1'}`}>
-        <label className={labelClass}>Location</label>
-        <CitySearch
-          ref={citySearchRef}
-          variant="toolbar"
-          showSubmitButton={false}
-          initialSlug={citySlug}
-          onNavigate={onCityChange}
-        />
+    <div className={isSheet ? 'flex flex-col gap-3.5' : 'space-y-3'}>
+      <div className={isSheet ? '' : 'flex flex-col gap-3 sm:flex-row sm:items-end'}>
+        <div className="min-w-0 flex-1">
+          <label className="mb-1.5 block text-[12px] font-medium text-zinc-400">Location</label>
+          <CitySearch
+            ref={citySearchRef}
+            variant="toolbar"
+            showSubmitButton={false}
+            initialSlug={citySlug}
+            onNavigate={onCityChange}
+          />
+        </div>
+        <Button
+          onClick={() => citySearchRef.current?.submit()}
+          iconLeft={<Search className="h-4 w-4" aria-hidden />}
+          className={isSheet ? 'w-full' : 'w-full sm:w-auto'}
+        >
+          Search
+        </Button>
       </div>
 
-      <div className="min-w-0">
-        <label className={labelClass}>Provider type</label>
-        <select
+      <div className={isSheet ? 'flex flex-col gap-3.5' : 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'}>
+        <SelectField
+          label="Provider type"
           value={filters.providerType || 'all'}
           onChange={(e) =>
-            onChange({
-              ...filters,
-              providerType: e.target.value as MarketplaceProviderTypeFilter,
-            })
+            onChange({ ...filters, providerType: e.target.value as MarketplaceProviderTypeFilter })
           }
-          className={fieldClass}
         >
           {PROVIDER_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
             </option>
           ))}
-        </select>
-      </div>
+        </SelectField>
 
-      <div className="min-w-0">
-        <label className={labelClass}>Gender</label>
-        <select
+        <SelectField
+          label="Gender"
           value={filters.gender || 'all'}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              gender: e.target.value as MarketplaceGenderFilter,
-            })
-          }
-          className={fieldClass}
+          onChange={(e) => onChange({ ...filters, gender: e.target.value as MarketplaceGenderFilter })}
         >
           {GENDERS.map((g) => (
             <option key={g.value} value={g.value}>
               {g.label}
             </option>
           ))}
-        </select>
-      </div>
+        </SelectField>
 
-      <div className="min-w-0">
-        <label className={labelClass}>Service</label>
-        <select
+        <SelectField
+          label="Service"
           value={filters.service || ''}
           onChange={(e) => onChange({ ...filters, service: e.target.value || null })}
-          className={fieldClass}
         >
           <option value="">All services</option>
           {MASSAGE_SERVICE_OPTIONS.map((label) => (
@@ -130,92 +109,58 @@ function FilterFields({
               {label}
             </option>
           ))}
-        </select>
-      </div>
+        </SelectField>
 
-      <div className="min-w-0">
-        <label className={labelClass}>Min Price</label>
-        <input
-          type="number"
-          min={0}
-          placeholder="Min"
-          value={filters.minPrice ?? ''}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              minPrice: e.target.value === '' ? null : Number(e.target.value),
-            })
-          }
-          className={fieldClass}
-        />
-      </div>
-
-      <div className="min-w-0">
-        <label className={labelClass}>Max Price</label>
-        <input
-          type="number"
-          min={0}
-          placeholder="Max"
-          value={filters.maxPrice ?? ''}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              maxPrice: e.target.value === '' ? null : Number(e.target.value),
-            })
-          }
-          className={fieldClass}
-        />
-      </div>
-
-      <div className="min-w-0">
-        <label className={labelClass}>Availability</label>
-        <select
+        <SelectField
+          label="Availability"
           value={filters.availability || 'any'}
           onChange={(e) =>
-            onChange({
-              ...filters,
-              availability: e.target.value as MarketplaceAvailability | 'any',
-            })
+            onChange({ ...filters, availability: e.target.value as MarketplaceAvailability | 'any' })
           }
-          className={fieldClass}
         >
           {AVAILABILITY.map((a) => (
             <option key={a.value} value={a.value}>
               {a.label}
             </option>
           ))}
-        </select>
-      </div>
+        </SelectField>
 
-      <div className="min-w-0">
-        <label className={labelClass}>Sort</label>
-        <select
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            label="Min price"
+            type="number"
+            min={0}
+            placeholder="GHS"
+            inputMode="numeric"
+            value={filters.minPrice ?? ''}
+            onChange={(e) =>
+              onChange({ ...filters, minPrice: e.target.value === '' ? null : Number(e.target.value) })
+            }
+          />
+          <TextField
+            label="Max price"
+            type="number"
+            min={0}
+            placeholder="GHS"
+            inputMode="numeric"
+            value={filters.maxPrice ?? ''}
+            onChange={(e) =>
+              onChange({ ...filters, maxPrice: e.target.value === '' ? null : Number(e.target.value) })
+            }
+          />
+        </div>
+
+        <SelectField
+          label="Sort by"
           value={filters.sort || 'recommended'}
           onChange={(e) => onChange({ ...filters, sort: e.target.value as MarketplaceSort })}
-          className={fieldClass}
         >
           {SORTS.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
             </option>
           ))}
-        </select>
-      </div>
-
-      <div className={`min-w-0 ${isSheet ? 'pt-2' : ''}`}>
-        {!isSheet && <label className={`${labelClass} invisible select-none`}>Search</label>}
-        <button
-          type="button"
-          onClick={() => citySearchRef.current?.submit()}
-          className={
-            isSheet
-              ? 'w-full inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-sm font-semibold uppercase tracking-widest transition-colors'
-              : 'w-full inline-flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-xs font-semibold uppercase tracking-widest transition-colors'
-          }
-        >
-          <Search className="w-4 h-4" />
-          Search
-        </button>
+        </SelectField>
       </div>
     </div>
   );
@@ -227,14 +172,12 @@ export const ExploreFilters: React.FC<Props> = (props) => {
 
   return (
     <>
-      {/* Desktop / tablet toolbar */}
-      <div className="hidden md:block rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:block">
         <FilterFields {...props} layout="toolbar" />
       </div>
 
-      {/* Mobile trigger */}
-      <div className="md:hidden flex gap-2 items-stretch">
-        <div className="flex-1 min-w-0">
+      <div className="flex items-stretch gap-2 md:hidden">
+        <div className="min-w-0 flex-1">
           <CitySearch
             ref={mobileCityRef}
             variant="toolbar"
@@ -243,56 +186,46 @@ export const ExploreFilters: React.FC<Props> = (props) => {
             onNavigate={props.onCityChange}
           />
         </div>
-        <button
-          type="button"
-          onClick={() => mobileCityRef.current?.submit()}
-          className="inline-flex items-center justify-center gap-1.5 shrink-0 min-h-[44px] px-3 rounded-xl bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
-          aria-label="Search city"
-        >
-          <Search className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
+        <Button onClick={() => mobileCityRef.current?.submit()} className="shrink-0 px-4" aria-label="Search city">
+          <Search className="h-4 w-4" aria-hidden />
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() => setSheetOpen(true)}
-          className="inline-flex items-center justify-center gap-2 shrink-0 min-h-[44px] px-4 rounded-xl border border-white/15 bg-white/[0.05] text-xs uppercase tracking-widest text-zinc-200"
+          className="shrink-0 px-4"
         >
-          <SlidersHorizontal className="w-4 h-4" />
+          <SlidersHorizontal className="h-4 w-4" aria-hidden />
           Filters
-        </button>
+        </Button>
       </div>
 
-      {/* Mobile bottom sheet */}
-      {sheetOpen && (
-        <div className="md:hidden fixed inset-0 z-50">
+      {sheetOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
             aria-label="Close filters"
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setSheetOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-auto rounded-t-3xl border border-white/10 bg-[#0c0c12] p-5 pb-8 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-white">Filters</h2>
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl border border-white/10 bg-brand-surface-elevated p-5 pb-8 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[15px] font-semibold text-white">Filters</h2>
               <button
                 type="button"
                 onClick={() => setSheetOpen(false)}
-                className="p-2 rounded-full border border-white/10 text-zinc-300"
                 aria-label="Close"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
             <FilterFields {...props} layout="sheet" />
-            <button
-              type="button"
-              onClick={() => setSheetOpen(false)}
-              className="mt-4 w-full min-h-[48px] rounded-full border border-white/15 text-white text-sm font-semibold uppercase tracking-widest"
-            >
+            <Button fullWidth onClick={() => setSheetOpen(false)} className="mt-5">
               Show results
-            </button>
+            </Button>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 };

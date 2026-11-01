@@ -82,6 +82,10 @@ Never commit `config.local.php` or the DB password.
 - `httpOnly`, `Secure` in production, `SameSite=Lax`, `path=/`
 - Passwords: `password_hash` / `password_verify` (bcrypt — compatible with prior bcryptjs hashes)
 - Same-origin frontend calls `/api` with `credentials: 'include'`
+- **Email confirmation is the verification gate** for both customers and providers. Phone
+  numbers are stored as contact details only and are never shown as verified.
+- Confirmation links expire after 24 hours, are single-use, and resend is capped at 5 per
+  account per hour (per-IP limits apply as well).
 
 ## Email
 
@@ -94,7 +98,8 @@ PHPMailer 7.1.1, vendored in `api/vendor/phpmailer` (no Composer on the host —
 |------|---------|---------|
 | Password reset | `POST /api/auth/forgot-password` | the requesting account's own address |
 | Account email confirmation | `POST /api/auth/register` | the new account's own address |
-| Provider verification code | `POST /api/provider/send-email-code` | the provider account's own address |
+| Confirmation resend | `POST /api/auth/resend-verification` | the signed-in account's own address |
+| Provider email verification | `POST /api/provider/send-email-code` | the provider account's own address |
 | Provider submitted for review | `POST /api/provider/submit-review` | `info@massagerstudio.com` |
 
 Company mailboxes (recipients — keep separate from SMTP/`mail_from`):
@@ -144,20 +149,54 @@ masked, no tokens or message bodies). `storage/` is blocked from HTTP access by 
 ### Still required on the host
 
 The three mailboxes (`info@`, `admin@`, `contact@`) already exist. SMTP authentication
-should use `info@massagerstudio.com` as `smtp_user` / `mail_from`. Recipient routing still
-uses the three addresses for their assigned purposes.
+uses `info@massagerstudio.com` as `smtp_user` / `mail_from`, with
+`contact@massagerstudio.com` as `Reply-To` and the sender name `Massager Studio`. Recipient
+routing still uses the three addresses for their assigned purposes.
 
-1. Confirm the SMTP host/port for `info@massagerstudio.com` in hPanel → Emails (typically
-   `smtp.hostinger.com`, port `465` / `ssl`, or `587` / `tls`).
-2. Copy `api/config/config.example.php` to `api/config/config.local.php` on the server and
-   enter `smtp_pass` (and any differing host/port values) **privately** — never commit it
-   and never paste the password into chat.
-3. Publish SPF and DKIM records for `massagerstudio.com` so mail is not filtered.
-4. On the host (native PHP), run `php api/tools/send-smtp-test.php` (or `npm run test:smtp`
-   where native PHP is available). SMTP acceptance ≠ confirmed inbox receipt — also check
-   the `info@` inbox and junk folder.
-5. `GET /api/config-status` reports `mail_configured`, `mail_transport` and the *names* of any
-   missing mail keys (never values), so you can confirm the config without guessing.
+**Code status:** the API already reads host/port/encryption/credentials from server-only
+configuration. Defaults are port `465`, encryption `ssl`, sender `info@massagerstudio.com`,
+sender name `Massager Studio` and `Reply-To contact@massagerstudio.com`; `smtp_host` has **no**
+default, so nothing is sent until host, user and password are set. Credentials are *not* in
+this repository, so SMTP is **not connected** until the steps below are done on the host.
+
+1. In hPanel → Emails → `info@massagerstudio.com`, confirm the outgoing server values:
+   host `smtp.hostinger.com`, port `465`, encryption `ssl`. (Port `587` + `tls` is the
+   STARTTLS alternative; use one, not both.)
+2. On the server, edit `dist/api/config/config.local.php` **in place** and add the mail keys
+   below. Do not overwrite `db_*` values and do not touch `api/storage` or uploads. If the
+   host uses environment variables instead, add the matching `DS_*` variables in hPanel.
+   Enter `smtp_pass` privately in hPanel/the file — never in chat, Git, the frontend or logs.
+   ```php
+   'smtp_host' => 'smtp.hostinger.com',
+   'smtp_port' => 465,
+   'smtp_secure' => 'ssl',
+   'smtp_user' => 'info@massagerstudio.com',
+   'smtp_pass' => '…entered privately…',
+   'mail_from' => 'info@massagerstudio.com',
+   'mail_from_name' => 'Massager Studio',
+   'mail_reply_to' => 'contact@massagerstudio.com',
+   'mail_transport' => 'smtp',
+   ```
+3. DNS is already correct — verified against the authoritative nameservers on 2026-11-01;
+   change nothing:
+   - SPF (`massagerstudio.com` TXT): `v=spf1 include:_spf.mail.hostinger.com ~all`
+   - DMARC (`_dmarc.massagerstudio.com` TXT): `v=DMARC1; p=none`
+   - DKIM (selector `hostingermail-a`): `hostingermail-a._domainkey` is a CNAME to
+     `hostingermail-a.dkim.mail.hostinger.com`, which resolves to a 2048-bit
+     `v=DKIM1;k=rsa;p=MIIBIjANBg…` TXT record. Hostinger signs outgoing mail with this key.
+     The `hostingermail-b` / `hostingermail-c` selectors also exist and are intentionally
+     empty (`v=DKIM1;p=`) — leave them, and do not add a second DKIM key.
+   - MX is `mx1.hostinger.com` (5) and `mx2.hostinger.com` (10).
+
+   If hPanel ever shows a *different* DKIM selector as active, copy its exact TXT value from
+   hPanel instead of inventing one; never replace the existing records with guesses.
+4. Confirm `GET /api/config-status` reports `mail_configured: true` and
+   `mail_transport: smtp` (names only, never values).
+5. On the host with native PHP, run `php api/tools/send-smtp-test.php` to send a labelled
+   message. A successful SMTP hand-off is **acceptance, not delivery** — confirm the
+   message actually arrives in the `info@` inbox (and check junk) before calling email live.
+   The bundled local `php-cli` (WASM) cannot complete an SMTP session, so this test must run
+   on the host.
 
 ### Local verification
 
@@ -179,6 +218,27 @@ no working `stream_select`, which PHPMailer's SMTP client relies on, so it canno
 session even against a local sink. Do not treat a green local run as proof that mail is
 delivering — confirm acceptance on the host (step 4 above).
 
+## Membership and provider verification
+
+Provider membership is **free by default**. There is no membership payment gate in the
+registration flow, and a provider can submit for admin review without paying anything.
+
+| Key | Env | Default | Meaning |
+|-----|-----|---------|---------|
+| `membership_fee_enabled` | `DS_MEMBERSHIP_FEE_ENABLED` | `false` | Set `true` to reintroduce the one-off fee |
+| `membership_fee_amount` | `DS_MEMBERSHIP_FEE_AMOUNT` | `100` | Fee amount used when enabled |
+| `membership_currency` | `DS_MEMBERSHIP_CURRENCY` | `GHS` | Currency label |
+
+- Free membership **never** grants the verified badge. Approval is still an explicit admin
+  action after identity documents are reviewed.
+- Past payment rows in `provider_verification_payments` and the historical
+  `provider_verification.verification_fee_amount` values are preserved and untouched.
+- While the fee is disabled `POST /api/provider/payment.php` records nothing and returns
+  `free: true`; it never fabricates a payment.
+- Turning the fee back on requires only the config change — no schema migration. New rows
+  are created with the configured amount; existing rows keep their recorded amount.
+- No database migration is required for this release.
+
 ## Endpoints
 
 | Method | Path | File |
@@ -193,7 +253,8 @@ delivering — confirm acceptance on the host (step 4 above).
 | POST | `/api/auth/reset-password` | `api/auth/reset-password.php` |
 | POST | `/api/auth/onboarding` | `api/auth/onboarding.php` |
 | POST | `/api/auth/verify-email` | `api/auth/verify-email.php` |
-| POST | `/api/auth/verify-phone` | `api/auth/verify-phone.php` |
+| POST | `/api/auth/resend-verification` | `api/auth/resend-verification.php` |
+| POST | `/api/auth/verify-phone` | `api/auth/verify-phone.php` (legacy, unused by the app) |
 
 `.htaccess` maps clean `/api/...` URLs to `.php` and **never** rewrites `/api` to React `index.html`.
 

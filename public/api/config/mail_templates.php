@@ -200,6 +200,7 @@ function ds_mail_template(string $template, array $vars): ?array
         $providerId = (string) ($vars['provider_id'] ?? '');
         $submittedAt = (string) ($vars['submitted_at'] ?? '');
         $reviewLink = (string) ($vars['review_link'] ?? '');
+        $membership = (string) ($vars['membership'] ?? '');
 
         $rows = [
             'Provider' => $providerName,
@@ -207,6 +208,7 @@ function ds_mail_template(string $template, array $vars): ?array
             'City' => $city !== '' ? $city : '—',
             'Account email' => $providerEmail,
             'Account id' => $providerId,
+            'Membership' => $membership !== '' ? $membership : '—',
             'Submitted' => $submittedAt !== '' ? $submittedAt : '—',
         ];
 

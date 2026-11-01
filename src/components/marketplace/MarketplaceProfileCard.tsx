@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Phone } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { MarketplaceProfile } from '../../data/marketplaceProfiles';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../../lib/marketplace';
 import { PortraitMedia } from './PortraitMedia';
 import { VerifiedBadge, VerifiedNameCheck } from './VerifiedBadge';
+import { buttonClass } from '../ui/Button';
 
 type Props = {
   profile: MarketplaceProfile;
@@ -20,122 +21,106 @@ type Props = {
 
 export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) => {
   const price = formatPrice(profile.startingPrice, profile.currency);
-  const thumbs = profile.gallery.filter((src) => src !== profile.primaryImage).slice(0, 3);
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.05, 0.35), duration: 0.35 }}
-      className="group flex flex-col md:flex-row gap-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:border-brand-gold/35 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(88,28,135,0.18)] transition-all duration-300"
+      transition={{ delay: Math.min(index * 0.04, 0.3), duration: 0.3 }}
+      className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-colors duration-300 hover:border-white/20"
     >
-      <div className="relative md:w-[38%] lg:w-[36%] shrink-0 bg-[#0a0a0f]">
-        <PortraitMedia
-          src={profile.primaryImage}
-          alt={profile.displayName}
-          aspectClassName="aspect-[4/5] md:aspect-auto md:h-full md:min-h-[300px]"
-          hoverZoom
-        />
-        {thumbs.length > 0 && (
-          <div className="absolute bottom-3 left-3 right-3 flex gap-1.5">
-            {thumbs.map((src) => (
-              <div
-                key={src}
-                className="relative w-12 h-14 rounded-lg overflow-hidden border border-white/25 shadow-lg bg-black/50"
-              >
-                <img
-                  src={src}
-                  alt=""
-                  aria-hidden
-                  className="absolute inset-0 w-full h-full object-cover scale-125 blur-md opacity-60"
-                />
-                <img src={src} alt="" className="absolute inset-0 w-full h-full object-contain object-center" />
+      <div className="flex flex-col sm:flex-row">
+        <div className="relative w-full shrink-0 bg-brand-ink sm:w-[220px] lg:w-[240px]">
+          <PortraitMedia
+            src={profile.primaryImage}
+            alt={profile.displayName}
+            aspectClassName="aspect-[4/3] sm:aspect-auto sm:h-full sm:min-h-[228px]"
+            hoverZoom
+          />
+          {profile.isDemo ? (
+            <span className="absolute left-3 top-3 z-10 rounded-full border border-white/15 bg-black/70 px-2 py-0.5 text-[10px] font-medium text-zinc-300">
+              Demo
+            </span>
+          ) : null}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+                {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
+                {profile.providerKind !== 'agency' && genderLabel(profile.gender)
+                  ? ` · ${genderLabel(profile.gender)}`
+                  : ''}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <h3 className="text-[17px] font-semibold leading-snug tracking-[-0.01em] text-white">
+                  {profile.displayName}
+                </h3>
+                <VerifiedNameCheck verified={profile.verified} />
               </div>
+              <p className="mt-1 flex items-center gap-1.5 text-[13px] text-zinc-400">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-gold-light" aria-hidden />
+                {profile.city}, {profile.country}
+              </p>
+              <div className="mt-2">
+                <VerifiedBadge verified={profile.verified} />
+              </div>
+            </div>
+
+            {price ? (
+              <div className="shrink-0 text-right">
+                <p className="text-[11px] font-medium text-zinc-500">From</p>
+                <p className="mt-0.5 text-[15px] font-semibold tabular-nums text-white">{price}</p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {profile.services.slice(0, 4).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11.5px] text-zinc-300"
+              >
+                {tag}
+              </span>
             ))}
           </div>
-        )}
-        {profile.isDemo && (
-          <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.18em] px-2 py-1 rounded-full bg-black/70 border border-white/15 text-zinc-300 z-10">
-            Demo
-          </span>
-        )}
-      </div>
 
-      <div className="flex-1 flex flex-col p-5 sm:p-6 gap-3 min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold-light/80 mb-1">
-              {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
-              {profile.providerKind !== 'agency' && genderLabel(profile.gender)
-                ? ` · ${genderLabel(profile.gender)}`
-                : ''}
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-xl font-semibold text-white tracking-tight uppercase">
-                {profile.displayName}
-              </h3>
-              <VerifiedNameCheck verified={profile.verified} />
-            </div>
-            <div className="mt-1.5">
-              <VerifiedBadge verified={profile.verified} />
-            </div>
-            <p className="mt-1 text-xs text-zinc-400">
-              {providerKindLabel(profile.providerKind)}
-              {profile.providerKind === 'agency' ? ` · ${profile.city}` : ''}
-            </p>
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
-              <MapPin className="w-3.5 h-3.5 text-brand-gold-light shrink-0" />
-              {profile.city}, {profile.country}
-            </p>
-          </div>
-          {price && (
-            <div className="text-right shrink-0">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-500">From</p>
-              <p className="text-sm font-semibold text-brand-gold-light">{price}</p>
-            </div>
-          )}
-        </div>
+          <p className="mt-3 line-clamp-2 text-[13.5px] leading-relaxed text-zinc-400">
+            {profile.shortBio}
+          </p>
 
-        <div className="flex flex-wrap gap-1.5">
-          {profile.services.slice(0, 4).map((tag) => (
-            <span
-              key={tag}
-              className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border border-brand-gold/25 bg-brand-gold/10 text-brand-cream"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">“{profile.shortBio}”</p>
-
-        <div className="mt-auto pt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] text-zinc-500 uppercase tracking-wider">
-          <span>{availabilityLabel(profile.availability)}</span>
-          <span className="text-zinc-700">·</span>
-          <span>{serviceSettingLabel(profile.serviceSetting)}</span>
-          {profile.publicContactEnabled && (
-            <>
-              <span className="text-zinc-700">·</span>
-              <span className="inline-flex items-center gap-1 text-emerald-400/90">
-                <Phone className="w-3 h-3" /> Public contact
+          <div className="mt-auto flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-zinc-500">
+              <span>
+                {providerKindLabel(profile.providerKind)} · {serviceSettingLabel(profile.serviceSetting)}
               </span>
-            </>
-          )}
-        </div>
+              <span aria-hidden>·</span>
+              <span>{availabilityLabel(profile.availability)}</span>
+              {profile.publicContactEnabled ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <span className="text-emerald-300/90">Public contact</span>
+                </>
+              ) : null}
+            </p>
 
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Link
-            to={`/profile/${profile.slug}?from=${profile.citySlug}`}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-xs font-semibold uppercase tracking-widest transition-colors"
-          >
-            View Profile
-          </Link>
-          <Link
-            to={`/profile/${profile.slug}?from=${profile.citySlug}#contact`}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-white/15 text-zinc-200 hover:border-brand-gold/40 hover:text-white text-xs font-semibold uppercase tracking-widest transition-colors"
-          >
-            Contact
-          </Link>
+            <div className="flex gap-2">
+              <Link
+                to={`/profile/${profile.slug}?from=${profile.citySlug}#contact`}
+                className={buttonClass({ variant: 'secondary', size: 'sm', className: 'flex-1 sm:flex-none' })}
+              >
+                Contact
+              </Link>
+              <Link
+                to={`/profile/${profile.slug}?from=${profile.citySlug}`}
+                className={buttonClass({ size: 'sm', className: 'flex-1 sm:flex-none' })}
+              >
+                View profile
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </motion.article>

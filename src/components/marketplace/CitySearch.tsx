@@ -2,6 +2,7 @@ import React, { forwardRef, useEffect, useId, useImperativeHandle, useRef, useSt
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Search } from 'lucide-react';
 import { cityExplorePath, searchCities, type MarketplaceCity } from '../../data/locations';
+import { buttonClass } from '../ui/Button';
 
 export type CitySearchHandle = {
   submit: () => void;
@@ -17,13 +18,7 @@ type CitySearchProps = {
 };
 
 export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function CitySearch(
-  {
-    variant = 'hero',
-    initialSlug,
-    onNavigate,
-    className = '',
-    showSubmitButton,
-  },
+  { variant = 'hero', initialSlug, onNavigate, className = '', showSubmitButton },
   ref,
 ) {
   const navigate = useNavigate();
@@ -75,32 +70,28 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
 
   const showList = open && suggestions.length > 0;
 
-  // Hero: in-flow list reserves vertical space so trust/next sections never sit under it.
-  // Toolbar: absolute overlay keeps the filter bar compact.
   const listClassName = isHero
-    ? 'relative z-30 w-full mt-2 max-h-[min(16rem,45vh)] overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-[#0c0c12] shadow-[0_24px_48px_rgba(0,0,0,0.85)] py-2'
-    : 'absolute z-50 left-0 right-0 mt-2 max-h-[min(16rem,45vh)] overflow-y-auto overscroll-contain rounded-2xl border border-white/12 bg-[#0c0c12] shadow-[0_24px_48px_rgba(0,0,0,0.85)] py-2';
+    ? 'relative z-30 mt-2 max-h-[min(16rem,45vh)] w-full overflow-y-auto overscroll-contain rounded-xl border border-white/12 bg-brand-surface-elevated py-1.5 shadow-2xl'
+    : 'absolute left-0 right-0 z-50 mt-2 max-h-[min(16rem,45vh)] overflow-y-auto overscroll-contain rounded-xl border border-white/12 bg-brand-surface-elevated py-1.5 shadow-2xl';
 
   return (
-    <div
-      ref={wrapRef}
-      className={`relative w-full min-w-0 ${isHero ? 'z-30' : 'z-20'} ${className}`}
-    >
+    <div ref={wrapRef} className={`relative w-full min-w-0 ${isHero ? 'z-30' : 'z-20'} ${className}`}>
       <div
         className={
           isHero
-            ? 'flex flex-col sm:flex-row gap-2 sm:gap-0 w-full rounded-2xl sm:rounded-full border border-white/15 bg-black/50 backdrop-blur-xl p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
-            : 'flex w-full items-center rounded-xl border border-white/10 bg-white/[0.04] px-3 min-h-[44px]'
+            ? 'flex w-full flex-col gap-2 rounded-xl border border-white/12 bg-black/45 p-1.5 backdrop-blur-xl sm:flex-row sm:items-center'
+            : 'flex min-h-12 w-full items-center rounded-xl border border-white/12 bg-white/[0.04] px-3'
         }
       >
-        <label className={`flex flex-1 items-center gap-2 min-w-0 ${isHero ? 'px-3 sm:px-4 min-h-[48px]' : ''}`}>
-          <MapPin className="w-4 h-4 text-brand-gold-light shrink-0" aria-hidden />
+        <label className={`flex min-w-0 flex-1 items-center gap-2.5 ${isHero ? 'min-h-12 px-2.5' : ''}`}>
+          <MapPin className="h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
           <input
             type="text"
             role="combobox"
             aria-expanded={open}
             aria-controls={listId}
             aria-autocomplete="list"
+            aria-label="City"
             value={query}
             placeholder="Where are you looking?"
             onChange={(e) => {
@@ -126,26 +117,25 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
                 setOpen(false);
               }
             }}
-            className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm sm:text-base text-white placeholder:text-zinc-500"
+            className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-white outline-none placeholder:text-zinc-500"
           />
         </label>
-        {withButton && (
+        {withButton ? (
           <button
             type="button"
             onClick={submit}
-            className={
-              isHero
-                ? 'inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl sm:rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-sm font-semibold tracking-wide transition-colors'
-                : 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-lg bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-xs font-semibold uppercase tracking-wider transition-colors shrink-0'
-            }
+            className={buttonClass({
+              size: isHero ? 'md' : 'sm',
+              className: isHero ? 'w-full sm:w-auto' : 'shrink-0',
+            })}
           >
-            <Search className="w-4 h-4" />
-            Search
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <span>Search</span>
           </button>
-        )}
+        ) : null}
       </div>
 
-      {showList && (
+      {showList ? (
         <ul id={listId} role="listbox" className={listClassName}>
           {suggestions.map((city, i) => (
             <li key={city.id} role="option" aria-selected={i === highlight}>
@@ -153,18 +143,18 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
                 type="button"
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => go(city)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                  i === highlight ? 'bg-brand-gold/15 text-white' : 'text-zinc-300 hover:bg-white/[0.04]'
+                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13.5px] transition-colors ${
+                  i === highlight ? 'bg-brand-gold/15 text-white' : 'text-zinc-300 hover:bg-white/[0.05]'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 text-brand-gold-light shrink-0" />
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-gold-light" aria-hidden />
                 <span>{city.name}</span>
-                <span className="ml-auto text-[10px] uppercase tracking-widest text-zinc-500">Ghana</span>
+                <span className="ml-auto text-[11px] text-zinc-500">Ghana</span>
               </button>
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </div>
   );
 });

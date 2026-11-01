@@ -1,8 +1,8 @@
 import { BrandLogo } from '../components/BrandLogo';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, UserRound } from 'lucide-react';
-import { providerApi } from '../lib/api';
+import { Building2, Check, UserRound, X } from 'lucide-react';
+import { authApi, providerApi } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { MARKETPLACE_CITIES } from '../data/locations';
 import {
@@ -14,30 +14,39 @@ import {
   type ProviderType,
   type ServiceRateDraft,
 } from '../data/providerRegistration';
+import { Button } from '../components/ui/Button';
+import { Container } from '../components/ui/Layout';
+import {
+  Alert,
+  CheckboxField,
+  ProgressBar,
+  SelectField,
+  SelectableCard,
+  TextAreaField,
+  TextField,
+} from '../components/ui';
 
 type Step =
   | 'provider_type'
   | 'gender'
   | 'account'
-  | 'phone'
   | 'email'
   | 'profile'
   | 'team'
   | 'identity'
-  | 'payment'
+  | 'membership'
   | 'review';
 
 function stepsFor(type: ProviderType | null): { id: Step; label: string }[] {
   const base: { id: Step; label: string }[] = [
-    { id: 'provider_type', label: 'Type' },
+    { id: 'provider_type', label: 'Provider type' },
   ];
   if (type === 'individual') {
     base.push({ id: 'gender', label: 'Gender' });
   }
   base.push(
     { id: 'account', label: 'Account' },
-    { id: 'phone', label: 'Phone' },
-    { id: 'email', label: 'Email' },
+    { id: 'email', label: 'Email verification' },
     { id: 'profile', label: 'Profile' },
   );
   if (type === 'agency') {
@@ -45,11 +54,66 @@ function stepsFor(type: ProviderType | null): { id: Step; label: string }[] {
   }
   base.push(
     { id: 'identity', label: 'Identity' },
-    { id: 'payment', label: 'Fee' },
+    { id: 'membership', label: 'Membership' },
     { id: 'review', label: 'Review' },
   );
   return base;
 }
+
+const STEP_META: Record<Step, { title: string; description: string }> = {
+  provider_type: {
+    title: 'How are you registering?',
+    description:
+      'Choose the account type that matches how you provide massage services. You can list multiple services either way.',
+  },
+  gender: {
+    title: 'Your gender',
+    description:
+      'Needed for individual provider profiles. We never infer gender from a name or photo.',
+  },
+  account: {
+    title: 'Account details',
+    description:
+      'Your sign-in details and contact information. Your profile stays unverified until review is complete.',
+  },
+  email: {
+    title: 'Verify your email',
+    description:
+      'We send a single-use confirmation link to this address. Your phone number stays a contact detail and is never marked verified.',
+  },
+  profile: {
+    title: 'Your public profile',
+    description:
+      'This is what clients see in Explore: your display name, area, services and rates.',
+  },
+  team: {
+    title: 'Your team',
+    description:
+      'Add the massage professionals clients can book through your agency. Team members inherit agency rates unless you add a note.',
+  },
+  identity: {
+    title: 'Identity verification',
+    description:
+      'ID documents are private and never shown on public profiles. An admin reviews them before the verified badge is granted.',
+  },
+  membership: {
+    title: 'Membership',
+    description:
+      'Membership is currently free. Identity checks and admin approval are still required before the verified badge appears.',
+  },
+  review: {
+    title: 'Submit for admin review',
+    description:
+      'Check your details, then send the application. The verified badge appears only after approval.',
+  },
+};
+
+/** Steps that can be safely revisited without re-submitting a server-side step. */
+const BACK_TARGETS: Partial<Record<Step, Step>> = {
+  gender: 'provider_type',
+  account: 'provider_type',
+  review: 'membership',
+};
 
 function profileFormError(err: unknown): string {
   return getAuthErrorMessage(err);
@@ -108,19 +172,25 @@ type TeamDraft = {
 
 export const ProviderRegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
+  const { user, refreshSession, isAuthenticated } = useAuth();
   const [step, setStep] = useState<Step>('provider_type');
   const [providerType, setProviderType] = useState<ProviderType | null>(null);
   const [gender, setGender] = useState<ProviderGender | ''>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [demoPhoneCode, setDemoPhoneCode] = useState<string | null>(null);
+  const [accountCreated, setAccountCreated] = useState(false);
   const [demoEmailToken, setDemoEmailToken] = useState<string | null>(null);
-  const [phoneCode, setPhoneCode] = useState('');
   const [emailToken, setEmailToken] = useState('');
-  const [paymentMessage, setPaymentMessage] = useState(
-    'Verification payment integration coming soon',
-  );
+  const [emailSent, setEmailSent] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [membership, setMembership] = useState({
+    feeEnabled: false,
+    feeAmount: 0,
+    standardFeeAmount: 100,
+    currency: 'GHS',
+    free: true,
+    message: 'Membership is currently free.',
+  });
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [savedTeam, setSavedTeam] = useState<Array<Record<string, unknown>>>([]);
 
@@ -183,6 +253,141 @@ export const ProviderRegisterPage: React.FC = () => {
     idImage: null as File | null,
     selfieImage: null as File | null,
   });
+
+  const [resuming, setResuming] = useState(false);
+  const resumeRef = useRef<string | null>(null);
+
+  /**
+   * Existing providers who already created an account continue where they left off
+   * (the phone/fee steps are gone) instead of being asked to register twice.
+   */
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    if (user.role !== 'massage_provider' && user.role !== 'provider') return;
+    if (resumeRef.current === user.id) return;
+    resumeRef.current = user.id;
+    let cancelled = false;
+    setResuming(true);
+
+    const applySavedProfile = (raw: Record<string, unknown> | null) => {
+      if (!raw) return;
+      const text = (value: unknown) => (typeof value === 'string' ? value : '');
+      const numeric = (value: unknown) =>
+        typeof value === 'number' ? String(value) : text(value);
+      const stringList = (value: unknown) =>
+        Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+      const savedRates: ServiceRateDraft[] = Array.isArray(raw.rates)
+        ? raw.rates
+            .filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
+            .map((row) => ({
+              service: text(row.service),
+              durationMinutes: Number(row.durationMinutes) || 60,
+              price: row.price === null || row.price === undefined ? '' : String(row.price),
+            }))
+        : [];
+
+      setProfile((prev) => {
+        const services = stringList(raw.services);
+        const settings = stringList(raw.serviceSetting);
+        return {
+          ...prev,
+          displayName: text(raw.displayName) || prev.displayName,
+          city: text(raw.city) || prev.city,
+          region: text(raw.region) || prev.region,
+          country: text(raw.country) || prev.country,
+          areaNeighbourhood: text(raw.areaNeighbourhood),
+          businessAddress: text(raw.businessAddress),
+          serviceArea: text(raw.serviceArea),
+          serviceRadiusKm: numeric(raw.serviceRadiusKm),
+          about: text(raw.about),
+          services: services.length > 0 ? services : prev.services,
+          rates: savedRates.length > 0 ? savedRates : prev.rates,
+          startingPrice: numeric(raw.startingPrice),
+          availability: text(raw.availability) || prev.availability,
+          workingDays: text(raw.workingDays),
+          workingHours: text(raw.workingHours),
+          yearsExperience: numeric(raw.yearsExperience),
+          serviceSetting: settings.length > 0 ? settings : prev.serviceSetting,
+          languages: stringList(raw.languages).join(', ') || prev.languages,
+          primaryImage: text(raw.primaryImage) || prev.primaryImage,
+          coverImage: text(raw.coverImage),
+          publicPhone: raw.publicPhone !== false,
+          publicWhatsapp: raw.publicWhatsapp !== false,
+          publicEmail: raw.publicEmail === true,
+        };
+      });
+      setAccount((prev) => ({
+        ...prev,
+        businessRegistrationNumber:
+          text(raw.businessRegistrationNumber) || prev.businessRegistrationNumber,
+        dateOfBirth: text(raw.dateOfBirth) || prev.dateOfBirth,
+        age: numeric(raw.age) || prev.age,
+      }));
+    };
+
+    providerApi
+      .dashboard()
+      .then(async (data) => {
+        if (cancelled) return;
+
+        const savedType = data.profile?.providerType;
+        if (savedType === 'individual' || savedType === 'agency') setProviderType(savedType);
+        const savedGender = data.profile?.gender;
+        if (savedGender === 'female' || savedGender === 'male') setGender(savedGender);
+        setAccount((prev) => ({
+          ...prev,
+          email: data.user.email || prev.email,
+          firstName: data.user.firstName || prev.firstName,
+          lastName: data.user.lastName || prev.lastName,
+          phone: data.user.phone || prev.phone,
+          displayName: data.profile?.displayName || prev.displayName,
+          businessName: data.profile?.businessName || prev.businessName,
+        }));
+        setAccountCreated(true);
+
+        if (['pending_review', 'verified'].includes(data.verification.status)) {
+          navigate('/provider/dashboard', { replace: true });
+          return;
+        }
+        if (!data.progress.emailVerified) {
+          setStep('email');
+          return;
+        }
+        if (!data.progress.profileCompleted) {
+          const saved = await providerApi.getProfile().catch(() => null);
+          if (cancelled) return;
+          applySavedProfile(saved?.profile ?? null);
+          setStep('profile');
+          return;
+        }
+        if (!data.progress.identitySubmitted) {
+          setStep('identity');
+          return;
+        }
+        if (data.membership) {
+          setMembership({
+            feeEnabled: data.membership.feeEnabled,
+            feeAmount: data.membership.feeAmount,
+            standardFeeAmount: data.membership.standardFeeAmount,
+            currency: data.membership.currency,
+            free: data.membership.free,
+            message: data.membership.message,
+          });
+        }
+        setStep('membership');
+      })
+      .catch(() => {
+        // Not a provider account (or the API is unavailable): keep normal signup.
+        resumeRef.current = null;
+      })
+      .finally(() => {
+        if (!cancelled) setResuming(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user, navigate]);
 
   const STEPS = useMemo(() => stepsFor(providerType), [providerType]);
   const stepIndex = STEPS.findIndex((s) => s.id === step);
@@ -256,30 +461,16 @@ export const ProviderRegisterPage: React.FC = () => {
         termsAccepted: true,
       });
       await refreshSession();
+      setAccountCreated(true);
       setProfile((p) => ({
         ...p,
         displayName,
       }));
-      setStep('phone');
-      const sent = await providerApi.sendPhoneCode();
-      if (sent.demoCode) setDemoPhoneCode(sent.demoCode);
-    } catch (err) {
-      setError(profileFormError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onVerifyPhone = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await providerApi.verifyPhone(phoneCode.trim());
-      await refreshSession();
       setStep('email');
       const sent = await providerApi.sendEmailCode();
       if (sent.demoToken) setDemoEmailToken(sent.demoToken);
+      setEmailSent(Boolean(sent.sent));
+      setResendMessage(sent.message ?? null);
     } catch (err) {
       setError(profileFormError(err));
     } finally {
@@ -295,6 +486,40 @@ export const ProviderRegisterPage: React.FC = () => {
       await providerApi.verifyEmail(emailToken.trim());
       await refreshSession();
       setStep('profile');
+    } catch (err) {
+      setError(profileFormError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** After clicking the emailed link (another tab), re-read the session instead of typing the token. */
+  const onConfirmEmailFromLink = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await authApi.me();
+      await refreshSession();
+      if (data.user.emailVerifiedAt) {
+        setStep('profile');
+      } else {
+        setError('We have not seen your confirmation yet. Open the link in your email, then try again.');
+      }
+    } catch (err) {
+      setError(profileFormError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onResendEmail = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const sent = await providerApi.sendEmailCode();
+      if (sent.demoToken) setDemoEmailToken(sent.demoToken);
+      setEmailSent(Boolean(sent.sent));
+      setResendMessage(sent.message ?? null);
     } catch (err) {
       setError(profileFormError(err));
     } finally {
@@ -428,9 +653,16 @@ export const ProviderRegisterPage: React.FC = () => {
       form.append('idImage', identity.idImage);
       form.append('selfieImage', identity.selfieImage);
       await providerApi.submitIdentity(form);
-      setStep('payment');
       const pay = await providerApi.getPayment();
-      setPaymentMessage(pay.message);
+      setMembership({
+        feeEnabled: pay.feeEnabled,
+        feeAmount: pay.feeAmount,
+        standardFeeAmount: pay.standardFeeAmount,
+        currency: pay.currency,
+        free: pay.free,
+        message: pay.message,
+      });
+      setStep('membership');
     } catch (err) {
       setError(profileFormError(err));
     } finally {
@@ -438,12 +670,14 @@ export const ProviderRegisterPage: React.FC = () => {
     }
   };
 
-  const onPaymentContinue = async () => {
+  const onMembershipContinue = async () => {
     setError(null);
     setLoading(true);
     try {
-      const pay = await providerApi.initiatePayment();
-      setPaymentMessage(pay.message);
+      if (membership.feeEnabled) {
+        const pay = await providerApi.initiatePayment();
+        setMembership((m) => ({ ...m, message: pay.message }));
+      }
       setStep('review');
     } catch (err) {
       setError(profileFormError(err));
@@ -465,815 +699,1057 @@ export const ProviderRegisterPage: React.FC = () => {
     }
   };
 
-  const field =
-    'w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-zinc-100 outline-none focus:border-brand-gold/40';
+  const stepMeta = STEP_META[step];
+  const stepNumber = stepIndex + 1;
+  const stepProgress = STEPS.length > 1 ? (stepNumber / STEPS.length) * 100 : 0;
+  const completion = Math.max(profileCompletion, localCompletion);
+  const backTarget = BACK_TARGETS[step];
+
+  const goBack = () => {
+    if (!backTarget) return;
+    setError(null);
+    setStep(backTarget);
+  };
+
+  const backButton = backTarget ? (
+    <Button variant="secondary" onClick={goBack} className="w-full sm:w-auto">
+      Back
+    </Button>
+  ) : null;
 
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
-          <BrandLogo variant="plate" withWordmark markHeight={26} />
-        </Link>
-        <Link to="/login" className="text-xs uppercase tracking-widest text-zinc-400 hover:text-white">
-          Sign In
-        </Link>
+    <div className="min-h-screen bg-brand-surface text-zinc-200">
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-brand-surface/90 backdrop-blur-xl">
+        <Container className="flex h-16 items-center justify-between gap-4">
+          <Link
+            to="/"
+            className="inline-flex min-h-11 items-center rounded-lg"
+            aria-label="Massager Studio home"
+          >
+            <BrandLogo variant="plate" withWordmark markHeight={26} />
+          </Link>
+          <Link
+            to="/login"
+            className="inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+          >
+            Sign in
+          </Link>
+        </Container>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">
-          Provider registration
-        </p>
-        <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Become a Massage Provider</h1>
-        <p className="mt-2 text-sm text-zinc-400">
-          Create your public profile, list your massage services and complete verification to earn the verified badge.
-        </p>
-
-        {providerType && (
-          <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-            <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-widest text-zinc-400">
-              <span>Profile completion</span>
-              <span className="text-brand-gold-light">{Math.max(profileCompletion, localCompletion)}%</span>
-            </div>
-            <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full bg-brand-gold transition-all"
-                style={{ width: `${Math.max(profileCompletion, localCompletion)}%` }}
-              />
-            </div>
+      <main className="pb-16">
+        <Container className="pt-8 sm:pt-10 lg:pt-12">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+              Provider registration
+            </p>
+            <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[32px]">
+              Become a massage provider
+            </h1>
+            <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">
+              Create your public profile, list your massage services and complete verification to
+              earn the verified badge.
+            </p>
           </div>
-        )}
 
-        <ol className="mt-6 flex flex-wrap gap-2">
-          {STEPS.map((s, i) => (
-            <li
-              key={s.id}
-              className={`text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full border ${
-                i <= stepIndex
-                  ? 'border-brand-gold/40 bg-brand-gold/15 text-brand-cream'
-                  : 'border-white/10 text-zinc-500'
-              }`}
-            >
-              {i + 1}. {s.label}
-            </li>
-          ))}
-        </ol>
-
-        {error && (
-          <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-6 rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8">
-          {step === 'provider_type' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white uppercase tracking-wide">
-                How are you registering?
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setProviderType('individual');
-                  setStep('gender');
-                  setError(null);
-                }}
-                className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-brand-gold/40 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-gold-light">
-                    <UserRound className="w-6 h-6" />
-                  </span>
-                  <div>
-                    <p className="text-base font-semibold uppercase tracking-wide text-white">
-                      As an Individual
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      I personally provide massage services.
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setProviderType('agency');
-                  setGender('');
-                  setStep('account');
-                  setError(null);
-                }}
-                className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-brand-gold/40 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-gold-light">
-                    <Building2 className="w-6 h-6" />
-                  </span>
-                  <div>
-                    <p className="text-base font-semibold uppercase tracking-wide text-white">
-                      As an Agency
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      I manage a massage business or team.
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          )}
-
-          {step === 'gender' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">Gender</h2>
-              <p className="text-sm text-zinc-400">
-                Required for individual providers. We do not infer gender from name or photo.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {([
-                  { id: 'female', label: 'Female' },
-                  { id: 'male', label: 'Male' },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setGender(opt.id)}
-                    className={`min-h-[56px] rounded-2xl border text-sm font-semibold uppercase tracking-widest ${
-                      gender === opt.id
-                        ? 'border-brand-gold/50 bg-brand-gold/20 text-white'
-                        : 'border-white/10 text-zinc-300'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                disabled={!gender}
-                onClick={() => {
-                  setError(null);
-                  setStep('account');
-                }}
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink disabled:opacity-50"
-              >
-                Continue
-              </button>
-            </div>
-          )}
-
-          {step === 'account' && providerType && (
-            <form onSubmit={onCreateAccount} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">
-                {providerType === 'agency' ? 'Agency account' : 'Personal details'}
-              </h2>
-              {providerType === 'agency' && (
-                <>
-                  <input
-                    className={field}
-                    placeholder="Agency / business name"
-                    required
-                    value={account.businessName}
-                    onChange={(e) => setAccount({ ...account, businessName: e.target.value })}
-                  />
-                  <input
-                    className={field}
-                    placeholder="Business registration number (optional)"
-                    value={account.businessRegistrationNumber}
-                    onChange={(e) =>
-                      setAccount({ ...account, businessRegistrationNumber: e.target.value })
-                    }
-                  />
-                </>
-              )}
-              <div className="grid sm:grid-cols-2 gap-3">
-                <input
-                  className={field}
-                  placeholder={providerType === 'agency' ? 'Contact first name' : 'First name'}
-                  required
-                  value={account.firstName}
-                  onChange={(e) => setAccount({ ...account, firstName: e.target.value })}
-                />
-                <input
-                  className={field}
-                  placeholder={providerType === 'agency' ? 'Contact last name' : 'Last name'}
-                  required
-                  value={account.lastName}
-                  onChange={(e) => setAccount({ ...account, lastName: e.target.value })}
-                />
-              </div>
-              {providerType === 'individual' && (
-                <>
-                  <input
-                    className={field}
-                    placeholder="Display name"
-                    required
-                    value={account.displayName}
-                    onChange={(e) => setAccount({ ...account, displayName: e.target.value })}
-                  />
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <input
-                      className={field}
-                      type="date"
-                      placeholder="Date of birth"
-                      value={account.dateOfBirth}
-                      onChange={(e) => setAccount({ ...account, dateOfBirth: e.target.value })}
-                    />
-                    <input
-                      className={field}
-                      type="number"
-                      min={18}
-                      max={99}
-                      placeholder="Age (optional)"
-                      value={account.age}
-                      onChange={(e) => setAccount({ ...account, age: e.target.value })}
-                    />
-                  </div>
-                </>
-              )}
-              <input
-                className={field}
-                type="email"
-                placeholder={providerType === 'agency' ? 'Business email' : 'Email'}
-                required
-                value={account.email}
-                onChange={(e) => setAccount({ ...account, email: e.target.value })}
-              />
-              <input
-                className={field}
-                placeholder="Phone"
-                required
-                value={account.phone}
-                onChange={(e) => setAccount({ ...account, phone: e.target.value })}
-              />
-              <input
-                className={field}
-                placeholder="WhatsApp number"
-                value={account.whatsapp}
-                onChange={(e) => setAccount({ ...account, whatsapp: e.target.value })}
-              />
-              <input
-                className={field}
-                type="password"
-                placeholder="Password"
-                required
-                value={account.password}
-                onChange={(e) => setAccount({ ...account, password: e.target.value })}
-              />
-              <input
-                className={field}
-                type="password"
-                placeholder="Confirm password"
-                required
-                value={account.confirmPassword}
-                onChange={(e) => setAccount({ ...account, confirmPassword: e.target.value })}
-              />
-              <label className="flex items-start gap-2 text-sm text-zinc-400">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={account.termsAccepted}
-                  onChange={(e) => setAccount({ ...account, termsAccepted: e.target.checked })}
-                />
-                I accept the Terms and Privacy Policy. My profile starts unverified.
-              </label>
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink disabled:opacity-60"
-              >
-                {loading ? 'Creating…' : 'Continue'}
-              </button>
-            </form>
-          )}
-
-          {step === 'phone' && (
-            <form onSubmit={onVerifyPhone} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">Phone verification</h2>
-              <p className="text-sm text-zinc-400">Enter the 6-digit code sent to your phone.</p>
-              {demoPhoneCode && (
-                <p className="text-xs text-amber-200/90 rounded-lg border border-amber-500/20 bg-amber-950/30 px-3 py-2">
-                  Demo mode code: <strong>{demoPhoneCode}</strong>
-                </p>
-              )}
-              <input
-                className={field}
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="6-digit code"
-                required
-                value={phoneCode}
-                onChange={(e) => setPhoneCode(e.target.value)}
-              />
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full min-h-[44px] rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
-              >
-                Verify phone
-              </button>
-            </form>
-          )}
-
-          {step === 'email' && (
-            <form onSubmit={onVerifyEmail} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">Email verification</h2>
-              {demoEmailToken && (
-                <p className="text-xs text-amber-200/90 rounded-lg border border-amber-500/20 bg-amber-950/30 px-3 py-2 break-all">
-                  Demo mode token: <strong>{demoEmailToken}</strong>
-                </p>
-              )}
-              <input
-                className={field}
-                placeholder="Verification token"
-                required
-                value={emailToken}
-                onChange={(e) => setEmailToken(e.target.value)}
-              />
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full min-h-[44px] rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
-              >
-                Verify email
-              </button>
-            </form>
-          )}
-
-          {step === 'profile' && providerType && (
-            <form onSubmit={onSaveProfile} className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">
-                {providerType === 'agency' ? 'Agency profile' : 'Your profile'}
-              </h2>
-              <input
-                className={field}
-                placeholder={providerType === 'agency' ? 'Public agency name' : 'Display name'}
-                required
-                value={profile.displayName}
-                onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-              />
-              <div className="grid sm:grid-cols-2 gap-3">
-                <select
-                  className={field}
-                  value={profile.city}
-                  onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                >
-                  {cities.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className={field}
-                  placeholder="Region"
-                  value={profile.region}
-                  onChange={(e) => setProfile({ ...profile, region: e.target.value })}
-                />
-              </div>
-              <input
-                className={field}
-                placeholder="Country"
-                value={profile.country}
-                onChange={(e) => setProfile({ ...profile, country: e.target.value })}
-              />
-              <input
-                className={field}
-                placeholder="Area / neighbourhood"
-                value={profile.areaNeighbourhood}
-                onChange={(e) => setProfile({ ...profile, areaNeighbourhood: e.target.value })}
-              />
-              {providerType === 'agency' && (
-                <input
-                  className={field}
-                  placeholder="Business address"
-                  value={profile.businessAddress}
-                  onChange={(e) => setProfile({ ...profile, businessAddress: e.target.value })}
-                />
-              )}
-              <input
-                className={field}
-                placeholder="Service area"
-                value={profile.serviceArea}
-                onChange={(e) => setProfile({ ...profile, serviceArea: e.target.value })}
-              />
-              {providerType === 'individual' && (
-                <input
-                  className={field}
-                  type="number"
-                  min={0}
-                  placeholder="Service radius (km, optional)"
-                  value={profile.serviceRadiusKm}
-                  onChange={(e) => setProfile({ ...profile, serviceRadiusKm: e.target.value })}
-                />
-              )}
-              <textarea
-                className={`${field} min-h-[100px] py-3`}
-                placeholder={providerType === 'agency' ? 'About the agency' : 'About me'}
-                value={profile.about}
-                onChange={(e) => setProfile({ ...profile, about: e.target.value })}
-              />
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">
-                  Massage services
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {MASSAGE_SERVICE_OPTIONS.map((label) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => toggleService(label)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] uppercase tracking-wider border ${
-                        profile.services.includes(label)
-                          ? 'border-brand-gold/40 bg-brand-gold/20 text-brand-cream'
-                          : 'border-white/10 text-zinc-400'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {profile.rates.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-500">
-                    Pricing (enter your own rates)
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:mt-10 lg:grid-cols-[264px_minmax(0,1fr)] lg:gap-10">
+            <aside className="hidden self-start lg:sticky lg:top-24 lg:block">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+                    Step {stepNumber} of {STEPS.length}
                   </p>
-                  {profile.rates.map((row, idx) => (
-                    <div key={`${row.service}-${row.durationMinutes}`} className="grid grid-cols-[1fr_90px_110px] gap-2 items-center">
-                      <span className="text-xs text-zinc-300 truncate">
-                        {row.service}
-                      </span>
-                      <span className="text-xs text-zinc-500">{row.durationMinutes} mins</span>
-                      <input
-                        className={field}
-                        type="number"
-                        min={0}
-                        placeholder="GHS"
-                        value={row.price}
-                        onChange={(e) => {
-                          const next = [...profile.rates];
-                          next[idx] = { ...row, price: e.target.value };
-                          setProfile({ ...profile, rates: next });
+                  {profile.services.length > 0 ? (
+                    <p className="text-[11px] tabular-nums text-brand-gold-light">{completion}%</p>
+                  ) : null}
+                </div>
+                <ProgressBar value={stepProgress} className="mt-2" />
+                <ol className="mt-4 space-y-0.5">
+                  {STEPS.map((s, i) => {
+                    const active = s.id === step;
+                    const done = i < stepIndex;
+                    return (
+                      <li key={s.id}>
+                        <div
+                          aria-current={active ? 'step' : undefined}
+                          className={[
+                            'flex items-center gap-2.5 rounded-lg px-2 py-2 text-[13px]',
+                            active
+                              ? 'bg-brand-gold/[0.10] font-semibold text-white'
+                              : done
+                                ? 'text-zinc-300'
+                                : 'text-zinc-500',
+                          ].join(' ')}
+                        >
+                          <span
+                            className={[
+                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold',
+                              done
+                                ? 'border-brand-gold/40 bg-brand-gold/15 text-brand-gold-light'
+                                : active
+                                  ? 'border-brand-gold/60 bg-brand-gold text-brand-ink'
+                                  : 'border-white/12 text-zinc-500',
+                            ].join(' ')}
+                          >
+                            {done ? <Check className="h-3 w-3" aria-hidden /> : i + 1}
+                          </span>
+                          <span className="truncate">{s.label}</span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+              <p className="mt-3 px-1 text-[12px] leading-relaxed text-zinc-500">
+                Your profile stays unverified until identity checks and admin review are complete.
+              </p>
+            </aside>
+
+            <div className="min-w-0">
+              <div className="mb-5 lg:hidden">
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-[12px] font-medium text-zinc-500">
+                    Step {stepNumber} of {STEPS.length}
+                  </p>
+                  {profile.services.length > 0 ? (
+                    <p className="text-[12px] tabular-nums text-brand-gold-light">
+                      Profile {completion}%
+                    </p>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-[15px] font-semibold text-white">
+                  {STEPS[stepIndex]?.label ?? stepMeta.title}
+                </p>
+                <ProgressBar value={stepProgress} className="mt-2.5" />
+              </div>
+
+              {error ? (
+                <Alert variant="error" className="mb-5">
+                  {error}
+                </Alert>
+              ) : null}
+
+              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 sm:p-6 lg:p-7">
+                <header className="mb-5 border-b border-white/[0.07] pb-4">
+                  <h2 className="text-lg font-semibold tracking-[-0.01em] text-white sm:text-xl">
+                    {stepMeta.title}
+                  </h2>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-zinc-400">
+                    {stepMeta.description}
+                  </p>
+                </header>
+
+                <p className={resuming ? 'py-12 text-center text-sm text-zinc-400' : 'hidden'}>
+                  Loading your registration…
+                </p>
+
+                <div className={resuming ? 'hidden' : undefined}>
+                {step === 'provider_type' ? (
+                  <div className="space-y-5">
+                    <div role="radiogroup" aria-label="Provider type" className="grid gap-3 sm:grid-cols-2">
+                      <SelectableCard
+                        selected={providerType === 'individual'}
+                        title="Individual"
+                        description="I personally provide massage services."
+                        icon={<UserRound className="h-5 w-5" aria-hidden />}
+                        onClick={() => {
+                          setProviderType('individual');
+                          setStep('gender');
+                          setError(null);
+                        }}
+                      />
+                      <SelectableCard
+                        selected={providerType === 'agency'}
+                        title="Agency"
+                        description="I manage a massage business or team."
+                        icon={<Building2 className="h-5 w-5" aria-hidden />}
+                        onClick={() => {
+                          setProviderType('agency');
+                          setGender('');
+                          setStep('account');
+                          setError(null);
                         }}
                       />
                     </div>
-                  ))}
-                </div>
-              )}
-              <input
-                className={field}
-                type="number"
-                min={0}
-                placeholder="Starting price (GHS)"
-                value={profile.startingPrice}
-                onChange={(e) => setProfile({ ...profile, startingPrice: e.target.value })}
-              />
-              <div className="grid sm:grid-cols-2 gap-3">
-                <input
-                  className={field}
-                  type="number"
-                  min={0}
-                  placeholder="Years of experience"
-                  value={profile.yearsExperience}
-                  onChange={(e) => setProfile({ ...profile, yearsExperience: e.target.value })}
-                />
-                <select
-                  className={field}
-                  value={profile.availability}
-                  onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
-                >
-                  <option value="today">Available today</option>
-                  <option value="this_week">This week</option>
-                  <option value="flexible">Flexible</option>
-                </select>
-              </div>
-              <input
-                className={field}
-                placeholder="Working days"
-                value={profile.workingDays}
-                onChange={(e) => setProfile({ ...profile, workingDays: e.target.value })}
-              />
-              <input
-                className={field}
-                placeholder="Working / opening hours"
-                value={profile.workingHours}
-                onChange={(e) => setProfile({ ...profile, workingHours: e.target.value })}
-              />
-              <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
-                {SERVICE_SETTING_OPTIONS.map((s) => (
-                  <label key={s.id} className="inline-flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={profile.serviceSetting.includes(s.id)}
-                      onChange={(e) => {
-                        setProfile({
-                          ...profile,
-                          serviceSetting: e.target.checked
-                            ? [...profile.serviceSetting, s.id]
-                            : profile.serviceSetting.filter((x) => x !== s.id),
-                        });
-                      }}
-                    />
-                    {s.label}
-                  </label>
-                ))}
-              </div>
-              <input
-                className={field}
-                placeholder="Languages"
-                value={profile.languages}
-                onChange={(e) => setProfile({ ...profile, languages: e.target.value })}
-              />
-              <input
-                className={field}
-                placeholder="Main photo URL (temporary until upload)"
-                value={profile.primaryImage}
-                onChange={(e) => setProfile({ ...profile, primaryImage: e.target.value })}
-              />
-              {providerType === 'agency' && (
-                <input
-                  className={field}
-                  placeholder="Cover / logo image URL (optional)"
-                  value={profile.coverImage}
-                  onChange={(e) => setProfile({ ...profile, coverImage: e.target.value })}
-                />
-              )}
-              <div className="flex flex-col gap-2 text-sm text-zinc-300">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={profile.publicPhone}
-                    onChange={(e) => setProfile({ ...profile, publicPhone: e.target.checked })}
-                  />
-                  Show phone publicly
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={profile.publicWhatsapp}
-                    onChange={(e) => setProfile({ ...profile, publicWhatsapp: e.target.checked })}
-                  />
-                  Show WhatsApp publicly
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={profile.publicEmail}
-                    onChange={(e) => setProfile({ ...profile, publicEmail: e.target.checked })}
-                  />
-                  Show email publicly
-                </label>
-              </div>
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
-              >
-                Save profile
-              </button>
-            </form>
-          )}
+                    <p className="text-[13px] text-zinc-500">
+                      Individual profiles list one provider. Agency profiles can add several team
+                      members after the agency profile is saved.
+                    </p>
+                  </div>
+                ) : null}
 
-          {step === 'team' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">Meet our massage professionals</h2>
-              <p className="text-sm text-zinc-400">
-                Add team members under your agency. Separate staff logins can be added later.
-              </p>
-              {savedTeam.length > 0 && (
-                <ul className="space-y-2">
-                  {savedTeam.map((m) => (
-                    <li
-                      key={String(m.id)}
-                      className="rounded-xl border border-white/10 px-3 py-2 text-sm text-zinc-200 flex justify-between gap-2"
-                    >
-                      <span>
-                        {String(m.displayName)} · {String(m.gender)}
-                      </span>
-                      <button
-                        type="button"
-                        className="text-xs text-rose-300"
-                        onClick={async () => {
-                          try {
-                            const res = await providerApi.deleteTeamMember(String(m.id));
-                            setSavedTeam(res.teamMembers || []);
-                          } catch (err) {
-                            setError(profileFormError(err));
-                          }
+                {step === 'gender' ? (
+                  <div className="space-y-5">
+                    <div role="radiogroup" aria-label="Gender" className="grid grid-cols-2 gap-3">
+                      {(
+                        [
+                          { id: 'female', label: 'Female' },
+                          { id: 'male', label: 'Male' },
+                        ] as const
+                      ).map((opt) => (
+                        <SelectableCard
+                          key={opt.id}
+                          layout="tile"
+                          selected={gender === opt.id}
+                          title={opt.label}
+                          onClick={() => setGender(opt.id)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      {backButton}
+                      <Button
+                        disabled={!gender}
+                        onClick={() => {
+                          setError(null);
+                          setStep('account');
                         }}
+                        className="w-full sm:w-auto"
                       >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <form onSubmit={onAddTeamMember} className="space-y-3 border-t border-white/10 pt-4">
-                <input
-                  className={field}
-                  placeholder="Display name"
-                  value={teamDraft.displayName}
-                  onChange={(e) => setTeamDraft({ ...teamDraft, displayName: e.target.value })}
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  {(['female', 'male'] as const).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setTeamDraft({ ...teamDraft, gender: g })}
-                      className={`min-h-[44px] rounded-xl border text-xs uppercase tracking-widest ${
-                        teamDraft.gender === g
-                          ? 'border-brand-gold/40 bg-brand-gold/20 text-white'
-                          : 'border-white/10 text-zinc-400'
-                      }`}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-                <textarea
-                  className={`${field} min-h-[80px] py-3`}
-                  placeholder="Short bio"
-                  value={teamDraft.bio}
-                  onChange={(e) => setTeamDraft({ ...teamDraft, bio: e.target.value })}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {MASSAGE_SERVICE_OPTIONS.slice(0, 6).map((label) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() =>
-                        setTeamDraft({
-                          ...teamDraft,
-                          services: teamDraft.services.includes(label)
-                            ? teamDraft.services.filter((s) => s !== label)
-                            : [...teamDraft.services, label],
-                        })
-                      }
-                      className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider border ${
-                        teamDraft.services.includes(label)
-                          ? 'border-brand-gold/40 text-brand-cream'
-                          : 'border-white/10 text-zinc-500'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  className={field}
-                  type="number"
-                  min={0}
-                  placeholder="Years experience"
-                  value={teamDraft.yearsExperience}
-                  onChange={(e) => setTeamDraft({ ...teamDraft, yearsExperience: e.target.value })}
-                />
-                <select
-                  className={field}
-                  value={teamDraft.availability}
-                  onChange={(e) => setTeamDraft({ ...teamDraft, availability: e.target.value })}
-                >
-                  <option value="today">Available today</option>
-                  <option value="this_week">This week</option>
-                  <option value="flexible">Flexible</option>
-                </select>
-                <input
-                  className={field}
-                  placeholder="Rates note (or leave blank to inherit agency rates)"
-                  value={teamDraft.ratesNote}
-                  onChange={(e) => setTeamDraft({ ...teamDraft, ratesNote: e.target.value })}
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  {(['active', 'inactive'] as const).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setTeamDraft({ ...teamDraft, status: s })}
-                      className={`min-h-[44px] rounded-xl border text-xs uppercase tracking-widest ${
-                        teamDraft.status === s
-                          ? 'border-brand-gold/40 bg-brand-gold/20 text-white'
-                          : 'border-white/10 text-zinc-400'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  disabled={loading}
-                  type="submit"
-                  className="w-full min-h-[44px] rounded-full border border-white/15 text-xs uppercase tracking-widest"
-                >
-                  Add team member
-                </button>
-              </form>
-              <button
-                type="button"
-                onClick={() => setStep('identity')}
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
-              >
-                Continue to verification
-              </button>
-            </div>
-          )}
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
 
-          {step === 'identity' && (
-            <form onSubmit={onSubmitIdentity} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">
-                {providerType === 'agency' ? 'Contact person identity' : 'Identity verification'}
-              </h2>
-              <p className="text-sm text-zinc-400">
-                {providerType === 'agency'
-                  ? 'Upload the contact person’s ID and selfie. Business documents can be added during admin review.'
-                  : 'ID documents are private and never shown on public profiles.'}
-              </p>
-              <select
-                className={field}
-                value={identity.idType}
-                onChange={(e) => setIdentity({ ...identity, idType: e.target.value })}
-              >
-                <option>Ghana Card</option>
-                <option>Passport</option>
-                <option>Driver Licence</option>
-                <option>Voter ID</option>
-              </select>
-              <input
-                className={field}
-                placeholder="ID number (optional)"
-                value={identity.idNumber}
-                onChange={(e) => setIdentity({ ...identity, idNumber: e.target.value })}
-              />
-              <label className="block text-xs uppercase tracking-widest text-zinc-500">
-                Government ID image
-              </label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                required
-                onChange={(e) =>
-                  setIdentity({ ...identity, idImage: e.target.files?.[0] || null })
-                }
-              />
-              <label className="block text-xs uppercase tracking-widest text-zinc-500">
-                Selfie / live photo
-              </label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                required
-                onChange={(e) =>
-                  setIdentity({ ...identity, selfieImage: e.target.files?.[0] || null })
-                }
-              />
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
-              >
-                Submit identity
-              </button>
-            </form>
-          )}
+                {step === 'account' && providerType ? (
+                  isAuthenticated && accountCreated ? (
+                    <div className="space-y-5">
+                      <Alert variant="success" title="Your account is ready">
+                        Signed in as {account.email || 'your registered email'}. Verification
+                        continues on the next step.
+                      </Alert>
+                      <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                        <Button onClick={() => setStep('email')} className="w-full sm:w-auto">
+                          Continue to email verification
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={onCreateAccount} className="space-y-4">
+                      {providerType === 'agency' ? (
+                        <>
+                          <TextField
+                            label="Agency / business name"
+                            required
+                            autoComplete="organization"
+                            value={account.businessName}
+                            onChange={(e) => setAccount({ ...account, businessName: e.target.value })}
+                          />
+                          <TextField
+                            label="Business registration number"
+                            hint="Optional — add it now or during admin review."
+                            value={account.businessRegistrationNumber}
+                            onChange={(e) =>
+                              setAccount({ ...account, businessRegistrationNumber: e.target.value })
+                            }
+                          />
+                        </>
+                      ) : null}
 
-          {step === 'payment' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">Verification fee</h2>
-              <p className="text-2xl font-semibold text-brand-gold-light">GHS 100</p>
-              <p className="text-sm text-zinc-400">
-                Payment alone does not verify your profile. Identity checks and admin approval are also required.
-              </p>
-              <div className="rounded-xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-sm text-amber-100">
-                {paymentMessage}
-              </div>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={onPaymentContinue}
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
-              >
-                Continue to admin review
-              </button>
-            </div>
-          )}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField
+                          label={providerType === 'agency' ? 'Contact first name' : 'First name'}
+                          required
+                          autoComplete="given-name"
+                          value={account.firstName}
+                          onChange={(e) => setAccount({ ...account, firstName: e.target.value })}
+                        />
+                        <TextField
+                          label={providerType === 'agency' ? 'Contact last name' : 'Last name'}
+                          required
+                          autoComplete="family-name"
+                          value={account.lastName}
+                          onChange={(e) => setAccount({ ...account, lastName: e.target.value })}
+                        />
+                      </div>
 
-          {step === 'review' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">Submit for admin review</h2>
-              <p className="text-sm text-zinc-400">
-                An admin will review verification details for your{' '}
-                {providerType === 'agency' ? 'agency' : 'individual'} profile. The green verified badge is only
-                granted after approval.
-              </p>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={onSubmitReview}
-                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
-              >
-                Submit for review
-              </button>
+                      {providerType === 'individual' ? (
+                        <>
+                          <TextField
+                            label="Display name"
+                            required
+                            hint="Shown publicly on your profile."
+                            value={account.displayName}
+                            onChange={(e) => setAccount({ ...account, displayName: e.target.value })}
+                          />
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <TextField
+                              label="Date of birth"
+                              type="date"
+                              value={account.dateOfBirth}
+                              onChange={(e) => setAccount({ ...account, dateOfBirth: e.target.value })}
+                            />
+                            <TextField
+                              label="Age"
+                              type="number"
+                              min={18}
+                              max={99}
+                              hint="Optional"
+                              value={account.age}
+                              onChange={(e) => setAccount({ ...account, age: e.target.value })}
+                            />
+                          </div>
+                        </>
+                      ) : null}
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField
+                          label={providerType === 'agency' ? 'Business email' : 'Email'}
+                          type="email"
+                          required
+                          autoComplete="email"
+                          value={account.email}
+                          onChange={(e) => setAccount({ ...account, email: e.target.value })}
+                        />
+                        <TextField
+                          label="Phone"
+                          type="tel"
+                          required
+                          autoComplete="tel"
+                          value={account.phone}
+                          onChange={(e) => setAccount({ ...account, phone: e.target.value })}
+                        />
+                      </div>
+
+                      <TextField
+                        label="WhatsApp number"
+                        type="tel"
+                        hint="Optional — clients see it only if you choose to show it."
+                        value={account.whatsapp}
+                        onChange={(e) => setAccount({ ...account, whatsapp: e.target.value })}
+                      />
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField
+                          label="Password"
+                          type="password"
+                          required
+                          autoComplete="new-password"
+                          hint="At least 8 characters, with a letter and a number."
+                          value={account.password}
+                          onChange={(e) => setAccount({ ...account, password: e.target.value })}
+                        />
+                        <TextField
+                          label="Confirm password"
+                          type="password"
+                          required
+                          autoComplete="new-password"
+                          value={account.confirmPassword}
+                          onChange={(e) => setAccount({ ...account, confirmPassword: e.target.value })}
+                        />
+                      </div>
+
+                      <CheckboxField
+                        name="provider-terms"
+                        checked={account.termsAccepted}
+                        onChange={(e) => setAccount({ ...account, termsAccepted: e.target.checked })}
+                        label="I accept the Terms and Privacy Policy. My profile starts unverified."
+                      />
+
+                      <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                        {backButton}
+                        <Button type="submit" loading={loading} loadingLabel="Creating account" className="w-full sm:w-auto">
+                          Continue
+                        </Button>
+                      </div>
+                    </form>
+                  )
+                ) : null}
+
+                {step === 'email' ? (
+                  <div className="space-y-4">
+                    <Alert variant={emailSent ? 'success' : 'info'} title="Confirm your email address">
+                      {emailSent
+                        ? `We sent a single-use confirmation link to ${account.email || 'your registered email'}. It expires in 24 hours.`
+                        : `Open the confirmation email for ${account.email || 'your registered email'} when it arrives. The link expires in 24 hours.`}
+                    </Alert>
+
+                    <p className="text-[13px] leading-relaxed text-zinc-500">
+                      Your phone number is kept as contact information for bookings and is never
+                      shown as verified.
+                    </p>
+
+                    {resendMessage && !emailSent ? (
+                      <p className="text-[13px] text-zinc-400">{resendMessage}</p>
+                    ) : null}
+
+                    {demoEmailToken ? (
+                      <Alert variant="warning" title="Demo mode (email delivery not configured)">
+                        <span className="break-all">{demoEmailToken}</span>
+                      </Alert>
+                    ) : null}
+
+                    <div className="flex flex-col gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      <Button
+                        variant="secondary"
+                        onClick={onResendEmail}
+                        loading={loading}
+                        loadingLabel="Sending"
+                        className="w-full sm:w-auto"
+                      >
+                        Resend email
+                      </Button>
+                      <Button
+                        onClick={onConfirmEmailFromLink}
+                        loading={loading}
+                        loadingLabel="Checking"
+                        className="w-full sm:w-auto"
+                      >
+                        I&apos;ve confirmed my email
+                      </Button>
+                    </div>
+
+                    <details className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                      <summary className="cursor-pointer text-[13px] font-medium text-zinc-300">
+                        Confirming on this device instead?
+                      </summary>
+                      <form onSubmit={onVerifyEmail} className="mt-3 space-y-3">
+                        <TextField
+                          label="Verification token"
+                          required
+                          autoComplete="one-time-code"
+                          hint="Paste the token from the confirmation link if you cannot open it."
+                          value={emailToken}
+                          onChange={(e) => setEmailToken(e.target.value)}
+                        />
+                        <Button type="submit" loading={loading} loadingLabel="Verifying" className="w-full sm:w-auto">
+                          Verify email
+                        </Button>
+                      </form>
+                    </details>
+                  </div>
+                ) : null}
+
+                {step === 'profile' && providerType ? (
+                  <form onSubmit={onSaveProfile} className="space-y-4">
+                    <TextField
+                      label={providerType === 'agency' ? 'Public agency name' : 'Display name'}
+                      required
+                      value={profile.displayName}
+                      onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                    />
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <SelectField
+                        label="City"
+                        value={profile.city}
+                        onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                      >
+                        {cities.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </SelectField>
+                      <TextField
+                        label="Region"
+                        value={profile.region}
+                        onChange={(e) => setProfile({ ...profile, region: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        label="Country"
+                        value={profile.country}
+                        onChange={(e) => setProfile({ ...profile, country: e.target.value })}
+                      />
+                      <TextField
+                        label="Area / neighbourhood"
+                        value={profile.areaNeighbourhood}
+                        onChange={(e) => setProfile({ ...profile, areaNeighbourhood: e.target.value })}
+                      />
+                    </div>
+
+                    {providerType === 'agency' ? (
+                      <TextField
+                        label="Business address"
+                        value={profile.businessAddress}
+                        onChange={(e) => setProfile({ ...profile, businessAddress: e.target.value })}
+                      />
+                    ) : null}
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        label="Service area"
+                        value={profile.serviceArea}
+                        onChange={(e) => setProfile({ ...profile, serviceArea: e.target.value })}
+                      />
+                      {providerType === 'individual' ? (
+                        <TextField
+                          label="Service radius (km)"
+                          type="number"
+                          min={0}
+                          hint="Optional"
+                          value={profile.serviceRadiusKm}
+                          onChange={(e) => setProfile({ ...profile, serviceRadiusKm: e.target.value })}
+                        />
+                      ) : null}
+                    </div>
+
+                    <TextAreaField
+                      label={providerType === 'agency' ? 'About the agency' : 'About you'}
+                      rows={4}
+                      value={profile.about}
+                      onChange={(e) => setProfile({ ...profile, about: e.target.value })}
+                    />
+
+                    <fieldset>
+                      <legend className="mb-2 text-[13px] font-medium text-zinc-200">
+                        Massage services
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        {MASSAGE_SERVICE_OPTIONS.map((label) => {
+                          const selected = profile.services.includes(label);
+                          return (
+                            <button
+                              key={label}
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() => toggleService(label)}
+                              className={[
+                                'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                selected
+                                  ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                  : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
+                              ].join(' ')}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+
+                    {profile.rates.length > 0 ? (
+                      <fieldset>
+                        <legend className="mb-2 text-[13px] font-medium text-zinc-200">
+                          Your rates
+                        </legend>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {profile.rates.map((row, idx) => (
+                            <TextField
+                              key={`${row.service}-${row.durationMinutes}`}
+                              label={`${row.service} · ${row.durationMinutes} min`}
+                              type="number"
+                              min={0}
+                              placeholder="GHS"
+                              inputMode="numeric"
+                              value={row.price}
+                              onChange={(e) => {
+                                const next = [...profile.rates];
+                                next[idx] = { ...row, price: e.target.value };
+                                setProfile({ ...profile, rates: next });
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </fieldset>
+                    ) : null}
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        label="Starting price (GHS)"
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        value={profile.startingPrice}
+                        onChange={(e) => setProfile({ ...profile, startingPrice: e.target.value })}
+                      />
+                      <TextField
+                        label="Years of experience"
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        value={profile.yearsExperience}
+                        onChange={(e) => setProfile({ ...profile, yearsExperience: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <SelectField
+                        label="Availability"
+                        value={profile.availability}
+                        onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
+                      >
+                        <option value="today">Available today</option>
+                        <option value="this_week">This week</option>
+                        <option value="flexible">Flexible</option>
+                      </SelectField>
+                      <TextField
+                        label="Working days"
+                        placeholder="Mon – Sat"
+                        value={profile.workingDays}
+                        onChange={(e) => setProfile({ ...profile, workingDays: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        label="Opening hours"
+                        placeholder="09:00 – 20:00"
+                        value={profile.workingHours}
+                        onChange={(e) => setProfile({ ...profile, workingHours: e.target.value })}
+                      />
+                      <TextField
+                        label="Languages"
+                        hint="Separate with commas."
+                        value={profile.languages}
+                        onChange={(e) => setProfile({ ...profile, languages: e.target.value })}
+                      />
+                    </div>
+
+                    <fieldset>
+                      <legend className="mb-2 text-[13px] font-medium text-zinc-200">
+                        Where you offer sessions
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        {SERVICE_SETTING_OPTIONS.map((s) => {
+                          const selected = profile.serviceSetting.includes(s.id);
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() =>
+                                setProfile({
+                                  ...profile,
+                                  serviceSetting: selected
+                                    ? profile.serviceSetting.filter((x) => x !== s.id)
+                                    : [...profile.serviceSetting, s.id],
+                                })
+                              }
+                              className={[
+                                'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                selected
+                                  ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                  : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
+                              ].join(' ')}
+                            >
+                              {s.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        label="Main photo URL"
+                        hint="Temporary until photo upload is available."
+                        value={profile.primaryImage}
+                        onChange={(e) => setProfile({ ...profile, primaryImage: e.target.value })}
+                      />
+                      {providerType === 'agency' ? (
+                        <TextField
+                          label="Cover / logo image URL"
+                          hint="Optional"
+                          value={profile.coverImage}
+                          onChange={(e) => setProfile({ ...profile, coverImage: e.target.value })}
+                        />
+                      ) : null}
+                    </div>
+
+                    <fieldset>
+                      <legend className="mb-1 text-[13px] font-medium text-zinc-200">
+                        Contact visibility
+                      </legend>
+                      <CheckboxField
+                        name="public-phone"
+                        checked={profile.publicPhone}
+                        onChange={(e) => setProfile({ ...profile, publicPhone: e.target.checked })}
+                        label="Show phone publicly"
+                      />
+                      <CheckboxField
+                        name="public-whatsapp"
+                        checked={profile.publicWhatsapp}
+                        onChange={(e) => setProfile({ ...profile, publicWhatsapp: e.target.checked })}
+                        label="Show WhatsApp publicly"
+                      />
+                      <CheckboxField
+                        name="public-email"
+                        checked={profile.publicEmail}
+                        onChange={(e) => setProfile({ ...profile, publicEmail: e.target.checked })}
+                        label="Show email publicly"
+                      />
+                    </fieldset>
+
+                    <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      <Button type="submit" loading={loading} loadingLabel="Saving profile" className="w-full sm:w-auto">
+                        Save and continue
+                      </Button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {step === 'team' ? (
+                  <div className="space-y-5">
+                    {savedTeam.length > 0 ? (
+                      <ul className="space-y-2">
+                        {savedTeam.map((m) => (
+                          <li
+                            key={String(m.id)}
+                            className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2.5"
+                          >
+                            <span className="min-w-0 truncate text-[13.5px] text-zinc-200">
+                              {String(m.displayName)}
+                              <span className="ml-2 text-[12px] capitalize text-zinc-500">
+                                {String(m.gender)}
+                              </span>
+                            </span>
+                            <button
+                              type="button"
+                              className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-[12.5px] font-medium text-rose-300 transition-colors hover:bg-rose-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/70"
+                              onClick={async () => {
+                                try {
+                                  const res = await providerApi.deleteTeamMember(String(m.id));
+                                  setSavedTeam(res.teamMembers || []);
+                                } catch (err) {
+                                  setError(profileFormError(err));
+                                }
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" aria-hidden />
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[13px] text-zinc-500">
+                        No team members added yet. You can add them now or continue and add more
+                        later.
+                      </p>
+                    )}
+
+                    <form onSubmit={onAddTeamMember} className="space-y-4 border-t border-white/[0.07] pt-5">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField
+                          label="Display name"
+                          value={teamDraft.displayName}
+                          onChange={(e) => setTeamDraft({ ...teamDraft, displayName: e.target.value })}
+                        />
+                        <div>
+                          <p className="mb-1.5 text-[13px] font-medium text-zinc-200">Gender</p>
+                          <div role="radiogroup" aria-label="Team member gender" className="grid grid-cols-2 gap-2">
+                            {(['female', 'male'] as const).map((g) => (
+                              <button
+                                key={g}
+                                type="button"
+                                aria-pressed={teamDraft.gender === g}
+                                onClick={() => setTeamDraft({ ...teamDraft, gender: g })}
+                                className={[
+                                  'inline-flex h-12 items-center justify-center rounded-xl border text-[13px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                  teamDraft.gender === g
+                                    ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                    : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:text-zinc-200',
+                                ].join(' ')}
+                              >
+                                {g}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <TextAreaField
+                        label="Short bio"
+                        rows={3}
+                        value={teamDraft.bio}
+                        onChange={(e) => setTeamDraft({ ...teamDraft, bio: e.target.value })}
+                      />
+
+                      <fieldset>
+                        <legend className="mb-2 text-[13px] font-medium text-zinc-200">
+                          Services
+                        </legend>
+                        <div className="flex flex-wrap gap-2">
+                          {MASSAGE_SERVICE_OPTIONS.slice(0, 6).map((label) => {
+                            const selected = teamDraft.services.includes(label);
+                            return (
+                              <button
+                                key={label}
+                                type="button"
+                                aria-pressed={selected}
+                                onClick={() =>
+                                  setTeamDraft({
+                                    ...teamDraft,
+                                    services: selected
+                                      ? teamDraft.services.filter((s) => s !== label)
+                                      : [...teamDraft.services, label],
+                                  })
+                                }
+                                className={[
+                                  'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                  selected
+                                    ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                    : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
+                                ].join(' ')}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </fieldset>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField
+                          label="Years of experience"
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={teamDraft.yearsExperience}
+                          onChange={(e) => setTeamDraft({ ...teamDraft, yearsExperience: e.target.value })}
+                        />
+                        <SelectField
+                          label="Availability"
+                          value={teamDraft.availability}
+                          onChange={(e) => setTeamDraft({ ...teamDraft, availability: e.target.value })}
+                        >
+                          <option value="today">Available today</option>
+                          <option value="this_week">This week</option>
+                          <option value="flexible">Flexible</option>
+                        </SelectField>
+                      </div>
+
+                      <TextField
+                        label="Rates note"
+                        hint="Leave blank to inherit agency rates."
+                        value={teamDraft.ratesNote}
+                        onChange={(e) => setTeamDraft({ ...teamDraft, ratesNote: e.target.value })}
+                      />
+
+                      <div>
+                        <p className="mb-1.5 text-[13px] font-medium text-zinc-200">Status</p>
+                        <div role="radiogroup" aria-label="Team member status" className="grid grid-cols-2 gap-2">
+                          {(['active', 'inactive'] as const).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              aria-pressed={teamDraft.status === s}
+                              onClick={() => setTeamDraft({ ...teamDraft, status: s })}
+                              className={[
+                                'inline-flex h-12 items-center justify-center rounded-xl border text-[13px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                teamDraft.status === s
+                                  ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                  : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:text-zinc-200',
+                              ].join(' ')}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        variant="secondary"
+                        loading={loading}
+                        loadingLabel="Adding"
+                        className="w-full sm:w-auto"
+                      >
+                        Add team member
+                      </Button>
+                    </form>
+
+                    <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      <Button onClick={() => setStep('identity')} className="w-full sm:w-auto">
+                        Continue to verification
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {step === 'identity' ? (
+                  <form onSubmit={onSubmitIdentity} className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <SelectField
+                        label="ID type"
+                        value={identity.idType}
+                        onChange={(e) => setIdentity({ ...identity, idType: e.target.value })}
+                      >
+                        <option>Ghana Card</option>
+                        <option>Passport</option>
+                        <option>Driver Licence</option>
+                        <option>Voter ID</option>
+                      </SelectField>
+                      <TextField
+                        label="ID number"
+                        hint="Optional"
+                        value={identity.idNumber}
+                        onChange={(e) => setIdentity({ ...identity, idNumber: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FileField
+                        label="Government ID image"
+                        required
+                        file={identity.idImage}
+                        onChange={(file) => setIdentity({ ...identity, idImage: file })}
+                      />
+                      <FileField
+                        label="Selfie / live photo"
+                        required
+                        file={identity.selfieImage}
+                        onChange={(file) => setIdentity({ ...identity, selfieImage: file })}
+                      />
+                    </div>
+
+                    <p className="text-[12.5px] leading-relaxed text-zinc-500">
+                      JPG, PNG or WebP. Documents are visible only to the admin review team.
+                    </p>
+
+                    <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      <Button type="submit" loading={loading} loadingLabel="Submitting" className="w-full sm:w-auto">
+                        Submit identity
+                      </Button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {step === 'membership' ? (
+                  <div className="space-y-5">
+                    <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <div>
+                        <p className="text-[12px] font-medium text-zinc-400">Membership</p>
+                        <p className="mt-1 text-2xl font-semibold text-white">
+                          {membership.feeEnabled
+                            ? `${membership.currency} ${membership.feeAmount.toFixed(0)}`
+                            : 'Free'}
+                        </p>
+                      </div>
+                      <p className="max-w-xs text-[12px] leading-relaxed text-zinc-500">
+                        {membership.feeEnabled
+                          ? 'One-off membership fee. It does not guarantee approval.'
+                          : 'No fee is charged. Identity checks and admin approval still apply.'}
+                      </p>
+                    </div>
+
+                    <Alert variant={membership.feeEnabled ? 'info' : 'success'}>
+                      {membership.message}
+                    </Alert>
+
+                    <p className="text-[13px] leading-relaxed text-zinc-500">
+                      Free membership does not grant a verified badge. An admin reviews your
+                      identity documents before any badge appears.
+                    </p>
+
+                    <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      {backButton}
+                      <Button
+                        onClick={onMembershipContinue}
+                        loading={loading}
+                        loadingLabel="Preparing"
+                        className="w-full sm:w-auto"
+                      >
+                        Continue to review
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {step === 'review' ? (
+                  <div className="space-y-5">
+                    <dl className="divide-y divide-white/[0.07] rounded-xl border border-white/10 bg-white/[0.02] px-4">
+                      {[
+                        { label: 'Provider type', value: providerType === 'agency' ? 'Agency' : 'Individual' },
+                        {
+                          label: providerType === 'agency' ? 'Agency name' : 'Display name',
+                          value: profile.displayName || account.displayName || account.businessName || '—',
+                        },
+                        { label: 'City', value: profile.city || '—' },
+                        {
+                          label: 'Services',
+                          value: profile.services.length ? profile.services.join(', ') : '—',
+                        },
+                        {
+                          label: 'Rates',
+                          value:
+                            profile.rates.filter((r) => r.price.trim() !== '').length > 0
+                              ? `${profile.rates.filter((r) => r.price.trim() !== '').length} rate rows`
+                              : profile.startingPrice
+                                ? `From GHS ${profile.startingPrice}`
+                                : '—',
+                        },
+                        { label: 'Email verified', value: 'Yes' },
+                        {
+                          label: 'Membership',
+                          value: membership.feeEnabled
+                            ? `${membership.currency} ${membership.feeAmount.toFixed(0)}`
+                            : 'Free',
+                        },
+                      ].map((row) => (
+                        <div key={row.label} className="flex flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-6">
+                          <dt className="text-[12.5px] font-medium text-zinc-500">{row.label}</dt>
+                          <dd className="text-[13.5px] text-zinc-200 sm:text-right">{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+
+                    <Alert variant="info">
+                      An admin reviews verification details before granting the verified badge.
+                    </Alert>
+
+                    <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                      {backButton}
+                      <Button
+                        onClick={onSubmitReview}
+                        loading={loading}
+                        loadingLabel="Submitting"
+                        className="w-full sm:w-auto"
+                      >
+                        Submit for review
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                </div>
+              </section>
             </div>
-          )}
-        </div>
+          </div>
+        </Container>
       </main>
     </div>
   );
 };
+
+function FileField({
+  label,
+  required,
+  file,
+  onChange,
+}: {
+  label: string;
+  required?: boolean;
+  file: File | null;
+  onChange: (file: File | null) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-1.5 flex items-center gap-1 text-[13px] font-medium text-zinc-200">
+        {label}
+        {required ? (
+          <span className="text-brand-gold-light" aria-hidden>
+            *
+          </span>
+        ) : null}
+      </p>
+      <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/12 bg-[#101012] px-3.5 text-[13px] text-zinc-400 transition-colors hover:border-white/25 focus-within:border-brand-gold/60 focus-within:ring-2 focus-within:ring-brand-gold/20">
+        <span className="truncate">{file ? file.name : 'Choose file'}</span>
+        <span className="shrink-0 rounded-lg border border-white/12 px-2.5 py-1 text-[12px] font-medium text-zinc-200">
+          Browse
+        </span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          required={required}
+          className="sr-only"
+          onChange={(e) => onChange(e.target.files?.[0] || null)}
+        />
+      </label>
+    </div>
+  );
+}

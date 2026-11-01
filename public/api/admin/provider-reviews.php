@@ -48,6 +48,8 @@ if ($method === 'GET') {
             'emailVerified' => !empty($row['email_verified_at']) || !empty($row['user_email_verified_at']),
             'identityStatus' => $row['identity_status'],
             'paymentStatus' => $row['payment_status'],
+            'membershipFeeEnabled' => ds_membership_fee_enabled(),
+            'membershipFree' => !ds_membership_fee_enabled(),
             'verificationStatus' => $row['verification_status'],
             'submittedAt' => $row['submitted_for_review_at'] ?? $row['created_at'],
             'adminNotes' => $row['admin_notes'],

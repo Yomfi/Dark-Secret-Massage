@@ -1,9 +1,11 @@
-import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Search, UserRound } from 'lucide-react';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
-import type { OnboardingChoice } from '../lib/api';
+import { ApiError, type OnboardingChoice } from '../lib/api';
+import { BrandLogo } from '../components/BrandLogo';
+import { Container } from '../components/ui/Layout';
+import { Alert, SelectableCard } from '../components/ui';
 
 const OPTIONS: {
   choice: OnboardingChoice;
@@ -14,15 +16,15 @@ const OPTIONS: {
 }[] = [
   {
     choice: 'book_massage',
-    title: 'Search for a Masseuse',
-    detail: 'Find massage professionals available near you.',
+    title: 'Find a massage professional',
+    detail: 'Browse vetted providers by city and book a session.',
     icon: Search,
     to: '/explore',
   },
   {
     choice: 'become_provider',
-    title: 'Become a Massage Provider',
-    detail: 'Create a public profile and offer your massage services.',
+    title: 'Offer massage services',
+    detail: 'Create a public profile and list the services you provide.',
     icon: UserRound,
     to: '/provider/register',
   },
@@ -36,7 +38,7 @@ export const OnboardingPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#060608] flex items-center justify-center text-zinc-400">
+      <div className="flex min-h-screen items-center justify-center bg-brand-surface text-zinc-400">
         Loading…
       </div>
     );
@@ -53,6 +55,11 @@ export const OnboardingPage: React.FC = () => {
       await setOnboardingChoice(choice);
       navigate(to);
     } catch (err) {
+      // The API is the source of truth: unconfirmed email cannot progress.
+      if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
+        navigate('/verify-email?sent=0', { replace: true });
+        return;
+      }
       setError(getAuthErrorMessage(err));
     } finally {
       setLoadingChoice(null);
@@ -60,52 +67,43 @@ export const OnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
-          <BrandLogo variant="plate" withWordmark markHeight={26} />
-        </Link>
+    <div className="min-h-screen bg-brand-surface text-zinc-200">
+      <header className="border-b border-white/[0.07]">
+        <Container className="flex h-16 items-center justify-between gap-4">
+          <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+            <BrandLogo variant="plate" withWordmark markHeight={26} />
+          </Link>
+        </Container>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">Get started</p>
-        <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-white tracking-tight">
+      <main className="mx-auto w-full max-w-2xl px-5 py-12 sm:py-16">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+          Get started
+        </p>
+        <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-3xl">
           What would you like to do?
         </h1>
-        <p className="mt-3 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
+        <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">
           Choose how you would like to continue.
         </p>
 
-        {error && (
-          <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
+        {error ? (
+          <Alert variant="error" className="mt-6">
             {error}
-          </div>
-        )}
+          </Alert>
+        ) : null}
 
-        <div className="mt-8 grid grid-cols-1 gap-4">
+        <div role="radiogroup" aria-label="Choose a pathway" className="mt-6 grid gap-3">
           {OPTIONS.map(({ choice, title, detail, icon: Icon, to }) => (
-            <button
+            <SelectableCard
               key={choice}
-              type="button"
+              selected={loadingChoice === choice}
               disabled={Boolean(loadingChoice)}
               onClick={() => select(choice, to)}
-              className="text-left rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 hover:border-brand-gold/40 transition-all cursor-pointer disabled:opacity-60"
-            >
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/10 text-brand-gold-light">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-semibold text-white uppercase tracking-wide">
-                    {title}
-                  </h2>
-                  <p className="mt-1 text-base text-zinc-400 font-normal">{detail}</p>
-                  {loadingChoice === choice && (
-                    <p className="mt-2 text-sm text-brand-gold-light">Saving preference…</p>
-                  )}
-                </div>
-              </div>
-            </button>
+              title={title}
+              description={loadingChoice === choice ? 'Saving preference…' : detail}
+              icon={<Icon className="h-5 w-5" />}
+            />
           ))}
         </div>
       </main>

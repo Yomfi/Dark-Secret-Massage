@@ -65,6 +65,14 @@ function ds_config(): array
         'mail_from_name' => getenv('DS_MAIL_FROM_NAME') ?: 'Massager Studio',
         'mail_reply_to' => getenv('DS_MAIL_REPLY_TO') ?: 'contact@massagerstudio.com',
         'mail_debug' => (int) (getenv('DS_MAIL_DEBUG') ?: 0),
+        // Provider membership. Free by default: the fee can be switched back on
+        // (DS_MEMBERSHIP_FEE_ENABLED=true) without a schema or code change.
+        'membership_fee_enabled' => filter_var(
+            getenv('DS_MEMBERSHIP_FEE_ENABLED') ?: 'false',
+            FILTER_VALIDATE_BOOLEAN
+        ),
+        'membership_fee_amount' => (float) (getenv('DS_MEMBERSHIP_FEE_AMOUNT') ?: 100),
+        'membership_currency' => getenv('DS_MEMBERSHIP_CURRENCY') ?: 'GHS',
     ];
 
     $localFile = __DIR__ . '/config.local.php';

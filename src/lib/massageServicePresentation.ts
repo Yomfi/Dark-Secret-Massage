@@ -15,8 +15,8 @@ const PRESENTATION: Record<
   Omit<MassageServicePresentation, 'service'>
 > = {
   'deep-tissue': {
-    image: '/massage_therapy_booking_hero.jpg',
-    imageAlt: 'Professional deep tissue massage therapy session',
+    image: '/images/services/deep-tissue.jpg',
+    imageAlt: 'Massage therapist working on a client’s upper back during a deep tissue session',
     whoItMaySuit:
       'People who prefer slower, focused bodywork for areas that feel tightly held.',
     whatToExpect: [
@@ -27,8 +27,8 @@ const PRESENTATION: Record<
     locationAvailability: 'Studio or in-home',
   },
   'swedish-holistic': {
-    image: '/spa_treatment_room.jpg',
-    imageAlt: 'Calm wellness treatment room prepared for Swedish massage',
+    image: '/images/services/swedish.jpg',
+    imageAlt: 'Private treatment room with two prepared massage beds and warm window light',
     whoItMaySuit:
       'Anyone seeking a gentle, continuous full-body session for rest and unwind.',
     whatToExpect: [
@@ -39,8 +39,8 @@ const PRESENTATION: Record<
     locationAvailability: 'Studio or in-home',
   },
   'hot-stone': {
-    image: '/spa_treatment_room.jpg',
-    imageAlt: 'Professional wellness treatment space for restorative massage',
+    image: '/images/services/hot-stone.jpg',
+    imageAlt: 'Close view of prepared massage beds with rolled towels in a warm treatment room',
     whoItMaySuit:
       'Guests who enjoy longer, deeply warming sessions with a slower rhythm.',
     whatToExpect: [
@@ -51,8 +51,8 @@ const PRESENTATION: Record<
     locationAvailability: 'Studio preferred; in-home where available',
   },
   'aromatherapy-stress': {
-    image: '/massage_therapy_booking_hero.jpg',
-    imageAlt: 'Professional aromatherapy massage wellness session',
+    image: '/images/services/aromatherapy.jpg',
+    imageAlt: 'Calm, warmly lit lounge with candlelight where aromatherapy sessions begin',
     whoItMaySuit:
       'Those who want a softer session with optional botanical scent support.',
     whatToExpect: [
@@ -63,8 +63,8 @@ const PRESENTATION: Record<
     locationAvailability: 'Studio or in-home',
   },
   'sports-mobility': {
-    image: '/massage_therapy_booking_hero.jpg',
-    imageAlt: 'Professional mobility-focused massage therapy',
+    image: '/images/services/sports-mobility.jpg',
+    imageAlt: 'Close-up of a therapist applying focused pressure to shoulder muscles',
     whoItMaySuit:
       'Active professionals and athletes who want movement-oriented bodywork.',
     whatToExpect: [
@@ -77,7 +77,7 @@ const PRESENTATION: Record<
 };
 
 const FALLBACK: Omit<MassageServicePresentation, 'service'> = {
-  image: '/spa_treatment_room.jpg',
+  image: '/images/services/swedish.jpg',
   imageAlt: 'Professional massage wellness treatment setting',
   whoItMaySuit: 'Adults seeking intentional, professional massage wellness.',
   whatToExpect: [
@@ -103,6 +103,11 @@ export function getMassagePresentation(serviceId: string): MassageServicePresent
 
 export function formatDurationOptions(minutes: number[]): string {
   return minutes.map((m) => `${m} min`).join(' · ');
+}
+
+/** Compact form for cards: "60 · 90 · 120 min". */
+export function formatDurationSummary(minutes: number[]): string {
+  return `${minutes.join(' · ')} min`;
 }
 
 export function bookMassageHref(serviceId?: string): string {

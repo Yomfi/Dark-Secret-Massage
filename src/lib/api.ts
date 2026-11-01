@@ -112,7 +112,7 @@ export const authApi = {
       body: JSON.stringify(body),
     }),
   register: (body: RegisterBody) =>
-    apiRequest<{ user: AuthUserDto }>('/auth/register.php', {
+    apiRequest<{ user: AuthUserDto; verificationEmailSent?: boolean }>('/auth/register.php', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -146,6 +146,15 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ token }),
     }),
+  resendVerification: () =>
+    apiRequest<{
+      sent?: boolean;
+      alreadyVerified?: boolean;
+      demoMode?: boolean;
+      demoToken?: string;
+      emailConfigured?: boolean;
+      message: string;
+    }>('/auth/resend-verification.php', { method: 'POST', body: '{}' }),
 };
 
 export type OnboardingChoice = 'find_partner' | 'book_massage' | 'become_provider';
@@ -198,16 +207,30 @@ export type ProviderDashboardDto = {
     paymentStatus: string;
     feeAmount: number;
     currency: string;
+    membershipFeeEnabled?: boolean;
+    membershipFree?: boolean;
     verifiedAt: string | null;
     rejectionReason: string | null;
     submittedForReviewAt: string | null;
   };
+  membership?: {
+    feeEnabled: boolean;
+    feeRequired: boolean;
+    free: boolean;
+    feeAmount: number;
+    standardFeeAmount: number;
+    currency: string;
+    message: string;
+  };
   progress: {
     accountCreated: boolean;
+    phoneProvided?: boolean;
     phoneVerified: boolean;
     emailVerified: boolean;
     profileCompleted: boolean;
     identitySubmitted: boolean;
+    membershipFeeRequired?: boolean;
+    membershipFeePaid?: boolean;
     verificationFeePaid: boolean;
     adminReview: string;
   };
@@ -220,19 +243,6 @@ export const providerApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  sendPhoneCode: () =>
-    apiRequest<{
-      sent?: boolean;
-      alreadyVerified?: boolean;
-      demoMode?: boolean;
-      demoCode?: string;
-      message: string;
-    }>('/provider/send-phone-code.php', { method: 'POST', body: '{}' }),
-  verifyPhone: (code: string) =>
-    apiRequest<{ user: AuthUserDto; verified: boolean; nextStep: string }>(
-      '/provider/verify-phone.php',
-      { method: 'POST', body: JSON.stringify({ code }) },
-    ),
   sendEmailCode: () =>
     apiRequest<{
       sent?: boolean;
@@ -275,7 +285,11 @@ export const providerApi = {
   },
   getPayment: () =>
     apiRequest<{
+      feeEnabled: boolean;
+      feeRequired: boolean;
+      free: boolean;
       feeAmount: number;
+      standardFeeAmount: number;
       currency: string;
       paymentStatus: string;
       gatewayReady: boolean;

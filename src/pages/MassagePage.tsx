@@ -7,10 +7,9 @@ import { MassageServiceDetails } from '../components/massage/MassageServiceDetai
 import { MassageHowItWorks } from '../components/massage/MassageHowItWorks';
 import { MassageTrustStrip } from '../components/massage/MassageTrustStrip';
 import { MassageFinalCTA } from '../components/massage/MassageFinalCTA';
-import {
-  getMassagePresentation,
-  getMassagePresentations,
-} from '../lib/massageServicePresentation';
+import { Container } from '../components/ui/Layout';
+import { buttonClass } from '../components/ui/Button';
+import { getMassagePresentation, getMassagePresentations } from '../lib/massageServicePresentation';
 
 export const MassagePage: React.FC = () => {
   const items = useMemo(() => getMassagePresentations(), []);
@@ -22,31 +21,35 @@ export const MassagePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#060608]/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+    <div className="min-h-screen bg-brand-surface text-zinc-200">
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-brand-surface/90 backdrop-blur-xl">
+        <Container className="flex h-16 items-center justify-between gap-4">
+          <Link
+            to="/"
+            className="inline-flex min-h-11 items-center rounded-lg"
+            aria-label="Massager Studio home"
+          >
             <BrandLogo variant="plate" withWordmark markHeight={26} />
           </Link>
-          <nav className="flex items-center gap-4 sm:gap-6 text-sm font-semibold">
+          <nav className="flex items-center gap-1.5 sm:gap-2" aria-label="Primary">
             <a
               href="#services"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToServices();
               }}
-              className="hidden sm:inline text-zinc-400 hover:text-white transition-colors"
+              className="hidden h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-400 transition-colors hover:text-white sm:inline-flex"
             >
               Services
             </a>
-            <Link to="/book-massage" className="text-brand-gold-light hover:text-brand-gold-light transition-colors">
-              Book
-            </Link>
-            <Link to="/" className="text-zinc-400 hover:text-white transition-colors">
-              Home
+            <Link
+              to="/book-massage"
+              className={buttonClass({ size: 'sm' })}
+            >
+              Book now
             </Link>
           </nav>
-        </div>
+        </Container>
       </header>
 
       <main>
@@ -57,10 +60,19 @@ export const MassagePage: React.FC = () => {
         <MassageFinalCTA />
       </main>
 
-      <footer className="border-t border-white/[0.06] py-8 px-4 text-center text-sm text-zinc-500 font-medium">
-        <Link to="/" className="hover:text-zinc-300 transition-colors">
-          Return to Massager Studio home
-        </Link>
+      <footer className="border-t border-white/[0.07]">
+        <Container className="flex flex-col gap-3 py-8 sm:flex-row sm:items-center sm:justify-between">
+          <BrandLogo variant="plate" withWordmark markHeight={22} compact />
+          <p className="text-[13px] text-zinc-500">
+            © {new Date().getFullYear()} Massager Studio · Accra, Ghana
+          </p>
+          <Link
+            to="/"
+            className="inline-flex min-h-11 items-center text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
+          >
+            Back to home
+          </Link>
+        </Container>
       </footer>
 
       <MassageServiceDetails item={selected} onClose={() => setSelectedId(null)} />

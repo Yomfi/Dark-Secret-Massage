@@ -181,7 +181,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="min-h-screen bg-[#060608] text-[#e4e4e9] font-sans selection:bg-brand-gold/35 selection:text-brand-offwhite">
+        <div className="min-h-screen bg-brand-surface font-sans text-zinc-200 selection:bg-brand-gold/35 selection:text-brand-offwhite">
           <AppRoutes />
         </div>
       </AuthProvider>

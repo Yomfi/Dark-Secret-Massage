@@ -116,8 +116,8 @@ try {
             'INSERT INTO provider_verification
              (id, provider_user_id, identity_status, payment_status, verification_status,
               verification_fee_amount, currency, created_at, updated_at)
-             VALUES (?, ?, \'not_submitted\', \'unpaid\', \'unverified\', 100.00, \'GHS\', ?, ?)'
-        )->execute([ds_new_id(), $id, $now, $now]);
+             VALUES (?, ?, \'not_submitted\', \'unpaid\', \'unverified\', ?, ?, ?, ?)'
+        )->execute([ds_new_id(), $id, ds_membership_fee_amount(), ds_membership_currency(), $now, $now]);
     }
 
     if (ds_table_exists('provider_profiles')) {
@@ -173,5 +173,7 @@ ds_success([
     'user' => ds_user_dto($user),
     'providerType' => $providerType,
     'gender' => $gender !== '' ? $gender : null,
-    'nextStep' => 'phone_verification',
+    // Email is the verification gate; the phone number is contact information only.
+    'nextStep' => 'email_verification',
+    'membership' => ds_membership_status(),
 ], 201);

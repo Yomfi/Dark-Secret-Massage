@@ -102,6 +102,24 @@ async function main() {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )');
+      $pdo->exec('CREATE TABLE email_verification_tokens (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL, token_hash TEXT NOT NULL,
+        expires_at TEXT NOT NULL, used_at TEXT NULL, created_at TEXT NOT NULL
+      )');
+      $pdo->exec('CREATE TABLE provider_profiles (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL, slug TEXT, display_name TEXT,
+        provider_type TEXT, gender TEXT, business_name TEXT, contact_first_name TEXT,
+        contact_last_name TEXT, city TEXT, country TEXT, about TEXT, services_json TEXT,
+        rates_json TEXT, starting_price REAL, primary_image TEXT, profile_completion INTEGER,
+        profile_completed_at TEXT, created_at TEXT, updated_at TEXT
+      )');
+      $pdo->exec('CREATE TABLE provider_verification (
+        id TEXT PRIMARY KEY, provider_user_id TEXT NOT NULL, phone_verified_at TEXT,
+        email_verified_at TEXT, identity_status TEXT, payment_status TEXT,
+        verification_status TEXT, verification_fee_amount REAL, currency TEXT,
+        submitted_for_review_at TEXT, verified_at TEXT, admin_notes TEXT,
+        rejection_reason TEXT, created_at TEXT, updated_at TEXT
+      )');
       echo "ok";
       `,
     ],
@@ -186,6 +204,101 @@ async function main() {
     console.log('ME_AFTER_LOGIN', me2.status, JSON.stringify(me2.json));
     if (me2.status !== 200 || me2.json?.data?.user?.email !== email) {
       throw new Error('me after login failed');
+    }
+
+    // The backend (not just the UI) blocks customer progression until confirmed.
+    const onboardUnverified = await request('POST', '/auth/onboarding', {
+      cookie,
+      body: { choice: 'book_massage' },
+    });
+    if (
+      onboardUnverified.status !== 403 ||
+      onboardUnverified.json?.error?.code !== 'EMAIL_NOT_VERIFIED'
+    ) {
+      throw new Error('onboarding should be blocked until the email is confirmed');
+    }
+    console.log('ONBOARDING_UNVERIFIED', onboardUnverified.status, onboardUnverified.json?.error?.code);
+
+    // Email confirmation resend: single-use token, newest link wins.
+    const resend = await request('POST', '/auth/resend-verification', { cookie, body: {} });
+    if (resend.status !== 200 || typeof resend.json?.data?.demoToken !== 'string') {
+      throw new Error('resend confirmation did not return a development token');
+    }
+    console.log('RESEND', resend.status, resend.json?.data?.message);
+    const resentToken = resend.json.data.demoToken;
+    const confirmed = await request('POST', '/auth/verify-email', { body: { token: resentToken } });
+    if (confirmed.status !== 200 || confirmed.json?.data?.verified !== true) {
+      throw new Error('resent confirmation token did not verify');
+    }
+    const confirmReuse = await request('POST', '/auth/verify-email', { body: { token: resentToken } });
+    if (confirmReuse.status !== 400) throw new Error('confirmation token was reusable');
+    const resendAfter = await request('POST', '/auth/resend-verification', { cookie, body: {} });
+    if (resendAfter.status !== 200 || resendAfter.json?.data?.alreadyVerified !== true) {
+      throw new Error('resend after confirmation should report alreadyVerified');
+    }
+    console.log('RESEND_AFTER_VERIFY', resendAfter.json?.data?.message);
+
+    const onboardVerified = await request('POST', '/auth/onboarding', {
+      cookie,
+      body: { choice: 'book_massage' },
+    });
+    if (
+      onboardVerified.status !== 200 ||
+      onboardVerified.json?.data?.user?.onboardingChoice !== 'book_massage'
+    ) {
+      throw new Error('onboarding should succeed after the email is confirmed');
+    }
+    console.log('ONBOARDING_VERIFIED', onboardVerified.status, onboardVerified.json?.data?.user?.onboardingChoice);
+
+    // Provider registration is email-first and currently free for both types.
+    const providerPhoneBase = `+23322${String(Date.now()).slice(-7)}`;
+    const individual = await request('POST', '/provider/register.php', {
+      body: {
+        firstName: 'Prov',
+        lastName: 'Individual',
+        displayName: 'Prov Individual',
+        providerType: 'individual',
+        gender: 'female',
+        email: `provider_individual_${Date.now()}@example.com`,
+        phone: `${providerPhoneBase}1`,
+        password,
+        confirmPassword: password,
+        termsAccepted: true,
+      },
+    });
+    console.log('PROVIDER_INDIVIDUAL', individual.status, JSON.stringify(individual.json));
+    if (individual.status !== 201) throw new Error('individual provider registration failed');
+    if (individual.json?.data?.nextStep !== 'email_verification') {
+      throw new Error('individual provider should continue to email verification');
+    }
+    if (individual.json?.data?.membership?.free !== true) {
+      throw new Error('individual membership should be free');
+    }
+    if (individual.json?.data?.user?.phoneVerifiedAt) {
+      throw new Error('phone should not be marked verified at registration');
+    }
+
+    const agency = await request('POST', '/provider/register.php', {
+      body: {
+        firstName: 'Prov',
+        lastName: 'Agency',
+        displayName: 'Smoke Agency',
+        providerType: 'agency',
+        businessName: 'Smoke Agency',
+        email: `provider_agency_${Date.now()}@example.com`,
+        phone: `${providerPhoneBase}2`,
+        password,
+        confirmPassword: password,
+        termsAccepted: true,
+      },
+    });
+    console.log('PROVIDER_AGENCY', agency.status, JSON.stringify(agency.json));
+    if (agency.status !== 201) throw new Error('agency provider registration failed');
+    if (agency.json?.data?.nextStep !== 'email_verification') {
+      throw new Error('agency provider should continue to email verification');
+    }
+    if (agency.json?.data?.membership?.free !== true) {
+      throw new Error('agency membership should be free');
     }
 
     console.log('AUTH_SMOKE_OK');

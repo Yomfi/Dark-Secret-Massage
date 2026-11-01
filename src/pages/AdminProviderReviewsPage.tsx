@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { adminProviderApi } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
+import { Alert, Badge, Button, Container, PageHeading, surfaceClass } from '../components/ui';
 
 type Row = {
   providerUserId: string;
@@ -15,6 +16,7 @@ type Row = {
   emailVerified: boolean;
   identityStatus: string;
   paymentStatus: string;
+  membershipFree?: boolean;
   verificationStatus: string;
   submittedAt?: string;
   adminNotes?: string | null;
@@ -60,79 +62,88 @@ const Inner: React.FC = () => {
   };
 
   if (error && rows.length === 0) {
-    return <p className="px-4 py-16 text-center text-zinc-400">{error}</p>;
+    return (
+      <Container className="py-16">
+        <p className="text-center text-sm text-zinc-400">{error}</p>
+      </Container>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-4">
-      <h1 className="text-2xl font-bold text-white">Profile Verification</h1>
-      {error && <p className="text-sm text-rose-300">{error}</p>}
+    <Container className="max-w-4xl space-y-4 py-10 sm:py-12">
+      <PageHeading
+        eyebrow="Admin"
+        title="Profile verification"
+        description="Review provider submissions and approve, reject or request changes."
+      />
+      {error && <Alert variant="error">{error}</Alert>}
       {rows.length === 0 ? (
-        <p className="text-zinc-500 text-sm">No provider verification records yet. Run the SQL migration and register a provider.</p>
+        <div className={surfaceClass('p-5')}>
+          <p className="text-sm text-zinc-400">
+            No provider verification records yet. Run the SQL migration and register a provider.
+          </p>
+        </div>
       ) : (
         rows.map((row) => (
-          <article key={row.providerUserId} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
+          <article key={row.providerUserId} className={surfaceClass('space-y-3 p-5')}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-lg font-semibold text-white">{row.displayName}</h2>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="mt-1 break-words text-[13px] text-zinc-500">
                   {row.city || '—'} · {row.email} · {row.phone}
                 </p>
               </div>
-              <span className="text-[10px] uppercase tracking-widest text-brand-gold-light border border-brand-gold/30 px-2 py-1 rounded-full">
-                {row.verificationStatus}
-              </span>
+              <Badge tone="gold">{row.verificationStatus}</Badge>
             </div>
-            <dl className="grid sm:grid-cols-2 gap-2 text-xs text-zinc-400">
-              <div>Phone verified: {row.phoneVerified ? 'Yes' : 'No'}</div>
+            <dl className="grid gap-2 text-[13px] text-zinc-400 sm:grid-cols-2">
               <div>Email verified: {row.emailVerified ? 'Yes' : 'No'}</div>
+              <div>Phone: {row.phone} (contact only)</div>
               <div>Identity: {row.identityStatus}</div>
-              <div>Payment: {row.paymentStatus}</div>
+              <div>Membership: {row.membershipFree ? 'Free' : row.paymentStatus}</div>
               <div>Submitted: {row.submittedAt || '—'}</div>
             </dl>
             <div className="flex flex-wrap gap-2 pt-1">
-              <button
-                type="button"
+              <Button
+                size="sm"
                 disabled={!!busy}
                 onClick={() => act(row.providerUserId, 'approve')}
-                className="px-4 py-2 rounded-full bg-emerald-600 text-[11px] uppercase tracking-widest text-white"
               >
                 Approve
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
                 disabled={!!busy}
                 onClick={() => act(row.providerUserId, 'reject')}
-                className="px-4 py-2 rounded-full border border-rose-400/40 text-[11px] uppercase tracking-widest text-rose-200"
               >
                 Reject
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
                 disabled={!!busy}
                 onClick={() => act(row.providerUserId, 'request_changes')}
-                className="px-4 py-2 rounded-full border border-white/15 text-[11px] uppercase tracking-widest text-zinc-200"
               >
                 Request changes
-              </button>
+              </Button>
             </div>
           </article>
         ))
       )}
-    </div>
+    </Container>
   );
 };
 
 export const AdminProviderReviewsPage: React.FC = () => (
   <ProtectedRoute>
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between gap-3">
-        <Link to="/" className="inline-flex items-center gap-2 min-w-0" aria-label="Massager Studio home">
-          <BrandLogo variant="plate" markHeight={24} />
-          <span className="text-xs font-semibold tracking-[0.18em] uppercase text-zinc-300 truncate">
-            Admin
-          </span>
-        </Link>
+    <div className="min-h-screen bg-brand-surface text-zinc-200">
+      <header className="border-b border-white/[0.07]">
+        <Container className="flex h-16 items-center justify-between gap-3">
+          <Link to="/" className="inline-flex min-w-0 items-center gap-2.5" aria-label="Massager Studio home">
+            <BrandLogo variant="plate" markHeight={24} />
+            <span className="truncate text-[13px] font-semibold text-zinc-300">Admin</span>
+          </Link>
+        </Container>
       </header>
       <Inner />
     </div>

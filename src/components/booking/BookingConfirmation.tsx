@@ -3,6 +3,7 @@ import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDisplayDate } from '../../lib/bookingAvailability';
 import { STUDIO_LOCATION_LABEL, type MassageBookingRecord } from '../../lib/massageBooking';
+import { Button, buttonClass } from '../ui';
 
 interface BookingConfirmationProps {
   booking: MassageBookingRecord;
@@ -19,7 +20,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
       : [booking.homeLocation.cityArea, booking.homeLocation.region].filter(Boolean).join(', ');
 
   return (
-    <div className="max-w-xl mx-auto text-center py-8 sm:py-12 px-2">
+    <div className="mx-auto max-w-xl px-2 py-6 text-center sm:py-10">
       <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-950/50 text-emerald-400">
         <CheckCircle2 className="h-8 w-8" aria-hidden />
       </div>
@@ -45,19 +46,11 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         <Row label="Quoted total" value={`GHS ${booking.totalGHS}`} mono />
       </div>
 
-      <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={onViewBookings}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light transition-all cursor-pointer"
-        >
+      <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+        <Button onClick={onViewBookings} iconRight={<ArrowRight className="h-4 w-4" aria-hidden />}>
           View my bookings
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </button>
-        <Link
-          to="/"
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-zinc-200 hover:border-brand-gold/40 hover:text-white transition-all"
-        >
+        </Button>
+        <Link to="/" className={buttonClass({ variant: 'secondary' })}>
           Return home
         </Link>
       </div>

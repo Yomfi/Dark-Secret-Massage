@@ -195,6 +195,28 @@ function setupDatabase() {
         id TEXT PRIMARY KEY, user_id TEXT NOT NULL, token_hash TEXT NOT NULL,
         expires_at TEXT NOT NULL, used_at TEXT NULL, created_at TEXT NOT NULL
       )");
+      $pdo->exec('CREATE TABLE provider_profiles (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL, slug TEXT, display_name TEXT,
+        provider_type TEXT, gender TEXT, business_name TEXT, contact_first_name TEXT,
+        contact_last_name TEXT, city TEXT, country TEXT, about TEXT, services_json TEXT,
+        rates_json TEXT, starting_price REAL, primary_image TEXT, profile_completion INTEGER,
+        profile_completed_at TEXT, created_at TEXT, updated_at TEXT
+      )');
+      $pdo->exec('CREATE TABLE provider_verification (
+        id TEXT PRIMARY KEY, provider_user_id TEXT NOT NULL, phone_verified_at TEXT,
+        email_verified_at TEXT, identity_status TEXT, payment_status TEXT,
+        verification_status TEXT, verification_fee_amount REAL, currency TEXT,
+        submitted_for_review_at TEXT, verified_at TEXT, admin_notes TEXT,
+        rejection_reason TEXT, created_at TEXT, updated_at TEXT
+      )');
+      $pdo->exec('CREATE TABLE provider_verification_payments (
+        id TEXT PRIMARY KEY, provider_user_id TEXT NOT NULL, amount REAL, currency TEXT,
+        status TEXT, gateway TEXT, created_at TEXT, updated_at TEXT
+      )');
+      $pdo->exec('CREATE TABLE provider_identity_documents (
+        id TEXT PRIMARY KEY, provider_user_id TEXT NOT NULL, id_type TEXT, status TEXT,
+        created_at TEXT, updated_at TEXT
+      )');
       echo 'ok';
   `);
 }
@@ -298,12 +320,46 @@ async function main() {
 
       const verifyToken = tokenFrom(verifyMessage, '/verify-email');
       check('confirmation token found in the message', Boolean(verifyToken));
+
+      // 1b — resend issues a fresh link and retires the previous one
+      const regCookie = mergeCookies('', reg.setCookie);
+      seen = outboxSnapshot();
+      const resend = await request('POST', '/auth/resend-verification', {
+        cookie: regCookie,
+        body: {},
+      });
+      check(
+        'resend sends a new confirmation email',
+        resend.status === 200 && resend.json?.data?.sent === true,
+        resend.text,
+      );
+      const resentMessages = outboxMessages(seen);
+      check('resend delivers exactly one message', resentMessages.length === 1, `count=${resentMessages.length}`);
+      const resentToken = resentMessages[0] ? tokenFrom(resentMessages[0], '/verify-email') : null;
+      check('resent link carries a token', Boolean(resentToken));
+
       if (verifyToken) {
-        collectedTokens.push(verifyToken);
-        const verified = await request('POST', '/auth/verify-email', { body: { token: verifyToken } });
+        const stale = await request('POST', '/auth/verify-email', { body: { token: verifyToken } });
+        check('resend retires the earlier confirmation link', stale.status === 400, stale.text);
+      }
+
+      // Expired links are rejected even when unused.
+      const expiredToken = 'e'.repeat(64);
+      await sqlite(`$pdo->prepare("INSERT INTO email_verification_tokens
+          (id, user_id, token_hash, expires_at, used_at, created_at)
+          SELECT 'exp_${stamp}', id, ?, '2020-01-01 00:00:00', NULL, '2020-01-01 00:00:00'
+          FROM users WHERE email = ?")
+        ->execute([hash('sha256', '${'e'.repeat(64)}'), '${email}']);
+        echo 'ok';`);
+      const expired = await request('POST', '/auth/verify-email', { body: { token: expiredToken } });
+      check('expired confirmation tokens are rejected', expired.status === 400, expired.text);
+
+      if (resentToken) {
+        collectedTokens.push(resentToken);
+        const verified = await request('POST', '/auth/verify-email', { body: { token: resentToken } });
         check('emailed confirmation token verifies the account', verified.json?.data?.verified === true, verified.text);
 
-        const reuse = await request('POST', '/auth/verify-email', { body: { token: verifyToken } });
+        const reuse = await request('POST', '/auth/verify-email', { body: { token: resentToken } });
         check('confirmation token is single-use', reuse.status === 400, reuse.text);
       }
     }
@@ -406,6 +462,62 @@ async function main() {
         check('provider code is single-use', reuse.status === 400, reuse.text);
       }
     }
+
+    // 4b — free membership: no payment record, no phone gate, review still gated by identity + email
+    await sqlite(`$pdo->prepare("INSERT INTO provider_profiles
+        (id, user_id, slug, display_name, provider_type, city, country, profile_completion, profile_completed_at, created_at, updated_at)
+        SELECT 'prof_${stamp}', id, 'mail-provider-${stamp}', 'Mail Provider', 'individual', 'Accra', 'Ghana', 95, '2026-01-01 00:00:00', '2026-01-01 00:00:00', '2026-01-01 00:00:00'
+        FROM users WHERE email = ?")->execute(['${providerEmail}']);
+      $pdo->prepare("UPDATE provider_verification SET identity_status = 'pending',
+        phone_verified_at = NULL WHERE provider_user_id = (SELECT id FROM users WHERE email = ?)")
+        ->execute(['${providerEmail}']);
+      echo 'ok';`);
+
+    const payGet = await request('GET', '/provider/payment.php', { cookie: providerCookie });
+    check(
+      'membership is free by default',
+      payGet.status === 200 && payGet.json?.data?.free === true && payGet.json?.data?.feeAmount === 0,
+      payGet.text,
+    );
+    const payPost = await request('POST', '/provider/payment.php', { cookie: providerCookie, body: {} });
+    check(
+      'free membership never records a payment intent',
+      payPost.status === 200 && payPost.json?.data?.initiated === false,
+      payPost.text,
+    );
+    const paymentRows = await sqlite(
+      `$stmt = $pdo->prepare("SELECT COUNT(*) FROM provider_verification_payments WHERE provider_user_id = (SELECT id FROM users WHERE email = ?)");
+       $stmt->execute(['${providerEmail}']); echo (string) $stmt->fetchColumn();`,
+    );
+    check('no payment row was created for a free membership', paymentRows.trim() === '0', paymentRows);
+
+    seen = outboxSnapshot();
+    const review = await request('POST', '/provider/submit-review.php', {
+      cookie: providerCookie,
+      body: {},
+    });
+    check('provider can submit for review without a phone verification', review.status === 200, review.text);
+    check('submission reports the free membership', review.json?.data?.membershipFree === true, review.text);
+    check('submission still goes to admin review', review.json?.data?.verificationStatus === 'pending_review');
+
+    const reviewMessages = outboxMessages(seen);
+    const reviewNotice = reviewMessages[0];
+    check('admin review notice sent to info@', reviewNotice ? reviewNotice.header('To').includes('info@massagerstudio.com') : false);
+    check(
+      'admin review notice states the membership is free',
+      reviewNotice ? /Free membership/.test(reviewNotice.raw) : false,
+    );
+
+    const dash = await request('GET', '/provider/dashboard.php', { cookie: providerCookie });
+    check('dashboard reports a free membership', dash.json?.data?.membership?.free === true, dash.text);
+    check(
+      'dashboard does not require a membership fee',
+      dash.json?.data?.progress?.membershipFeeRequired === false,
+      dash.text,
+    );
+    check('dashboard counts the free membership as complete', dash.json?.data?.progress?.verificationFeePaid === true);
+    check('dashboard keeps the phone unverified', dash.json?.data?.progress?.phoneVerified === false);
+    check('dashboard shows the email as verified', dash.json?.data?.progress?.emailVerified === true);
   } finally {
     await stopServer(php.server);
   }

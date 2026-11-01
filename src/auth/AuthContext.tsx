@@ -7,12 +7,14 @@ import {
   type RegisterBody,
 } from '../lib/api';
 
+export type RegisterResult = { user: AuthUserDto; verificationEmailSent: boolean };
+
 type AuthContextValue = {
   user: AuthUserDto | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<AuthUserDto>;
-  register: (body: RegisterBody) => Promise<AuthUserDto>;
+  register: (body: RegisterBody) => Promise<RegisterResult>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
   setOnboardingChoice: (choice: OnboardingChoice) => Promise<AuthUserDto>;
@@ -74,7 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = useCallback(async (body: RegisterBody) => {
     const data = await authApi.register(body);
     setUser(data.user);
-    return data.user;
+    return {
+      user: data.user,
+      verificationEmailSent: data.verificationEmailSent !== false,
+    };
   }, []);
 
   const logout = useCallback(async () => {

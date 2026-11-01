@@ -1,8 +1,10 @@
-import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { authApi } from '../lib/api';
 import { getAuthErrorMessage } from '../auth/AuthContext';
+import { AuthLayout } from '../components/layout/AuthLayout';
+import { Alert, Button, TextField } from '../components/ui';
 
 export const ResetPasswordPage: React.FC = () => {
   const [params] = useSearchParams();
@@ -44,94 +46,85 @@ export const ResetPasswordPage: React.FC = () => {
     }
   };
 
+  if (!token) {
+    return (
+      <AuthLayout
+        title="Choose a new password"
+        description="This reset link is missing its token. Request a new password reset email to continue."
+        footer={
+          <Link to="/forgot-password" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+            Request a new link
+          </Link>
+        }
+      >
+        <Alert variant="warning">
+          Reset links work once and expire after an hour.
+        </Alert>
+      </AuthLayout>
+    );
+  }
+
+  if (done) {
+    return (
+      <AuthLayout
+        title="Password updated"
+        description="You can now sign in with your new password."
+        footer={
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+            Back to sign in
+          </Link>
+        }
+      >
+        <Button
+          fullWidth
+          onClick={() => {
+            window.location.href = '/login';
+          }}
+        >
+          Sign in
+        </Button>
+      </AuthLayout>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
-          <BrandLogo variant="plate" withWordmark markHeight={26} />
+    <AuthLayout
+      title="Choose a new password"
+      description="Enter a new password for your account. Reset links work once and expire after an hour."
+      footer={
+        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+          Back to sign in
         </Link>
-      </header>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        {error ? <Alert variant="error">{error}</Alert> : null}
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8 space-y-5">
-          <h1 className="text-3xl font-bold text-white tracking-tight">Choose a new password</h1>
+        <TextField
+          label="New password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          hint="At least 8 characters, with a letter and a number."
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-          {!token && (
-            <>
-              <p className="text-base text-zinc-400">
-                This reset link is missing its token. Request a new password reset email to continue.
-              </p>
-              <Link to="/forgot-password" className="block text-center text-sm text-brand-gold-light font-semibold">
-                Request a new link
-              </Link>
-            </>
-          )}
+        <TextField
+          label="Confirm password"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          required
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
 
-          {token && done && (
-            <>
-              <p className="text-base text-zinc-300">
-                Your password has been updated. You can now sign in with your new password.
-              </p>
-              <Link
-                to="/login"
-                className="block w-full rounded-full bg-brand-gold py-3.5 text-center text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light"
-              >
-                Sign in
-              </Link>
-            </>
-          )}
-
-          {token && !done && (
-            <form onSubmit={onSubmit} className="space-y-4">
-              <p className="text-base text-zinc-400 font-normal">
-                Enter a new password for your account. Reset links work once and expire after an hour.
-              </p>
-
-              {error && (
-                <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
-                  {error}
-                </div>
-              )}
-
-              <label className="block">
-                <span className="block text-sm font-semibold text-zinc-200 mb-1.5">New password</span>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
-                />
-              </label>
-
-              <label className="block">
-                <span className="block text-sm font-semibold text-zinc-200 mb-1.5">Confirm password</span>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
-                />
-              </label>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 cursor-pointer"
-              >
-                {loading ? 'Updating…' : 'Update password'}
-              </button>
-
-              <Link to="/login" className="block text-center text-sm text-brand-gold-light font-semibold">
-                Back to sign in
-              </Link>
-            </form>
-          )}
-        </div>
-      </main>
-    </div>
+        <Button type="submit" fullWidth loading={loading} loadingLabel="Updating">
+          Update password
+        </Button>
+      </form>
+    </AuthLayout>
   );
 };

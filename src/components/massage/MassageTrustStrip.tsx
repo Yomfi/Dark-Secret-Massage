@@ -1,35 +1,24 @@
 import React from 'react';
-import { UserCheck, Lock, ShieldCheck } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { Lock, ShieldCheck, UserCheck } from 'lucide-react';
+import { Container } from '../ui/Layout';
 
 const ITEMS = [
-  { icon: UserCheck, title: 'Reviewed Providers' },
-  { icon: Lock, title: 'Private Booking Details' },
-  { icon: ShieldCheck, title: 'Secure Payments' },
+  { icon: UserCheck, label: 'Reviewed provider profiles' },
+  { icon: Lock, label: 'Private booking details' },
+  { icon: ShieldCheck, label: 'Secure, card-free requests' },
 ] as const;
 
-export const MassageTrustStrip: React.FC = () => {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <section className="py-12 sm:py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/[0.06]">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {ITEMS.map(({ icon: Icon, title }, index) => (
-          <motion.div
-            key={title}
-            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.4, delay: reduceMotion ? 0 : index * 0.06 }}
-            className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/10 text-brand-gold-light">
-              <Icon className="h-[18px] w-[18px]" aria-hidden />
-            </span>
-            <p className="text-sm sm:text-base font-semibold text-white">{title}</p>
-          </motion.div>
+export const MassageTrustStrip: React.FC = () => (
+  <div className="border-t border-white/[0.07]">
+    <Container className="py-6">
+      <ul className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8 sm:gap-y-2">
+        {ITEMS.map(({ icon: Icon, label }) => (
+          <li key={label} className="flex items-center gap-2.5 text-[13px] text-zinc-400">
+            <Icon className="h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+            {label}
+          </li>
         ))}
-      </div>
-    </section>
-  );
-};
+      </ul>
+    </Container>
+  </div>
+);

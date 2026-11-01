@@ -22,6 +22,7 @@ import {
   type StepFieldErrors,
 } from '../lib/massageBooking';
 import { MASSAGE_SERVICES } from '../data/mockData';
+import { Button, Container, PageHeading, surfaceClass } from '../components/ui';
 
 interface MassageBookingPageProps {
   onBookingRequested: (booking: MassageBookingRecord) => void;
@@ -105,7 +106,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
 
   const trustStrip = useMemo(
     () => (
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-400 font-medium">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium text-zinc-400">
         <span className="inline-flex items-center gap-1.5">
           <UserCheck className="h-4 w-4 text-brand-gold" aria-hidden />
           Reviewed providers
@@ -125,17 +126,17 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
 
   if (completed) {
     return (
-      <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
+      <div className="min-h-screen bg-brand-surface text-zinc-200">
         <BookingHeader />
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+        <Container as="main" className="py-12 sm:py-16">
           <BookingConfirmation booking={completed} onViewBookings={onViewBookings} />
-        </main>
+        </Container>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9] pb-28 lg:pb-16">
+    <div className="min-h-screen bg-brand-surface pb-28 text-zinc-200 lg:pb-16">
       <BookingHeader />
 
       {/* Compact hero */}
@@ -149,23 +150,16 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
           <div className="absolute inset-0 bg-gradient-to-r from-[#060608] via-[#060608]/92 to-[#060608]/75" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#060608] via-transparent to-[#060608]/50" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-brand-gold-light mb-3">
-            Massage Therapy
-          </p>
-          <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-white tracking-tight leading-[1.08] max-w-xl">
-            Book your massage.
-            <br />
-            <span className="text-zinc-300 font-semibold">Your time. Your space.</span>
-          </h1>
-          <p className="mt-4 max-w-lg text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
-            Choose your preferred therapy, location and time, and request a session with a trusted
-            provider.
-          </p>
-        </div>
+        <Container className="relative py-10 sm:py-12">
+          <PageHeading
+            eyebrow="Massage therapy"
+            title="Book your massage"
+            description="Choose your therapy, setting and time, then request a session with a reviewed provider."
+          />
+        </Container>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <Container as="main" className="py-8 sm:py-10">
         <div className="mb-8 sm:mb-10">
           <BookingProgress currentStep={step} />
         </div>
@@ -178,7 +172,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
           <div className="lg:col-span-7 xl:col-span-8">
             <div className="mb-6">{trustStrip}</div>
 
-            <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#0a0a10]/80 p-5 sm:p-7 lg:p-8">
+            <div className={surfaceClass('bg-[#0B0B0C]/80 p-5 sm:p-7')}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
@@ -255,35 +249,34 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
               </AnimatePresence>
 
               {/* Desktop step controls */}
-              <div className="mt-8 pt-6 border-t border-white/[0.08] hidden lg:flex items-center justify-between gap-4">
-                <button
-                  type="button"
+              <div className="mt-8 hidden items-center justify-between gap-4 border-t border-white/10 pt-6 lg:flex">
+                <Button
+                  variant="secondary"
+                  size="md"
                   onClick={step === 1 ? () => navigate('/#massage') : goBack}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-transparent px-5 py-3 text-sm font-semibold text-zinc-300 hover:text-white hover:border-white/25 transition-all cursor-pointer"
+                  iconLeft={<ArrowLeft className="h-4 w-4" aria-hidden />}
                 >
-                  <ArrowLeft className="h-4 w-4" aria-hidden />
                   {step === 1 ? 'Back' : 'Previous'}
-                </button>
+                </Button>
 
                 {step < 5 ? (
-                  <button
-                    type="button"
+                  <Button
+                    size="md"
                     onClick={goNext}
-                    className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-7 py-3 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light shadow-[0_12px_36px_-14px_rgba(176,139,75,0.55)] transition-all hover:-translate-y-0.5 cursor-pointer motion-reduce:transform-none"
+                    iconRight={<ArrowRight className="h-4 w-4" aria-hidden />}
                   >
                     Continue
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="button"
+                  <Button
+                    size="md"
                     onClick={handleSubmitRequest}
-                    disabled={submitting}
-                    className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-7 py-3 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_36px_-14px_rgba(176,139,75,0.55)] transition-all hover:-translate-y-0.5 cursor-pointer motion-reduce:transform-none"
+                    loading={submitting}
+                    loadingLabel="Submitting…"
+                    iconRight={<ArrowRight className="h-4 w-4" aria-hidden />}
                   >
-                    {submitting ? 'Submitting…' : 'Confirm booking request'}
-                    {!submitting && <ArrowRight className="h-4 w-4" aria-hidden />}
-                  </button>
+                    Confirm booking request
+                  </Button>
                 )}
               </div>
             </div>
@@ -293,39 +286,29 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
             <BookingSummary draft={draft} showEdit={step === 5} onEditStep={goToStep} />
           </div>
         </div>
-      </main>
+      </Container>
 
       {/* Mobile sticky continue */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/[0.08] bg-[#060608]/95 backdrop-blur-xl px-4 py-3 safe-area-pb">
-        <div className="max-w-lg mx-auto flex items-center gap-2.5">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-brand-surface/95 px-4 py-3 backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-2.5">
           {step > 1 && (
-            <button
-              type="button"
-              onClick={goBack}
-              className="shrink-0 inline-flex items-center justify-center rounded-full border border-white/15 px-4 py-3.5 text-sm font-semibold text-zinc-200 cursor-pointer"
-              aria-label="Previous step"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
+            <Button variant="secondary" onClick={goBack} aria-label="Previous step" className="w-12 px-0">
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+            </Button>
           )}
           {step < 5 ? (
-            <button
-              type="button"
-              onClick={goNext}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-5 py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light cursor-pointer"
-            >
+            <Button onClick={goNext} className="flex-1" iconRight={<ArrowRight className="h-4 w-4" aria-hidden />}>
               Continue
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
+            <Button
               onClick={handleSubmitRequest}
-              disabled={submitting}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-5 py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink disabled:opacity-60 cursor-pointer"
+              loading={submitting}
+              loadingLabel="Submitting…"
+              className="flex-1"
             >
-              {submitting ? 'Submitting…' : 'Confirm booking request'}
-            </button>
+              Confirm booking request
+            </Button>
           )}
         </div>
       </div>

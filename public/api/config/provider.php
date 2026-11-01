@@ -27,6 +27,49 @@ function ds_require_admin(): array
     return $user;
 }
 
+/** Membership fee is configurable; disabled means providers join for free. */
+function ds_membership_fee_enabled(): bool
+{
+    return filter_var(ds_config()['membership_fee_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+}
+
+function ds_membership_fee_amount(): float
+{
+    $amount = (float) (ds_config()['membership_fee_amount'] ?? 100.0);
+    return max(0.0, $amount);
+}
+
+function ds_membership_currency(): string
+{
+    $currency = strtoupper(trim((string) (ds_config()['membership_currency'] ?? 'GHS')));
+    return $currency !== '' ? $currency : 'GHS';
+}
+
+/**
+ * Public membership status shared by the API responses. The verified badge always
+ * depends on identity checks and admin approval — never on the fee.
+ *
+ * @return array<string, mixed>
+ */
+function ds_membership_status(): array
+{
+    $enabled = ds_membership_fee_enabled();
+    $amount = $enabled ? ds_membership_fee_amount() : 0.0;
+    $currency = ds_membership_currency();
+
+    return [
+        'feeEnabled' => $enabled,
+        'feeRequired' => $enabled,
+        'free' => !$enabled,
+        'feeAmount' => $amount,
+        'standardFeeAmount' => ds_membership_fee_amount(),
+        'currency' => $currency,
+        'message' => $enabled
+            ? 'Membership fee of ' . $currency . ' ' . number_format($amount, 0) . ' is required before admin review.'
+            : 'Membership is currently free.',
+    ];
+}
+
 function ds_otp_demo_mode(): bool
 {
     $cfg = ds_config();
@@ -52,8 +95,8 @@ function ds_ensure_provider_verification(string $userId): array
         'INSERT INTO provider_verification
          (id, provider_user_id, identity_status, payment_status, verification_status,
           verification_fee_amount, currency, created_at, updated_at)
-         VALUES (?, ?, \'not_submitted\', \'unpaid\', \'unverified\', 100.00, \'GHS\', ?, ?)'
-    )->execute([$id, $userId, $now, $now]);
+         VALUES (?, ?, \'not_submitted\', \'unpaid\', \'unverified\', ?, ?, ?, ?)'
+    )->execute([$id, $userId, ds_membership_fee_amount(), ds_membership_currency(), $now, $now]);
 
     $stmt->execute([$userId]);
     $row = $stmt->fetch();
@@ -63,8 +106,8 @@ function ds_ensure_provider_verification(string $userId): array
         'identity_status' => 'not_submitted',
         'payment_status' => 'unpaid',
         'verification_status' => 'unverified',
-        'verification_fee_amount' => 100.00,
-        'currency' => 'GHS',
+        'verification_fee_amount' => ds_membership_fee_amount(),
+        'currency' => ds_membership_currency(),
     ];
 }
 
@@ -264,11 +307,14 @@ function ds_provider_public_dto(?array $profile, ?array $verification, array $us
 
 function ds_provider_dashboard_dto(array $user, ?array $profile, array $verification): array
 {
-    $phoneOk = !empty($user['phone_verified_at']) || !empty($verification['phone_verified_at']);
+    // Email is the verification gate. A phone number is contact information only.
     $emailOk = !empty($user['email_verified_at']) || !empty($verification['email_verified_at']);
+    $phoneProvided = trim((string) ($user['phone'] ?? '')) !== '';
     $profileOk = !empty($profile['profile_completed_at']);
     $identityOk = in_array($verification['identity_status'] ?? '', ['pending', 'approved'], true);
+    $feeEnabled = ds_membership_fee_enabled();
     $paymentOk = ($verification['payment_status'] ?? '') === 'paid';
+    $feeOk = !$feeEnabled || $paymentOk;
     $status = (string) ($verification['verification_status'] ?? 'unverified');
 
     $completion = $profile ? ds_provider_completion_percent($profile) : 0;
@@ -289,19 +335,25 @@ function ds_provider_dashboard_dto(array $user, ?array $profile, array $verifica
             'status' => $status,
             'identityStatus' => $verification['identity_status'] ?? 'not_submitted',
             'paymentStatus' => $verification['payment_status'] ?? 'unpaid',
-            'feeAmount' => (float) ($verification['verification_fee_amount'] ?? 100),
-            'currency' => $verification['currency'] ?? 'GHS',
+            'feeAmount' => (float) ($verification['verification_fee_amount'] ?? ds_membership_fee_amount()),
+            'currency' => $verification['currency'] ?? ds_membership_currency(),
+            'membershipFeeEnabled' => $feeEnabled,
+            'membershipFree' => !$feeEnabled,
             'verifiedAt' => $verification['verified_at'] ?? null,
             'rejectionReason' => $verification['rejection_reason'] ?? null,
             'submittedForReviewAt' => $verification['submitted_for_review_at'] ?? null,
         ],
+        'membership' => ds_membership_status(),
         'progress' => [
             'accountCreated' => true,
-            'phoneVerified' => $phoneOk,
+            'phoneProvided' => $phoneProvided,
+            'phoneVerified' => !empty($user['phone_verified_at']) || !empty($verification['phone_verified_at']),
             'emailVerified' => $emailOk,
             'profileCompleted' => $profileOk,
             'identitySubmitted' => $identityOk,
-            'verificationFeePaid' => $paymentOk,
+            'membershipFeeRequired' => $feeEnabled,
+            'membershipFeePaid' => $paymentOk,
+            'verificationFeePaid' => $feeOk,
             'adminReview' => $status,
         ],
         'isVerified' => $status === 'verified',

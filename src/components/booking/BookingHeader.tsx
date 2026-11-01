@@ -17,7 +17,7 @@ export const BookingHeader: React.FC = () => {
 
         <Link
           to="/massage"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-300 hover:text-white transition-colors"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-zinc-300 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           <span className="hidden sm:inline">Back to Massage Services</span>

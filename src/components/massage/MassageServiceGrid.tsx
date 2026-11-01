@@ -1,6 +1,7 @@
 import React from 'react';
 import type { MassageServicePresentation } from '../../lib/massageServicePresentation';
 import { MassageServiceCard } from './MassageServiceCard';
+import { Section, SectionHeading } from '../ui/Layout';
 
 interface MassageServiceGridProps {
   items: MassageServicePresentation[];
@@ -12,20 +13,14 @@ export const MassageServiceGrid: React.FC<MassageServiceGridProps> = ({
   onViewDetails,
 }) => {
   return (
-    <section id="services" className="scroll-mt-24 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="max-w-2xl mb-10 sm:mb-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-gold-light mb-3">
-          Featured services
-        </p>
-        <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-[1.1]">
-          Choose your therapy
-        </h2>
-        <p className="mt-3 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
-          Select a service to review details or continue straight into booking.
-        </p>
-      </div>
+    <Section id="services" divider>
+      <SectionHeading
+        eyebrow="Services"
+        title="Choose your therapy"
+        description="Every session is led by a reviewed provider. Pick a therapy to see what it involves, or go straight to booking."
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
+      <div className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
         {items.map((item, index) => (
           <MassageServiceCard
             key={item.service.id}
@@ -35,6 +30,6 @@ export const MassageServiceGrid: React.FC<MassageServiceGridProps> = ({
           />
         ))}
       </div>
-    </section>
+    </Section>
   );
 };

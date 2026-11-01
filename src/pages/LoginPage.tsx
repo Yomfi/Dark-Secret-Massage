@@ -1,7 +1,8 @@
-import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
+import { AuthLayout } from '../components/layout/AuthLayout';
+import { Alert, Button, TextField } from '../components/ui';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -37,72 +38,53 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
-          <BrandLogo variant="plate" withWordmark markHeight={26} />
-        </Link>
-      </header>
+    <AuthLayout
+      title="Sign in"
+      description="Welcome back. Use the email or phone number on your account."
+      footer={
+        <>
+          New here?{' '}
+          <Link to="/register" className="font-semibold text-brand-gold-light hover:text-brand-gold">
+            Create account
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        {error ? <Alert variant="error">{error}</Alert> : null}
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <form
-          onSubmit={onSubmit}
-          className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8 space-y-5"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">Welcome back</p>
-            <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Sign in</h1>
-          </div>
+        <TextField
+          label="Email or phone"
+          name="identifier"
+          autoComplete="username"
+          required
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+        />
 
-          {error && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200 font-medium">
-              {error}
-            </div>
-          )}
+        <TextField
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-          <label className="block">
-            <span className="block text-sm font-semibold text-zinc-200 mb-1.5">Email or phone</span>
-            <input
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
-              autoComplete="username"
-            />
-          </label>
-
-          <label className="block">
-            <span className="block text-sm font-semibold text-zinc-200 mb-1.5">Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
-              autoComplete="current-password"
-            />
-          </label>
-
-          <div className="flex justify-end">
-            <Link to="/forgot-password" className="text-sm font-medium text-brand-gold-light hover:text-brand-gold-light">
-              Forgot password
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 cursor-pointer"
+        <div className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="inline-flex min-h-11 items-center text-[13px] font-medium text-brand-gold-light hover:text-brand-gold"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
+            Forgot password?
+          </Link>
+        </div>
 
-          <p className="text-sm text-zinc-400 text-center font-normal">
-            New here?{' '}
-            <Link to="/register" className="text-brand-gold-light hover:text-brand-gold-light font-semibold">
-              Create account
-            </Link>
-          </p>
-        </form>
-      </main>
-    </div>
+        <Button type="submit" fullWidth loading={loading} loadingLabel="Signing in">
+          Sign in
+        </Button>
+      </form>
+    </AuthLayout>
   );
 };

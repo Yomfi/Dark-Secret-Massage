@@ -30,6 +30,7 @@ $fileMap = [
     '/auth/forgot-password' => __DIR__ . '/auth/forgot-password.php',
     '/auth/reset-password' => __DIR__ . '/auth/reset-password.php',
     '/auth/verify-email' => __DIR__ . '/auth/verify-email.php',
+    '/auth/resend-verification' => __DIR__ . '/auth/resend-verification.php',
     '/auth/verify-phone' => __DIR__ . '/auth/verify-phone.php',
     '/auth/onboarding' => __DIR__ . '/auth/onboarding.php',
 ];

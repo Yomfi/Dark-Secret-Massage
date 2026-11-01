@@ -18,14 +18,25 @@ if (!ds_table_exists('email_verification_tokens')) {
     ds_error(503, 'NOT_CONFIGURED', 'Email verification is not available yet.');
 }
 
+// Resend limit: at most 5 verification emails per hour, per account.
+$since = (new DateTimeImmutable('-1 hour'))->format('Y-m-d H:i:s');
+$limitStmt = $pdo->prepare(
+    'SELECT COUNT(*) AS c FROM email_verification_tokens WHERE user_id = ? AND created_at > ?'
+);
+$limitStmt->execute([$user['id'], $since]);
+if ((int) ($limitStmt->fetch()['c'] ?? 0) >= 5) {
+    ds_error(429, 'RATE_LIMITED', 'Too many verification emails requested. Try again in an hour.');
+}
+
 $token = bin2hex(random_bytes(32));
 $tokenHash = hash('sha256', $token);
 $expires = (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s');
 
+$tokenId = ds_new_id();
 $pdo->prepare(
     'INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at, created_at)
      VALUES (?, ?, ?, ?, ?)'
-)->execute([ds_new_id(), $user['id'], $tokenHash, $expires, $now]);
+)->execute([$tokenId, $user['id'], $tokenHash, $expires, $now]);
 
 $sent = ds_send_template(
     'provider_verify',
@@ -41,11 +52,16 @@ $sent = ds_send_template(
 );
 
 if ($sent['sent']) {
+    // Only the newest link stays usable; earlier unused links are retired.
+    $pdo->prepare(
+        'UPDATE email_verification_tokens SET used_at = ? WHERE user_id = ? AND used_at IS NULL AND id <> ?'
+    )->execute([$now, $user['id'], $tokenId]);
+
     ds_success([
         'sent' => true,
         'expiresInSeconds' => 86400,
         'emailConfigured' => true,
-        'message' => 'We sent a verification code to your email address.',
+        'message' => 'We sent a verification link to your email address.',
     ]);
 }
 
@@ -62,6 +78,10 @@ if (ds_is_prod()) {
 }
 
 // Local/staging fallback: keep the flow usable without a real mailbox.
+$pdo->prepare(
+    'UPDATE email_verification_tokens SET used_at = ? WHERE user_id = ? AND used_at IS NULL AND id <> ?'
+)->execute([$now, $user['id'], $tokenId]);
+
 ds_success([
     'sent' => false,
     'expiresInSeconds' => 86400,

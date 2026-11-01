@@ -52,5 +52,12 @@ return [
     'mail_from_name' => 'Massager Studio',
     'mail_reply_to' => 'contact@massagerstudio.com', // users reply to the public inbox
     'mail_debug' => 0,                                // 1+ logs the SMTP transcript privately
+
+    // Provider membership. Membership is free while this is false (the default):
+    // identity checks and admin approval still apply, and no payment gate is shown.
+    // Set to true and adjust the amount to reintroduce the one-off fee later.
+    'membership_fee_enabled' => false,
+    'membership_fee_amount' => 100.00,
+    'membership_currency' => 'GHS',
 ];
 

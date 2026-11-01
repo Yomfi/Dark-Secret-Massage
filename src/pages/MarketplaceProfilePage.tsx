@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
+import { Button, Container, IconButton } from '../components/ui';
 import { Footer } from '../components/Footer';
 import {
   findMarketplaceProfile,
@@ -114,33 +115,30 @@ function ContactPanel({
   if (stickyMobile) {
     return (
       <>
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="flex gap-2">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0B0B0C]/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
+          <div className="mx-auto flex max-w-lg gap-2">
             {canCall && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => requestContact('call')}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full border border-white/15 text-[11px] uppercase tracking-widest text-zinc-100"
+                iconLeft={<Phone className="h-4 w-4" aria-hidden />}
+                className="flex-1 px-3"
               >
-                <Phone className="w-4 h-4" /> Call
-              </button>
+                Call
+              </Button>
             )}
             {canWhatsApp && (
-              <button
-                type="button"
+              <Button
                 onClick={() => requestContact('whatsapp')}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-emerald-600 text-[11px] uppercase tracking-widest text-white"
+                iconLeft={<MessageCircle className="h-4 w-4" aria-hidden />}
+                className="flex-1 border border-emerald-500/40 bg-emerald-600 px-3 text-white hover:bg-emerald-500"
               >
-                <MessageCircle className="w-4 h-4" /> WhatsApp
-              </button>
+                WhatsApp
+              </Button>
             )}
-            <button
-              type="button"
-              onClick={() => requestContact('enquire')}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-brand-gold text-[11px] uppercase tracking-widest text-brand-ink"
-            >
+            <Button onClick={() => requestContact('enquire')} className="flex-1 px-3">
               Enquire
-            </button>
+            </Button>
           </div>
         </div>
         {modal}
@@ -158,7 +156,7 @@ function ContactPanel({
           <div className="mb-2">
             <VerifiedBadge verified={profile.verified} size="md" />
           </div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+          <p className="text-[12px] font-medium text-zinc-500">
             {price ? 'From' : 'Contact'}
           </p>
           {price ? (
@@ -183,41 +181,40 @@ function ContactPanel({
 
         <div className="flex flex-col gap-2">
           {canWhatsApp && (
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={() => requestContact('whatsapp')}
-              className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs uppercase tracking-widest text-white transition-colors"
+              iconLeft={<MessageCircle className="h-4 w-4" aria-hidden />}
+              className="border border-emerald-500/40 bg-emerald-600 text-white hover:bg-emerald-500"
             >
-              <MessageCircle className="w-4 h-4" /> WhatsApp
-            </button>
+              WhatsApp
+            </Button>
           )}
           {canCall && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={() => requestContact('call')}
-              className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-brand-gold/40 transition-colors"
+              iconLeft={<Phone className="h-4 w-4" aria-hidden />}
             >
-              <Phone className="w-4 h-4" /> Call
-            </button>
+              Call
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={() => requestContact('enquire')}
-            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-brand-gold hover:bg-brand-gold-light text-xs uppercase tracking-widest text-brand-ink transition-colors"
-          >
+          <Button fullWidth onClick={() => requestContact('enquire')}>
             Enquire
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            fullWidth
             onClick={saveProfile}
-            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-brand-gold/40 transition-colors"
+            iconLeft={<Heart className="h-4 w-4" aria-hidden />}
           >
-            <Heart className="w-4 h-4" /> Save
-          </button>
+            Save
+          </Button>
         </div>
 
         {profile.isDemo && (
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600">
+          <p className="text-[12px] text-zinc-600">
             Demo profile · contact numbers are placeholders
           </p>
         )}
@@ -263,22 +260,22 @@ function ProfileGallery({
 
           {images.length > 1 && (
             <>
-              <button
-                type="button"
+              <IconButton
+                variant="overlay"
                 onClick={() => go(-1)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full border border-white/20 bg-black/55 text-white hover:bg-black/75"
+                className="absolute left-3 top-1/2 z-10 -translate-y-1/2"
                 aria-label="Previous photo"
               >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
+                <ChevronLeft className="h-5 w-5" aria-hidden />
+              </IconButton>
+              <IconButton
+                variant="overlay"
                 onClick={() => go(1)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full border border-white/20 bg-black/55 text-white hover:bg-black/75"
+                className="absolute right-3 top-1/2 z-10 -translate-y-1/2"
                 aria-label="Next photo"
               >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+                <ChevronRight className="h-5 w-5" aria-hidden />
+              </IconButton>
             </>
           )}
 
@@ -312,32 +309,32 @@ function ProfileGallery({
 
       {lightbox && (
         <div className="fixed inset-0 z-50 bg-black/92 flex items-center justify-center p-4">
-          <button
-            type="button"
+          <IconButton
+            variant="overlay"
             aria-label="Close"
-            className="absolute top-4 right-4 p-2 rounded-full border border-white/20 text-white"
+            className="absolute right-4 top-4 z-10"
             onClick={() => setLightbox(false)}
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="h-5 w-5" aria-hidden />
+          </IconButton>
           {images.length > 1 && (
             <>
-              <button
-                type="button"
+              <IconButton
+                variant="overlay"
                 onClick={() => go(-1)}
-                className="absolute left-3 sm:left-6 p-2 rounded-full border border-white/20 bg-black/40 text-white"
+                className="absolute left-3 z-10 sm:left-6"
                 aria-label="Previous"
               >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                type="button"
+                <ChevronLeft className="h-6 w-6" aria-hidden />
+              </IconButton>
+              <IconButton
+                variant="overlay"
                 onClick={() => go(1)}
-                className="absolute right-3 sm:right-6 p-2 rounded-full border border-white/20 bg-black/40 text-white"
+                className="absolute right-3 z-10 sm:right-6"
                 aria-label="Next"
               >
-                <ChevronRight className="w-6 h-6" />
-              </button>
+                <ChevronRight className="h-6 w-6" aria-hidden />
+              </IconButton>
             </>
           )}
           <img
@@ -425,11 +422,11 @@ export const MarketplaceProfilePage: React.FC = () => {
     <div className="min-h-screen bg-[#050508] text-zinc-100 pb-28 lg:pb-0">
       <Navbar {...navProps} />
 
-      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-16">
+      <Container as="main" className="relative z-10 pb-16 pt-28">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <Link
             to={backHref}
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-400 hover:text-white"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" /> Back to results
           </Link>
@@ -437,7 +434,7 @@ export const MarketplaceProfilePage: React.FC = () => {
             {prev && (
               <Link
                 to={`/profile/${prev.slug}${navQs}`}
-                className="inline-flex items-center gap-1 hover:text-white uppercase tracking-wider"
+                className="inline-flex items-center gap-1 font-medium hover:text-white"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Previous
               </Link>
@@ -445,7 +442,7 @@ export const MarketplaceProfilePage: React.FC = () => {
             {next && (
               <Link
                 to={`/profile/${next.slug}${navQs}`}
-                className="inline-flex items-center gap-1 hover:text-white uppercase tracking-wider"
+                className="inline-flex items-center gap-1 font-medium hover:text-white"
               >
                 Next <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -459,7 +456,7 @@ export const MarketplaceProfilePage: React.FC = () => {
 
           <div className="space-y-5">
             <header>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-brand-gold-light/90">
+              <p className="text-[12px] font-semibold text-brand-gold-light">
                 {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
                 {profile.providerKind !== 'agency' && genderLabel(profile.gender)
                   ? ` · ${genderLabel(profile.gender)}`
@@ -516,12 +513,12 @@ export const MarketplaceProfilePage: React.FC = () => {
         {/* Detailed sections */}
         <div className="mt-10 space-y-6 max-w-4xl">
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-3">About</h2>
+            <h2 className="mb-3 text-base font-semibold text-white">About</h2>
             <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{profile.about}</p>
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-1">
+            <h2 className="mb-1 text-base font-semibold text-white">
               Profile details
             </h2>
             <dl>
@@ -558,7 +555,7 @@ export const MarketplaceProfilePage: React.FC = () => {
 
           {profile.providerKind === 'agency' && profile.teamMembers && profile.teamMembers.length > 0 && (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-4">
+              <h2 className="mb-4 text-base font-semibold text-white">
                 Meet our massage professionals
               </h2>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -577,10 +574,10 @@ export const MarketplaceProfilePage: React.FC = () => {
                         />
                       )}
                       <div className="p-4">
-                        <p className="text-sm font-semibold text-white uppercase tracking-wide">
+                        <p className="text-sm font-semibold text-white">
                           {member.displayName}
                         </p>
-                        <p className="mt-1 text-[10px] uppercase tracking-widest text-zinc-500">
+                        <p className="mt-1 text-[12px] text-zinc-500">
                           {genderLabel(member.gender)}
                           {member.yearsExperience != null ? ` · ${member.yearsExperience} yrs` : ''}
                         </p>
@@ -608,7 +605,7 @@ export const MarketplaceProfilePage: React.FC = () => {
 
           {isProvider && profile.serviceOfferings && profile.serviceOfferings.length > 0 && (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-4">
+              <h2 className="mb-4 text-base font-semibold text-white">
                 Services offered
               </h2>
               <ul className="space-y-3">
@@ -635,12 +632,12 @@ export const MarketplaceProfilePage: React.FC = () => {
           )}
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-2">Reviews</h2>
+            <h2 className="mb-2 text-base font-semibold text-white">Reviews</h2>
             <p className="text-sm text-zinc-500">No reviews yet.</p>
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-2">Questions</h2>
+            <h2 className="mb-2 text-base font-semibold text-white">Questions</h2>
             <p className="text-sm text-zinc-500">No questions yet. Use Enquire to ask privately.</p>
           </section>
 
@@ -648,7 +645,7 @@ export const MarketplaceProfilePage: React.FC = () => {
             <button
               type="button"
               onClick={() => window.alert('Report received. Our team will review this profile.')}
-              className="inline-flex items-center gap-1.5 underline underline-offset-4 hover:text-zinc-300"
+              className="inline-flex min-h-11 items-center gap-1.5 underline underline-offset-4 hover:text-zinc-300"
             >
               <Flag className="w-3.5 h-3.5" /> Report Profile
             </button>
@@ -666,7 +663,7 @@ export const MarketplaceProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </main>
+      </Container>
 
       <ContactPanel profile={profile} stickyMobile />
       <Footer />

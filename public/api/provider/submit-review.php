@@ -15,13 +15,19 @@ if (!ds_table_exists('provider_verification')) {
 $verification = ds_ensure_provider_verification($user['id']);
 $profile = ds_provider_profile_by_user($user['id']);
 
-$phoneOk = !empty($user['phone_verified_at']) || !empty($verification['phone_verified_at']);
+// Email verification is required; a phone number is contact information, not a gate.
 $emailOk = !empty($user['email_verified_at']) || !empty($verification['email_verified_at']);
 $profileOk = $profile && !empty($profile['profile_completed_at']);
 $identityOk = in_array($verification['identity_status'] ?? '', ['pending', 'approved'], true);
+$feeEnabled = ds_membership_fee_enabled();
+$feeOk = !$feeEnabled || ($verification['payment_status'] ?? '') === 'paid';
 
-if (!$phoneOk || !$emailOk || !$profileOk || !$identityOk) {
-    ds_error(400, 'INCOMPLETE', 'Complete phone, email, profile and identity steps before admin review.');
+if (!$emailOk || !$profileOk || !$identityOk) {
+    ds_error(400, 'INCOMPLETE', 'Confirm your email, complete your profile and submit identity documents before admin review.');
+}
+
+if (!$feeOk) {
+    ds_error(402, 'PAYMENT_REQUIRED', 'Complete the membership fee before submitting for review.');
 }
 
 $now = ds_now_sql();
@@ -42,6 +48,7 @@ $notice = ds_send_template(
         'city' => (string) ($profile['city'] ?? ''),
         'provider_email' => (string) ($user['email'] ?? ''),
         'provider_id' => (string) $user['id'],
+        'membership' => $feeEnabled ? 'Fee required' : 'Free membership',
         'submitted_at' => $now,
         'review_link' => ds_app_link('/admin/provider-reviews'),
     ],
@@ -52,5 +59,6 @@ ds_success([
     'submitted' => true,
     'verificationStatus' => 'pending_review',
     'adminNotified' => $notice['sent'],
-    'message' => 'Your verification is awaiting admin review. Payment gateway integration is coming soon.',
+    'membershipFree' => !$feeEnabled,
+    'message' => 'Your profile is awaiting admin review. Membership is currently free; the verified badge is granted only after identity checks and admin approval.',
 ]);

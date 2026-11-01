@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { Container } from './ui/Layout';
+import { Button, buttonClass } from './ui/Button';
 
 interface NavbarProps {
   onOpenBooking: () => void;
@@ -9,8 +11,8 @@ interface NavbarProps {
   isAuthenticated?: boolean;
 }
 
-const linkClass =
-  'text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300/90 hover:text-brand-gold-light transition-colors duration-200 whitespace-nowrap cursor-pointer';
+const navLinkClass =
+  'inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80';
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenBooking,
@@ -22,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 24);
+    const handleScroll = () => setIsScrolled(window.scrollY > 16);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -32,170 +34,112 @@ export const Navbar: React.FC<NavbarProps> = ({
     navigate('/explore/accra');
   };
 
-  const goBecomeProvider = () => {
-    setMobileMenuOpen(false);
-    navigate('/provider/register');
-  };
-
-  const shellClass = [
-    'relative w-[90%] max-w-5xl mx-auto rounded-full border backdrop-blur-xl transition-all duration-300',
-    isScrolled
-      ? 'bg-[#08080c]/92 border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.45)]'
-      : 'bg-[#08080c]/55 border-white/10 shadow-[0_8px_28px_rgba(0,0,0,0.25)]',
-  ].join(' ');
+  const closeMenu = () => setMobileMenuOpen(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pt-3 sm:pt-4 pointer-events-none">
-      <div className={`${shellClass} pointer-events-auto`}>
-        <div className="hidden xl:grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-5 py-2.5 min-h-[52px]">
-          <nav className="flex items-center justify-start gap-3.5 min-w-0">
-            <Link to="/" className={linkClass}>
-              Home
-            </Link>
-            <button type="button" onClick={goExplore} className={linkClass}>
-              Explore
-            </button>
-            <Link to="/massage" className={linkClass}>
-              Massage
-            </Link>
-            <a href="/#safety" className={linkClass}>
-              Safety
-            </a>
-          </nav>
-
+    <header
+      className={[
+        'fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300',
+        isScrolled
+          ? 'border-white/10 bg-brand-surface/95 backdrop-blur-xl'
+          : 'border-transparent bg-gradient-to-b from-brand-surface/90 to-brand-surface/40 backdrop-blur-md',
+      ].join(' ')}
+    >
+      <Container className="flex h-16 items-center justify-between gap-4">
+        <div className="flex items-center gap-1">
           <Link
             to="/"
-            className="group flex items-center justify-center shrink-0 px-1"
+            className="mr-2 inline-flex min-h-11 items-center rounded-lg"
             aria-label="Massager Studio home"
           >
-            <BrandLogo variant="plate" markHeight={34} />
+            <BrandLogo variant="plate" withWordmark markHeight={26} />
           </Link>
 
-          <div className="flex items-center justify-end gap-2 min-w-0">
-            <Link
-              to="/provider/register"
-              className="inline-flex items-center px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-brand-gold-light transition-colors duration-200 whitespace-nowrap"
-            >
-              Become a Provider
+          <nav className="hidden items-center lg:flex" aria-label="Primary">
+            <Link to="/" className={navLinkClass}>
+              Home
             </Link>
-            <button
-              type="button"
-              onClick={onOpenDashboard}
-              className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-white border border-white/15 hover:border-brand-gold/35 rounded-full bg-transparent transition-colors duration-200 cursor-pointer whitespace-nowrap"
-            >
-              {isAuthenticated ? 'Client Portal' : 'Sign In'}
+            <button type="button" onClick={goExplore} className={navLinkClass}>
+              Explore
             </button>
-            <button
-              type="button"
-              onClick={onOpenBooking}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-colors duration-200 cursor-pointer whitespace-nowrap shadow-md shadow-brand-ink/40"
-            >
-              Book Massage
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
+            <Link to="/massage" className={navLinkClass}>
+              Massage
+            </Link>
+            <Link to="/provider/register" className={navLinkClass}>
+              For providers
+            </Link>
+          </nav>
         </div>
 
-        <div className="xl:hidden relative flex items-center justify-between gap-2 px-3 sm:px-4 py-2 min-h-[48px]">
+        <div className="hidden items-center gap-2 sm:flex">
+          <Button variant="ghost" size="sm" onClick={onOpenDashboard}>
+            {isAuthenticated ? 'My account' : 'Sign in'}
+          </Button>
+          <Button size="sm" onClick={onOpenBooking}>
+            Book now
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-1.5 sm:hidden">
+          <Button size="sm" onClick={onOpenBooking} className="px-3.5">
+            Book now
+          </Button>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="relative z-10 p-2 -ml-1 text-zinc-300 hover:text-white rounded-lg transition-colors"
-            aria-label="Toggle mobile menu"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+            aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-
-          <Link
-            to="/"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            aria-label="Massager Studio home"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <BrandLogo variant="plate" markHeight={30} />
-          </Link>
-
-          <button
-            type="button"
-            onClick={onOpenBooking}
-            className="relative z-10 shrink-0 inline-flex items-center px-3 py-1.5 text-[10px] sm:text-[11px] font-medium tracking-[0.12em] uppercase text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-colors"
-          >
-            Book
-            <span className="hidden sm:inline ml-1">Massage</span>
-            <span className="ml-1" aria-hidden="true">
-              →
-            </span>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
-      </div>
+      </Container>
 
-      {mobileMenuOpen && (
-        <div className="xl:hidden pointer-events-auto mt-2 w-[90%] max-w-5xl mx-auto bg-[#0a0a0f]/96 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl">
-          <div className="mb-4 flex items-center gap-3">
-            <BrandLogo variant="plate" markHeight={32} withWordmark />
-          </div>
-          <nav className="flex flex-col gap-1 text-sm uppercase tracking-[0.18em] text-zinc-300">
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
-            >
-              Home
-            </Link>
-            <button
-              type="button"
-              onClick={goExplore}
-              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
-            >
-              Explore
-            </button>
-            <Link
-              to="/massage"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
-            >
-              Massage
-            </Link>
-            <a
-              href="/#safety"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
-            >
-              Safety
-            </a>
-            <button
-              type="button"
-              onClick={goBecomeProvider}
-              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
-            >
-              Become a Provider
-            </button>
-          </nav>
-          <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenDashboard();
-              }}
-              className="w-full min-h-[44px] py-2.5 text-xs uppercase tracking-widest font-medium text-zinc-200 border border-white/15 rounded-full hover:border-brand-gold/35 hover:text-white transition-colors"
-            >
-              {isAuthenticated ? 'Client Portal' : 'Sign In'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenBooking();
-              }}
-              className="w-full min-h-[44px] py-2.5 text-xs uppercase tracking-widest font-medium text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-colors"
-            >
-              Book Massage →
-            </button>
-          </div>
+      {mobileMenuOpen ? (
+        <div className="border-t border-white/10 bg-brand-surface/98 backdrop-blur-xl sm:hidden">
+          <Container className="py-3">
+            <nav className="flex flex-col" aria-label="Mobile">
+              <Link to="/" onClick={closeMenu} className="flex min-h-12 items-center rounded-xl px-3 text-[14px] font-medium text-zinc-200 hover:bg-white/[0.05]">
+                Home
+              </Link>
+              <button
+                type="button"
+                onClick={goExplore}
+                className="flex min-h-12 items-center rounded-xl px-3 text-left text-[14px] font-medium text-zinc-200 hover:bg-white/[0.05]"
+              >
+                Explore
+              </button>
+              <Link
+                to="/massage"
+                onClick={closeMenu}
+                className="flex min-h-12 items-center rounded-xl px-3 text-[14px] font-medium text-zinc-200 hover:bg-white/[0.05]"
+              >
+                Massage
+              </Link>
+              <Link
+                to="/provider/register"
+                onClick={closeMenu}
+                className="flex min-h-12 items-center rounded-xl px-3 text-[14px] font-medium text-zinc-200 hover:bg-white/[0.05]"
+              >
+                For providers
+              </Link>
+              <div className="mt-2 border-t border-white/10 pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    onOpenDashboard();
+                  }}
+                  className={buttonClass({ variant: 'secondary', fullWidth: true, size: 'sm' })}
+                >
+                  {isAuthenticated ? 'My account' : 'Sign in'}
+                </button>
+              </div>
+            </nav>
+          </Container>
         </div>
-      )}
+      ) : null}
     </header>
   );
 };

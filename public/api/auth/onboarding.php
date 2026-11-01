@@ -5,6 +5,8 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 ds_require_method('POST');
 $user = ds_require_user();
+// Customers must confirm their email before progressing past registration.
+ds_require_verified_email($user);
 $choice = ds_validate_onboarding(ds_json_body());
 
 $now = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');

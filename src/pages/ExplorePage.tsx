@@ -13,6 +13,8 @@ import {
   type MarketplaceFilters,
 } from '../lib/marketplace';
 import { useAuth } from '../auth/AuthContext';
+import { Container } from '../components/ui/Layout';
+import { Button, buttonClass } from '../components/ui/Button';
 
 export const ExplorePage: React.FC = () => {
   const { citySlug = 'accra' } = useParams<{ citySlug: string }>();
@@ -44,11 +46,7 @@ export const ExplorePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050508] text-zinc-100">
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/15 via-transparent to-transparent" />
-      </div>
-
+    <div className="min-h-screen bg-brand-surface text-zinc-200">
       <Navbar
         onOpenBooking={() => navigate('/book-massage')}
         onOpenDashboard={() =>
@@ -57,62 +55,63 @@ export const ExplorePage: React.FC = () => {
         isAuthenticated={isAuthenticated}
       />
 
-      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-20">
-        <ExploreFilters
-          citySlug={citySlug}
-          filters={filters}
-          onChange={updateFilters}
-          onCityChange={onCityChange}
-        />
-
-        <header className="mt-8 mb-6">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-brand-gold-light/80 mb-2">Explore</p>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-            Massage Professionals in {city?.name || citySlug}
-          </h1>
-          <p className="mt-2 text-sm sm:text-base text-zinc-400 max-w-2xl">
-            Discover massage professionals available near you.
-          </p>
-          <p className="mt-3 text-xs text-zinc-500">
-            {results.length} {results.length === 1 ? 'result' : 'results'}
-            {filters.providerType && filters.providerType !== 'all'
-              ? ` · ${filters.providerType}`
-              : ''}
-            {filters.service ? ` · ${filters.service}` : ''}
-            {filters.gender && filters.gender !== 'all' ? ` · ${filters.gender}` : ''}
-            <span className="ml-2 text-zinc-600">(demo profiles)</span>
-          </p>
-        </header>
-
-        {results.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
-            <p className="text-lg text-white font-medium">No matches in this city yet</p>
-            <p className="mt-2 text-sm text-zinc-400 max-w-md mx-auto">
-              Try another service filter, clear the price range, or explore a nearby city.
+      <main className="pb-16 pt-24 sm:pt-28">
+        <Container>
+          <header className="mb-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+              Explore
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => updateFilters({ sort: 'recommended' })}
-                className="px-5 py-2.5 rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-brand-gold/40"
-              >
-                Clear filters
-              </button>
-              <Link
-                to="/explore/accra"
-                className="px-5 py-2.5 rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
-              >
-                Browse Accra
-              </Link>
-            </div>
+            <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-3xl">
+              Massage professionals in {city?.name || citySlug}
+            </h1>
+            <p className="mt-2 max-w-2xl text-[14.5px] leading-relaxed text-zinc-400">
+              Discover massage professionals available near you, then review the profile that suits
+              your session.
+            </p>
+            <p className="mt-3 text-[12.5px] text-zinc-500">
+              {results.length} {results.length === 1 ? 'result' : 'results'}
+              {filters.providerType && filters.providerType !== 'all' ? ` · ${filters.providerType}` : ''}
+              {filters.service ? ` · ${filters.service}` : ''}
+              {filters.gender && filters.gender !== 'all' ? ` · ${filters.gender}` : ''}
+              <span className="ml-2 text-zinc-600">(demo profiles)</span>
+            </p>
+          </header>
+
+          <ExploreFilters
+            citySlug={citySlug}
+            filters={filters}
+            onChange={updateFilters}
+            onCityChange={onCityChange}
+          />
+
+          <div className="mt-6">
+            {results.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-14 text-center">
+                <p className="text-[15px] font-semibold text-white">No matches in this city yet</p>
+                <p className="mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-zinc-400">
+                  Try another service filter, clear the price range, or explore a nearby city.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+                  <Button
+                    variant="secondary"
+                    onClick={() => updateFilters({ sort: 'recommended' })}
+                  >
+                    Clear filters
+                  </Button>
+                  <Link to="/explore/accra" className={buttonClass({})}>
+                    Browse Accra
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {results.map((profile, i) => (
+                  <MarketplaceProfileCard key={profile.id} profile={profile} index={i} />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {results.map((profile, i) => (
-              <MarketplaceProfileCard key={profile.id} profile={profile} index={i} />
-            ))}
-          </div>
-        )}
+        </Container>
       </main>
 
       <Footer />

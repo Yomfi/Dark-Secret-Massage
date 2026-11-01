@@ -13,8 +13,8 @@ $verification = ds_table_exists('provider_verification')
         'identity_status' => 'not_submitted',
         'payment_status' => 'unpaid',
         'verification_status' => 'unverified',
-        'verification_fee_amount' => 100,
-        'currency' => 'GHS',
+        'verification_fee_amount' => ds_membership_fee_amount(),
+        'currency' => ds_membership_currency(),
     ];
 
 ds_success(ds_provider_dashboard_dto($user, $profile, $verification));

@@ -58,6 +58,7 @@ if (ds_table_exists('provider_verification')) {
 ds_success([
     'submitted' => true,
     'identityStatus' => 'pending',
-    'nextStep' => 'verification_payment',
+    // Free membership skips payment entirely; the fee step only exists when enabled.
+    'nextStep' => ds_membership_fee_enabled() ? 'verification_payment' : 'admin_review',
     // Paths intentionally omitted from response — never public.
 ]);
