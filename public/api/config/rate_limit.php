@@ -8,12 +8,13 @@ declare(strict_types=1);
 function ds_rate_limit(string $bucket, int $max, int $windowSeconds): void
 {
     $ip = preg_replace('/[^a-zA-Z0-9_.:-]/', '_', ds_client_ip()) ?: 'unknown';
-    // Internal temp bucket path only — not user-facing branding.
+    // Internal temp bucket path only — not user-facing branding. The legacy
+    // directory name is kept so a deploy does not reset existing counters.
     // DS_RATE_LIMIT_DIR lets local smoke tests isolate counters between runs.
     $configured = getenv('DS_RATE_LIMIT_DIR');
     $dir = is_string($configured) && trim($configured) !== ''
         ? trim($configured)
-        : sys_get_temp_dir() . '/massagerstudio_rate';
+        : sys_get_temp_dir() . '/darksecret_rate';
     if (!is_dir($dir)) {
         @mkdir($dir, 0700, true);
     }
