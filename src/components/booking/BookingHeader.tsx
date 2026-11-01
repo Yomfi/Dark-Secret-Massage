@@ -12,7 +12,7 @@ export const BookingHeader: React.FC = () => {
           className="inline-flex items-center min-w-0"
           aria-label="Massager Studio home"
         >
-          <BrandLogo variant="plate" withWordmark markHeight={28} />
+          <BrandLogo variant="plate" withWordmark markHeight={32} />
         </Link>
 
         <Link

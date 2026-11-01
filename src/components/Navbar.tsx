@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="group flex items-center justify-center shrink-0 px-1"
             aria-label="Massager Studio home"
           >
-            <BrandLogo variant="plate" markHeight={26} />
+            <BrandLogo variant="plate" markHeight={34} />
           </Link>
 
           <div className="flex items-center justify-end gap-2 min-w-0">
@@ -113,7 +113,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             aria-label="Massager Studio home"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <BrandLogo variant="plate" markHeight={24} />
+            <BrandLogo variant="plate" markHeight={30} />
           </Link>
 
           <button
@@ -133,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {mobileMenuOpen && (
         <div className="xl:hidden pointer-events-auto mt-2 w-[90%] max-w-5xl mx-auto bg-[#0a0a0f]/96 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl">
           <div className="mb-4 flex items-center gap-3">
-            <BrandLogo variant="plate" markHeight={28} withWordmark />
+            <BrandLogo variant="plate" markHeight={32} withWordmark />
           </div>
           <nav className="flex flex-col gap-1 text-sm uppercase tracking-[0.18em] text-zinc-300">
             <Link

@@ -21,7 +21,7 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
         <div className="md:col-span-4 space-y-4">
           <div className="flex items-center gap-2">
-            <BrandLogo variant="plate" withWordmark markHeight={28} />
+            <BrandLogo variant="plate" withWordmark markHeight={36} />
           </div>
           <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-light max-w-sm">
             A private platform for trusted professional massage and wellness services across Ghana.

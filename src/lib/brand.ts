@@ -2,8 +2,8 @@
  * Massager Studio brand tokens extracted from the official logo JPEG.
  * Source artwork: public/brand/massager-studio-logo-source.jpg (raster, not vector).
  *
- * EXTRACTED_GOLD  #B08B4B  (avg ink sample from gold accent stroke)
- * EXTRACTED_INK   #161616  (avg near-black from the symbol)
+ * EXTRACTED_GOLD  #B08B4B  (~#AF8B4C sampled from gold accent; rounded brand token)
+ * EXTRACTED_INK   #161616  (near-black from the symbol)
  */
 export const BRAND = {
   name: 'Massager Studio',
@@ -15,9 +15,11 @@ export const BRAND = {
   surfaceElevated: '#121214',
   offwhite: '#F7F4EF',
   cream: '#FAF7F2',
-  /** Paths under /public */
+  /** Paths under /public — derived from massager-studio-logo-source.jpg */
   logo: '/brand/massager-studio-logo.png',
   logoOnDark: '/brand/massager-studio-logo-on-dark.png',
+  favicon32: '/favicon-32.png',
+  appleTouchIcon: '/apple-touch-icon.png',
 } as const;
 
 export type BrandLogoVariant = 'default' | 'onDark' | 'plate';
