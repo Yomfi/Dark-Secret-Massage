@@ -31,7 +31,10 @@ interface SocialLinksProps {
 
 export const SocialLinks: React.FC<SocialLinksProps> = ({ className = '' }) => (
   <nav aria-label="Massager Studio on social media" className={className}>
-    <ul className="flex flex-wrap items-center gap-2.5">
+    <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+      Follow us
+    </p>
+    <ul className="flex flex-wrap items-center gap-2 sm:gap-2.5">
       {COMPANY_SOCIAL_LINKS.map(({ platform, label, href }) => {
         const Icon = ICONS[platform];
         return (
@@ -41,10 +44,10 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({ className = '' }) => (
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Massager Studio on ${label} (opens in a new tab)`}
-              title={label}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition-colors hover:border-purple-500/50 hover:bg-purple-500/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050507]"
+              title={`Massager Studio on ${label}`}
+              className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition-colors hover:border-purple-500/50 hover:bg-purple-500/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050507]"
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-[1.05rem] w-[1.05rem]" />
             </a>
           </li>
         );
