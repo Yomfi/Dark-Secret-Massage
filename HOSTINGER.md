@@ -25,6 +25,15 @@ After build, `dist/` must contain:
 - `api/` (PHP endpoints copied from `public/api`)
 - `.htaccess`
 
+**Uploading `dist/` must not replace two things on the host:**
+
+- `api/config/config.local.php` — the live DB/SMTP secrets. It is gitignored and is not in
+  `dist/`; skip it during upload (or re-add it after).
+- `api/storage/` — live sessions, rate-limit counters, provider identity files and
+  `private/logs` + `private/outbox`. `npm run build` prunes `dist/api/storage` so local
+  smoke-test databases, sessions and outbox messages are never shipped; PHP recreates the
+  directories with mode `0700` on first use. Leave the host's existing `api/storage` alone.
+
 ## Database
 
 | Field | Value |
@@ -168,7 +177,7 @@ replace SMTP on the host.
 **Not covered locally:** the actual SMTP conversation. The bundled `php-cli` (WASM) runtime has
 no working `stream_select`, which PHPMailer's SMTP client relies on, so it cannot complete a
 session even against a local sink. Do not treat a green local run as proof that mail is
-delivering — confirm acceptance on the host (step 3 above).
+delivering — confirm acceptance on the host (step 4 above).
 
 ## Endpoints
 
