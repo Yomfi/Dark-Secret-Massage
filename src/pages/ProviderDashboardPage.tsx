@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BadgeCheck, Check, Circle } from 'lucide-react';
@@ -50,7 +51,7 @@ const ProviderDashboardInner: React.FC = () => {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <p className="text-zinc-300">{error}</p>
-        <Link to="/provider/register" className="mt-4 inline-block text-purple-300 text-sm uppercase tracking-widest">
+        <Link to="/provider/register" className="mt-4 inline-block text-brand-gold-light text-sm uppercase tracking-widest">
           Become a Massage Provider →
         </Link>
       </div>
@@ -75,7 +76,7 @@ const ProviderDashboardInner: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <p className="text-xs uppercase tracking-[0.28em] text-purple-300">My Profile</p>
+      <p className="text-xs uppercase tracking-[0.28em] text-brand-gold-light">My Profile</p>
       <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Profile Verification</h1>
 
       {data.isVerified ? (
@@ -106,11 +107,11 @@ const ProviderDashboardInner: React.FC = () => {
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-widest text-zinc-400">
             <span>Profile completion</span>
-            <span className="text-purple-200">{data.profile.profileCompletion ?? 0}%</span>
+            <span className="text-brand-gold-light">{data.profile.profileCompletion ?? 0}%</span>
           </div>
           <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-purple-500"
+              className="h-full bg-brand-gold"
               style={{ width: `${data.profile.profileCompletion ?? 0}%` }}
             />
           </div>
@@ -146,7 +147,7 @@ const ProviderDashboardInner: React.FC = () => {
         </button>
         <Link
           to="/explore/accra"
-          className="px-5 py-2.5 rounded-full bg-purple-600 text-xs uppercase tracking-widest text-white"
+          className="px-5 py-2.5 rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
         >
           View marketplace
         </Link>
@@ -159,9 +160,8 @@ export const ProviderDashboardPage: React.FC = () => (
   <ProtectedRoute>
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
         <Link to="/" className="text-xs uppercase tracking-widest text-zinc-400 hover:text-white">
           Home

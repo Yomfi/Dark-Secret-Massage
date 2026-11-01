@@ -28,7 +28,7 @@ export const MassageServiceCard: React.FC<MassageServiceCardProps> = ({
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, delay: reduceMotion ? 0 : index * 0.06, ease: [0.16, 1, 0.3, 1] }}
-      className="group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-white/[0.02] hover:border-purple-500/30 transition-colors duration-300"
+      className="group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-white/[0.02] hover:border-brand-gold/30 transition-colors duration-300"
     >
       <div className="relative aspect-[16/11] overflow-hidden">
         <img
@@ -50,7 +50,7 @@ export const MassageServiceCard: React.FC<MassageServiceCardProps> = ({
 
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-400 font-medium">
           <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-purple-300" aria-hidden />
+            <Clock className="h-3.5 w-3.5 text-brand-gold-light" aria-hidden />
             {formatDurationOptions(service.durationMinutes)}
           </span>
           <span className="text-zinc-600">·</span>
@@ -63,13 +63,13 @@ export const MassageServiceCard: React.FC<MassageServiceCardProps> = ({
           <button
             type="button"
             onClick={onViewDetails}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-200 hover:border-purple-400/40 hover:text-white transition-all cursor-pointer"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-200 hover:border-brand-gold/40 hover:text-white transition-all cursor-pointer"
           >
             View Details
           </button>
           <Link
             to={bookMassageHref(service.id)}
-            className="group/btn inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-purple-600 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white hover:bg-purple-500 transition-all"
+            className="group/btn inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-gold px-4 py-3 text-xs font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light transition-all"
           >
             Book This Service
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" aria-hidden />

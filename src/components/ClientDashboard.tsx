@@ -17,6 +17,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { BookingRequest } from '../lib/bookingAndMatchmaking';
+import { BrandLogo } from './BrandLogo';
 
 interface ClientDashboardProps {
   onBackToHome: () => void;
@@ -90,12 +91,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               <span className="hidden sm:inline">Public Showcase</span>
             </button>
             <div className="h-4 w-px bg-white/10 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              <span className="text-sm font-bold tracking-[0.22em] uppercase text-white font-sans">
-                MASSAGER STUDIO
-              </span>
-              <span className="text-[10px] uppercase font-mono tracking-wider text-purple-300 bg-purple-950/60 border border-purple-500/20 px-2 py-0.5 rounded-full ml-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <BrandLogo variant="plate" withWordmark markHeight={24} />
+              <span className="text-[10px] uppercase font-mono tracking-wider text-brand-gold-light bg-brand-ink/60 border border-brand-gold/20 px-2 py-0.5 rounded-full">
                 Portal
               </span>
             </div>
@@ -107,7 +105,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               <span>ID Verified · Member GH-8891</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-700 to-indigo-600 flex items-center justify-center font-bold text-xs text-white">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-gold-dark to-indigo-600 flex items-center justify-center font-bold text-xs text-white">
                 KM
               </div>
               <div className="hidden lg:block text-left text-xs">
@@ -127,7 +125,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             onClick={() => setActiveTab('massage')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'massage'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-950/50'
+                ? 'bg-brand-gold text-white shadow-lg shadow-brand-ink/50'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
@@ -139,7 +137,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             onClick={() => setActiveTab('messages')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'messages'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-950/50'
+                ? 'bg-brand-gold text-white shadow-lg shadow-brand-ink/50'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
@@ -151,7 +149,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             onClick={() => setActiveTab('privacy')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'privacy'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-950/50'
+                ? 'bg-brand-gold text-white shadow-lg shadow-brand-ink/50'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
@@ -173,7 +171,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </div>
               <button
                 onClick={onOpenBooking}
-                className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white bg-purple-600 hover:bg-purple-500 rounded-full transition-all cursor-pointer self-start sm:self-auto"
+                className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-all cursor-pointer self-start sm:self-auto"
               >
                 + Book New Wellness Session
               </button>
@@ -187,12 +185,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-purple-400">
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">
                         {b.locationType === 'studio' ? 'Private Studio Sanctuary' : 'In-Home Visit'}
                       </span>
                       <h4 className="text-lg font-bold text-white mt-0.5">{b.serviceType}</h4>
                     </div>
-                    <span className="text-xs font-mono font-bold text-purple-300">
+                    <span className="text-xs font-mono font-bold text-brand-gold-light">
                       GHS {b.totalGHS}
                     </span>
                   </div>
@@ -231,7 +229,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           `Reference: ${b.reference || b.id}. Status: ${b.status || 'recorded'}.`
                         )
                       }
-                      className="text-purple-400 hover:text-purple-300 text-xs font-medium cursor-pointer"
+                      className="text-brand-gold hover:text-brand-gold-light text-xs font-medium cursor-pointer"
                     >
                       Session Details
                     </button>
@@ -243,14 +241,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               <div className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-purple-400">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">
                       Private Studio Sanctuary
                     </span>
                     <h4 className="text-lg font-bold text-white mt-0.5">
                       Volcanic Hot Stone Ritual
                     </h4>
                   </div>
-                  <span className="text-xs font-mono font-bold text-purple-300">GHS 800</span>
+                  <span className="text-xs font-mono font-bold text-brand-gold-light">GHS 800</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs text-zinc-300 bg-black/30 p-3 rounded-xl border border-white/5">
@@ -282,7 +280,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             {/* Chat header */}
             <div className="px-6 py-4 bg-[#09090e] border-b border-white/[0.08] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-950/80 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-brand-ink/80 border border-brand-gold/30 flex items-center justify-center text-brand-gold-light font-bold text-sm">
                   MS
                 </div>
                 <div>
@@ -313,7 +311,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   <div
                     className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                       m.isUser
-                        ? 'bg-purple-600 text-white rounded-tr-none'
+                        ? 'bg-brand-gold text-white rounded-tr-none'
                         : 'bg-[#141420] text-zinc-200 border border-white/10 rounded-tl-none'
                     }`}
                   >
@@ -333,11 +331,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 placeholder="Message your wellness director..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/10 rounded-full text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/10 rounded-full text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-brand-gold"
               />
               <button
                 type="submit"
-                className="w-11 h-11 rounded-full bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-lg"
+                className="w-11 h-11 rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-lg"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />
@@ -351,7 +349,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           <div className="max-w-3xl mx-auto space-y-6">
             <div className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 sm:p-8 space-y-6">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Lock className="w-5 h-5 text-purple-400" />
+                <Lock className="w-5 h-5 text-brand-gold" />
                 <span>Confidentiality & Profile Settings</span>
               </h3>
 
@@ -366,7 +364,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   <button
                     onClick={() => setPrivateMode(!privateMode)}
                     className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                      privateMode ? 'bg-purple-600' : 'bg-zinc-700'
+                      privateMode ? 'bg-brand-gold' : 'bg-zinc-700'
                     }`}
                   >
                     <span
@@ -404,7 +402,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 <span>Want to pause or archive your membership?</span>
                 <button
                   onClick={() => alert('Your request to pause membership has been sent to your concierge.')}
-                  className="text-purple-400 hover:text-purple-300 font-medium cursor-pointer"
+                  className="text-brand-gold hover:text-brand-gold-light font-medium cursor-pointer"
                 >
                   Contact Concierge
                 </button>

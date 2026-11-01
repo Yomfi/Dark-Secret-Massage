@@ -23,14 +23,14 @@ export const BookingProgress: React.FC<BookingProgressProps> = ({ currentStep })
         <p className="text-sm font-medium text-zinc-300">
           Step {currentStep} of {STEPS.length}
         </p>
-        <p className="text-sm font-medium text-purple-300 hidden sm:block">
+        <p className="text-sm font-medium text-brand-gold-light hidden sm:block">
           {STEPS[currentStep - 1]?.label}
         </p>
       </div>
 
       <div className="relative h-1.5 rounded-full bg-white/[0.08] overflow-hidden mb-5">
         <motion.div
-          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-purple-600 to-purple-400"
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-gold to-brand-gold-light"
           initial={false}
           animate={{ width: `${progress}%` }}
           transition={reduceMotion ? { duration: 0 } : { duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -46,9 +46,9 @@ export const BookingProgress: React.FC<BookingProgressProps> = ({ currentStep })
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold border transition-colors ${
                   active
-                    ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_20px_-4px_rgba(168,85,247,0.7)]'
+                    ? 'bg-brand-gold border-brand-gold text-brand-ink shadow-[0_0_20px_-4px_rgba(176,139,75,0.55)]'
                     : done
-                      ? 'bg-purple-950/60 border-purple-500/50 text-purple-200'
+                      ? 'bg-brand-ink/60 border-brand-gold/50 text-brand-gold-light'
                       : 'bg-white/[0.03] border-white/10 text-zinc-500'
                 }`}
               >

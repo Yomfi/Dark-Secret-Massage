@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
@@ -78,7 +79,7 @@ const Inner: React.FC = () => {
                   {row.city || '—'} · {row.email} · {row.phone}
                 </p>
               </div>
-              <span className="text-[10px] uppercase tracking-widest text-purple-200 border border-purple-400/30 px-2 py-1 rounded-full">
+              <span className="text-[10px] uppercase tracking-widest text-brand-gold-light border border-brand-gold/30 px-2 py-1 rounded-full">
                 {row.verificationStatus}
               </span>
             </div>
@@ -125,9 +126,12 @@ const Inner: React.FC = () => {
 export const AdminProviderReviewsPage: React.FC = () => (
   <ProtectedRoute>
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
-      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="text-sm font-bold tracking-[0.28em] uppercase text-white">
-          Massager Studio Admin
+      <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between gap-3">
+        <Link to="/" className="inline-flex items-center gap-2 min-w-0" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" markHeight={24} />
+          <span className="text-xs font-semibold tracking-[0.18em] uppercase text-zinc-300 truncate">
+            Admin
+          </span>
         </Link>
       </header>
       <Inner />

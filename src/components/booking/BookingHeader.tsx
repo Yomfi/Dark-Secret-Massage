@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { BrandLogo } from '../BrandLogo';
 
 export const BookingHeader: React.FC = () => {
   return (
@@ -8,11 +9,10 @@ export const BookingHeader: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-[4.25rem] flex items-center justify-between gap-4">
         <Link
           to="/"
-          className="group flex items-center gap-2.5"
+          className="inline-flex items-center min-w-0"
           aria-label="Massager Studio home"
         >
-          <span className="w-2 h-2 rounded-full bg-purple-500 group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+          <BrandLogo variant="plate" withWordmark markHeight={28} />
         </Link>
 
         <Link

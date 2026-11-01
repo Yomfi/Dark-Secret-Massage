@@ -27,7 +27,7 @@ export const SafetyTrust: React.FC = () => {
     <section id="safety" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/[0.08]">
       {/* Centered header */}
       <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-        <span className="text-xs uppercase tracking-[0.3em] text-purple-400 font-semibold block mb-3">
+        <span className="text-xs uppercase tracking-[0.3em] text-brand-gold font-semibold block mb-3">
           SAFETY & DISCRETION
         </span>
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-sans leading-[1.08]">
@@ -45,10 +45,10 @@ export const SafetyTrust: React.FC = () => {
           return (
             <div
               key={idx}
-              className="rounded-3xl bg-white/[0.02] border border-white/[0.08] p-8 sm:p-9 flex flex-col justify-between hover:border-purple-500/30 transition-all"
+              className="rounded-3xl bg-white/[0.02] border border-white/[0.08] p-8 sm:p-9 flex flex-col justify-between hover:border-brand-gold/30 transition-all"
             >
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-purple-400 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-brand-gold mb-6">
                   <Icon className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">
@@ -58,7 +58,7 @@ export const SafetyTrust: React.FC = () => {
                   {pillar.description}
                 </p>
               </div>
-              <div className="pt-6 mt-6 border-t border-white/[0.06] text-xs uppercase tracking-wider text-purple-300 font-medium">
+              <div className="pt-6 mt-6 border-t border-white/[0.06] text-xs uppercase tracking-wider text-brand-gold-light font-medium">
                 {pillar.tag}
               </div>
             </div>

@@ -16,7 +16,7 @@ interface LocationSelectorProps {
 }
 
 const fieldClass =
-  'w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base font-normal text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40 transition-colors';
+  'w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base font-normal text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/40 transition-colors';
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
   locationType,
@@ -46,16 +46,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           onClick={() => onSelectType('studio')}
           className={`relative text-left rounded-2xl border p-5 transition-all duration-300 cursor-pointer ${
             locationType === 'studio'
-              ? 'border-purple-500/70 bg-purple-950/35 shadow-[0_0_32px_-12px_rgba(168,85,247,0.55)]'
+              ? 'border-brand-gold/70 bg-brand-gold/12 shadow-[0_0_32px_-12px_rgba(176,139,75,0.45)]'
               : 'border-white/[0.08] bg-white/[0.02] hover:border-white/20'
           }`}
         >
           {locationType === 'studio' && (
-            <span className="absolute top-4 right-4 inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-white">
+            <span className="absolute top-4 right-4 inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-gold text-brand-ink">
               <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
           )}
-          <Building2 className="h-6 w-6 text-purple-300 mb-3" aria-hidden />
+          <Building2 className="h-6 w-6 text-brand-gold-light mb-3" aria-hidden />
           <h3 className="text-base sm:text-lg font-semibold text-white">Studio / Treatment Location</h3>
           <p className="mt-2 text-sm sm:text-base text-zinc-300 font-normal leading-snug">
             Arrive at a private wellness suite prepared for your session.
@@ -67,16 +67,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           onClick={() => onSelectType('home')}
           className={`relative text-left rounded-2xl border p-5 transition-all duration-300 cursor-pointer ${
             locationType === 'home'
-              ? 'border-purple-500/70 bg-purple-950/35 shadow-[0_0_32px_-12px_rgba(168,85,247,0.55)]'
+              ? 'border-brand-gold/70 bg-brand-gold/12 shadow-[0_0_32px_-12px_rgba(176,139,75,0.45)]'
               : 'border-white/[0.08] bg-white/[0.02] hover:border-white/20'
           }`}
         >
           {locationType === 'home' && (
-            <span className="absolute top-4 right-4 inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-white">
+            <span className="absolute top-4 right-4 inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-gold text-brand-ink">
               <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
           )}
-          <Home className="h-6 w-6 text-purple-300 mb-3" aria-hidden />
+          <Home className="h-6 w-6 text-brand-gold-light mb-3" aria-hidden />
           <h3 className="text-base sm:text-lg font-semibold text-white">In-Home / Mobile Massage</h3>
           <p className="mt-2 text-sm sm:text-base text-zinc-300 font-normal leading-snug">
             A provider visits your location. Travel fee may apply. Availability by area.
@@ -86,7 +86,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       {locationType === 'studio' && (
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light mb-1.5">
             Studio location
           </p>
           <p className="text-base text-white font-medium">{STUDIO_LOCATION_LABEL}</p>

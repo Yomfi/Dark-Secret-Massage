@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Search, UserRound } from 'lucide-react';
@@ -61,14 +62,13 @@ export const OnboardingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">Get started</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">Get started</p>
         <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-white tracking-tight">
           What would you like to do?
         </h1>
@@ -89,10 +89,10 @@ export const OnboardingPage: React.FC = () => {
               type="button"
               disabled={Boolean(loadingChoice)}
               onClick={() => select(choice, to)}
-              className="text-left rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 hover:border-purple-500/40 transition-all cursor-pointer disabled:opacity-60"
+              className="text-left rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6 hover:border-brand-gold/40 transition-all cursor-pointer disabled:opacity-60"
             >
               <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-purple-400/20 bg-purple-500/10 text-purple-300">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/10 text-brand-gold-light">
                   <Icon className="h-5 w-5" />
                 </span>
                 <div>
@@ -101,7 +101,7 @@ export const OnboardingPage: React.FC = () => {
                   </h2>
                   <p className="mt-1 text-base text-zinc-400 font-normal">{detail}</p>
                   {loadingChoice === choice && (
-                    <p className="mt-2 text-sm text-purple-300">Saving preference…</p>
+                    <p className="mt-2 text-sm text-brand-gold-light">Saving preference…</p>
                   )}
                 </div>
               </div>

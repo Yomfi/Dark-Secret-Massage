@@ -44,7 +44,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({
             className="relative w-full max-w-lg h-full bg-[#0a0a10] border-l border-white/10 shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[#0a0a10]/95 backdrop-blur-xl border-b border-white/[0.06]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-purple-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-gold-light">
                 Service details
               </p>
               <button
@@ -87,7 +87,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1.5 flex items-center gap-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light mb-1.5 flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5" /> Duration
                   </p>
                   <p className="text-base font-semibold text-white">
@@ -95,7 +95,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light mb-1.5">
                     Starting price
                   </p>
                   <p className="text-base font-semibold text-white font-mono">
@@ -108,7 +108,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({
                 <ul className="space-y-2">
                   {item.whatToExpect.map((line) => (
                     <li key={line} className="flex items-start gap-2.5 text-base text-zinc-300 font-normal">
-                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-purple-400 shrink-0" />
+                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-gold shrink-0" />
                       {line}
                     </li>
                   ))}
@@ -117,14 +117,14 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({
 
               <DetailBlock title="Location availability">
                 <p className="text-base text-zinc-300 font-normal inline-flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-purple-300 shrink-0" aria-hidden />
+                  <MapPin className="h-4 w-4 text-brand-gold-light shrink-0" aria-hidden />
                   {item.locationAvailability}
                 </p>
               </DetailBlock>
 
               <Link
                 to={bookMassageHref(item.service.id)}
-                className="group sticky bottom-0 inline-flex w-full items-center justify-center gap-2 rounded-full bg-purple-600 px-6 py-4 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 shadow-lg shadow-purple-950/40 transition-all"
+                className="group sticky bottom-0 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold px-6 py-4 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light shadow-lg shadow-brand-ink/40 transition-all"
               >
                 Book This Service
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
@@ -140,7 +140,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({
 function DetailBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-300 mb-2.5">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold-light mb-2.5">
         {title}
       </h3>
       {children}

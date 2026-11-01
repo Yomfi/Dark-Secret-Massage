@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { BrandLogo } from './BrandLogo';
 
 interface NavbarProps {
   onOpenBooking: () => void;
@@ -9,7 +10,7 @@ interface NavbarProps {
 }
 
 const linkClass =
-  'text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300/90 hover:text-purple-300 transition-colors duration-200 whitespace-nowrap cursor-pointer';
+  'text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-300/90 hover:text-brand-gold-light transition-colors duration-200 whitespace-nowrap cursor-pointer';
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenBooking,
@@ -64,33 +65,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <Link
             to="/"
-            className="group flex items-center justify-center gap-2 shrink-0 px-2"
+            className="group flex items-center justify-center shrink-0 px-1"
             aria-label="Massager Studio home"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.75)] transition-transform duration-200 group-hover:scale-110" />
-            <span className="text-[12px] font-semibold tracking-[0.26em] uppercase text-white whitespace-nowrap">
-              MASSAGER STUDIO
-            </span>
+            <BrandLogo variant="plate" markHeight={26} />
           </Link>
 
           <div className="flex items-center justify-end gap-2 min-w-0">
             <Link
               to="/provider/register"
-              className="inline-flex items-center px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-purple-300 transition-colors duration-200 whitespace-nowrap"
+              className="inline-flex items-center px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-brand-gold-light transition-colors duration-200 whitespace-nowrap"
             >
               Become a Provider
             </Link>
             <button
               type="button"
               onClick={onOpenDashboard}
-              className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-white border border-white/15 hover:border-purple-400/35 rounded-full bg-transparent transition-colors duration-200 cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-zinc-300 hover:text-white border border-white/15 hover:border-brand-gold/35 rounded-full bg-transparent transition-colors duration-200 cursor-pointer whitespace-nowrap"
             >
               {isAuthenticated ? 'Client Portal' : 'Sign In'}
             </button>
             <button
               type="button"
               onClick={onOpenBooking}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-white bg-purple-600 hover:bg-purple-500 rounded-full transition-colors duration-200 cursor-pointer whitespace-nowrap shadow-md shadow-purple-950/40"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium tracking-[0.14em] uppercase text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-colors duration-200 cursor-pointer whitespace-nowrap shadow-md shadow-brand-ink/40"
             >
               Book Massage
               <span aria-hidden="true">→</span>
@@ -111,20 +109,17 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <Link
             to="/"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 group flex items-center gap-2"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             aria-label="Massager Studio home"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.75)]" />
-            <span className="text-[10px] sm:text-[13px] font-semibold tracking-normal sm:tracking-[0.22em] uppercase text-white whitespace-nowrap">
-              MASSAGER STUDIO
-            </span>
+            <BrandLogo variant="plate" markHeight={24} />
           </Link>
 
           <button
             type="button"
             onClick={onOpenBooking}
-            className="relative z-10 shrink-0 inline-flex items-center px-3 py-1.5 text-[10px] sm:text-[11px] font-medium tracking-[0.12em] uppercase text-white bg-purple-600 hover:bg-purple-500 rounded-full transition-colors"
+            className="relative z-10 shrink-0 inline-flex items-center px-3 py-1.5 text-[10px] sm:text-[11px] font-medium tracking-[0.12em] uppercase text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-colors"
           >
             Book
             <span className="hidden sm:inline ml-1">Massage</span>
@@ -137,39 +132,42 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {mobileMenuOpen && (
         <div className="xl:hidden pointer-events-auto mt-2 w-[90%] max-w-5xl mx-auto bg-[#0a0a0f]/96 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+          <div className="mb-4 flex items-center gap-3">
+            <BrandLogo variant="plate" markHeight={28} withWordmark />
+          </div>
           <nav className="flex flex-col gap-1 text-sm uppercase tracking-[0.18em] text-zinc-300">
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
+              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
             >
               Home
             </Link>
             <button
               type="button"
               onClick={goExplore}
-              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
+              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
             >
               Explore
             </button>
             <Link
               to="/massage"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
+              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
             >
               Massage
             </Link>
             <a
               href="/#safety"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
+              className="py-3 px-2 rounded-xl hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
             >
               Safety
             </a>
             <button
               type="button"
               onClick={goBecomeProvider}
-              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-purple-300 transition-colors"
+              className="py-3 px-2 rounded-xl text-left hover:bg-white/[0.04] hover:text-brand-gold-light transition-colors"
             >
               Become a Provider
             </button>
@@ -181,7 +179,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 onOpenDashboard();
               }}
-              className="w-full min-h-[44px] py-2.5 text-xs uppercase tracking-widest font-medium text-zinc-200 border border-white/15 rounded-full hover:border-purple-400/35 hover:text-white transition-colors"
+              className="w-full min-h-[44px] py-2.5 text-xs uppercase tracking-widest font-medium text-zinc-200 border border-white/15 rounded-full hover:border-brand-gold/35 hover:text-white transition-colors"
             >
               {isAuthenticated ? 'Client Portal' : 'Sign In'}
             </button>
@@ -191,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 onOpenBooking();
               }}
-              className="w-full min-h-[44px] py-2.5 text-xs uppercase tracking-widest font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-full transition-colors"
+              className="w-full min-h-[44px] py-2.5 text-xs uppercase tracking-widest font-medium text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-colors"
             >
               Book Massage →
             </button>

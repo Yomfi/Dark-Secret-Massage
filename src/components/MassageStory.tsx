@@ -27,7 +27,7 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
         {/* Right: Narrative with Concise Overview & Service Breakdown */}
         <div className="lg:col-span-6 order-1 lg:order-2 space-y-6 sm:space-y-8">
           <div className="inline-flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-purple-400">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-gold">
               PROFESSIONAL MASSAGE WELLNESS
             </span>
           </div>
@@ -55,10 +55,10 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
                     onOpenBooking();
                   }
                 }}
-                className="group p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-purple-500/40 hover:bg-white/[0.06] transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="group p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-brand-gold/40 hover:bg-white/[0.06] transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div>
-                  <div className="text-base font-semibold text-white group-hover:text-purple-300 transition-colors">
+                  <div className="text-base font-semibold text-white group-hover:text-brand-gold-light transition-colors">
                     {service.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 flex flex-wrap items-center gap-2">
@@ -87,7 +87,7 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
           <div className="pt-1">
             <a
               href="/massage"
-              className="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full border border-white/15 bg-white/[0.03] px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-zinc-200 shadow-[0_0_0_1px_rgba(168,85,247,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-purple-400/45 hover:bg-purple-500/[0.08] hover:text-white hover:shadow-[0_12px_40px_-16px_rgba(168,85,247,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#060608] motion-reduce:transform-none"
+              className="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full border border-white/15 bg-white/[0.03] px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-zinc-200 shadow-[0_0_0_1px_rgba(176,139,75,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-gold/45 hover:bg-brand-gold-light/[0.08] hover:text-brand-ink hover:shadow-[0_12px_40px_-16px_rgba(176,139,75,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#060608] motion-reduce:transform-none"
             >
               <span>View More Massage Services</span>
               <ArrowRight
@@ -101,7 +101,7 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
           <div className="pt-2">
             <button
               onClick={onOpenBooking}
-              className="inline-flex items-center gap-2 px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-wider text-white bg-purple-600 hover:bg-purple-500 rounded-full shadow-lg shadow-purple-950/40 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-2 px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-wider text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full shadow-lg shadow-brand-ink/40 transition-all cursor-pointer group"
             >
               <Calendar className="w-4 h-4" />
               <span>Book a Massage Service</span>

@@ -34,7 +34,7 @@ export const Hero: React.FC<HeroProps> = ({
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-5 sm:mb-6 inline-flex items-center gap-2"
         >
-          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.38em] text-purple-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-sans">
+          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.38em] text-brand-gold-light drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] font-sans">
             DISCOVER NEAR YOU
           </span>
         </motion.div>
@@ -81,7 +81,7 @@ export const Hero: React.FC<HeroProps> = ({
           </p>
           <Link
             to="/provider/register"
-            className="inline-flex items-center justify-center min-h-[44px] px-6 rounded-full border border-white/20 bg-white/[0.06] hover:bg-white/[0.1] hover:border-purple-400/40 text-white text-xs font-semibold uppercase tracking-[0.18em] transition-colors"
+            className="inline-flex items-center justify-center min-h-[44px] px-6 rounded-full border border-white/20 bg-white/[0.06] hover:bg-white/[0.1] hover:border-brand-gold/40 text-white text-xs font-semibold uppercase tracking-[0.18em] transition-colors"
           >
             Create Your Profile
           </Link>
@@ -94,21 +94,21 @@ export const Hero: React.FC<HeroProps> = ({
           className="relative z-10 flex flex-wrap items-center justify-center gap-4 sm:gap-7 text-[11px] sm:text-xs uppercase tracking-[0.22em] text-zinc-300 font-medium drop-shadow-md"
         >
           <div className="inline-flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-purple-400" />
+            <ShieldCheck className="w-4 h-4 text-brand-gold" />
             <span>VERIFIED PROFILES</span>
           </div>
           <span className="text-zinc-600 hidden sm:inline" aria-hidden="true">
             ·
           </span>
           <div className="inline-flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
+            <Sparkles className="w-4 h-4 text-brand-gold" />
             <span>TRUSTED PROVIDERS</span>
           </div>
           <span className="text-zinc-600 hidden sm:inline" aria-hidden="true">
             ·
           </span>
           <div className="inline-flex items-center gap-2">
-            <Lock className="w-4 h-4 text-purple-400" />
+            <Lock className="w-4 h-4 text-brand-gold" />
             <span>PRIVATE & SECURE</span>
           </div>
         </motion.div>
@@ -122,7 +122,7 @@ export const Hero: React.FC<HeroProps> = ({
       >
         <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2">
           <svg
-            className="w-5 h-6 text-purple-400/70 shrink-0 hidden sm:block"
+            className="w-5 h-6 text-brand-gold/70 shrink-0 hidden sm:block"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -152,7 +152,7 @@ export const Hero: React.FC<HeroProps> = ({
           </div>
 
           <svg
-            className="w-5 h-6 text-purple-400/70 shrink-0 scale-x-[-1] hidden sm:block"
+            className="w-5 h-6 text-brand-gold/70 shrink-0 scale-x-[-1] hidden sm:block"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

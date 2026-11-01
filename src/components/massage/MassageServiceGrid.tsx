@@ -14,7 +14,7 @@ export const MassageServiceGrid: React.FC<MassageServiceGridProps> = ({
   return (
     <section id="services" className="scroll-mt-24 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="max-w-2xl mb-10 sm:mb-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-purple-300 mb-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-gold-light mb-3">
           Featured services
         </p>
         <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-[1.1]">

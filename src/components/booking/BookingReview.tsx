@@ -82,7 +82,7 @@ export const BookingReview: React.FC<BookingReviewProps> = ({ draft, onEditStep 
       </div>
 
       <div className="rounded-2xl border border-white/[0.08] bg-[#0c0c12] p-4 sm:p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-purple-300 mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light mb-2">
           Payment readiness
         </p>
         <p className="text-base text-zinc-300 font-normal leading-relaxed">
@@ -117,7 +117,7 @@ function ReviewRow({
       <button
         type="button"
         onClick={onEdit}
-        className="shrink-0 text-xs font-semibold uppercase tracking-wider text-purple-300 hover:text-purple-200 cursor-pointer pt-0.5"
+        className="shrink-0 text-xs font-semibold uppercase tracking-wider text-brand-gold-light hover:text-brand-gold-light cursor-pointer pt-0.5"
       >
         Edit
       </button>

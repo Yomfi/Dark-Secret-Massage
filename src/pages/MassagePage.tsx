@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BrandLogo } from '../components/BrandLogo';
 import { MassageHero } from '../components/massage/MassageHero';
 import { MassageServiceGrid } from '../components/massage/MassageServiceGrid';
 import { MassageServiceDetails } from '../components/massage/MassageServiceDetails';
@@ -24,11 +25,8 @@ export const MassagePage: React.FC = () => {
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#060608]/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="Massager Studio home">
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">
-              Massager Studio
-            </span>
+          <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+            <BrandLogo variant="plate" withWordmark markHeight={26} />
           </Link>
           <nav className="flex items-center gap-4 sm:gap-6 text-sm font-semibold">
             <a
@@ -41,7 +39,7 @@ export const MassagePage: React.FC = () => {
             >
               Services
             </a>
-            <Link to="/book-massage" className="text-purple-300 hover:text-purple-200 transition-colors">
+            <Link to="/book-massage" className="text-brand-gold-light hover:text-brand-gold-light transition-colors">
               Book
             </Link>
             <Link to="/" className="text-zinc-400 hover:text-white transition-colors">

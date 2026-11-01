@@ -94,7 +94,7 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
         }
       >
         <label className={`flex flex-1 items-center gap-2 min-w-0 ${isHero ? 'px-3 sm:px-4 min-h-[48px]' : ''}`}>
-          <MapPin className="w-4 h-4 text-purple-300 shrink-0" aria-hidden />
+          <MapPin className="w-4 h-4 text-brand-gold-light shrink-0" aria-hidden />
           <input
             type="text"
             role="combobox"
@@ -135,8 +135,8 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
             onClick={submit}
             className={
               isHero
-                ? 'inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl sm:rounded-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold tracking-wide transition-colors'
-                : 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-wider transition-colors shrink-0'
+                ? 'inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl sm:rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-sm font-semibold tracking-wide transition-colors'
+                : 'inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-lg bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-xs font-semibold uppercase tracking-wider transition-colors shrink-0'
             }
           >
             <Search className="w-4 h-4" />
@@ -154,10 +154,10 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => go(city)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                  i === highlight ? 'bg-purple-500/15 text-white' : 'text-zinc-300 hover:bg-white/[0.04]'
+                  i === highlight ? 'bg-brand-gold/15 text-white' : 'text-zinc-300 hover:bg-white/[0.04]'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 text-purple-300 shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-brand-gold-light shrink-0" />
                 <span>{city.name}</span>
                 <span className="ml-auto text-[10px] uppercase tracking-widest text-zinc-500">Ghana</span>
               </button>

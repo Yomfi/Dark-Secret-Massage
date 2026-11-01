@@ -49,14 +49,14 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         <button
           type="button"
           onClick={onViewBookings}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-600 px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light transition-all cursor-pointer"
         >
           View my bookings
           <ArrowRight className="h-4 w-4" aria-hidden />
         </button>
         <Link
           to="/"
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-zinc-200 hover:border-purple-400/40 hover:text-white transition-all"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-zinc-200 hover:border-brand-gold/40 hover:text-white transition-all"
         >
           Return home
         </Link>

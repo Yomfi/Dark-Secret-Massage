@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
@@ -38,9 +39,8 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
       </header>
 
@@ -50,7 +50,7 @@ export const LoginPage: React.FC = () => {
           className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8 space-y-5"
         >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">Welcome back</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">Welcome back</p>
             <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Sign in</h1>
           </div>
 
@@ -65,7 +65,7 @@ export const LoginPage: React.FC = () => {
             <input
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-purple-500"
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
               autoComplete="username"
             />
           </label>
@@ -76,13 +76,13 @@ export const LoginPage: React.FC = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-purple-500"
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
               autoComplete="current-password"
             />
           </label>
 
           <div className="flex justify-end">
-            <Link to="/forgot-password" className="text-sm font-medium text-purple-300 hover:text-purple-200">
+            <Link to="/forgot-password" className="text-sm font-medium text-brand-gold-light hover:text-brand-gold-light">
               Forgot password
             </Link>
           </div>
@@ -90,14 +90,14 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-purple-600 py-3.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 disabled:opacity-60 cursor-pointer"
+            className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 cursor-pointer"
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
 
           <p className="text-sm text-zinc-400 text-center font-normal">
             New here?{' '}
-            <Link to="/register" className="text-purple-300 hover:text-purple-200 font-semibold">
+            <Link to="/register" className="text-brand-gold-light hover:text-brand-gold-light font-semibold">
               Create account
             </Link>
           </p>

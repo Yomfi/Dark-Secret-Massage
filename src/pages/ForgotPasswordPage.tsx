@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '../lib/api';
@@ -27,9 +28,8 @@ export const ForgotPasswordPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12">
@@ -57,18 +57,18 @@ export const ForgotPasswordPage: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-purple-500"
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
               required
             />
           </label>
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-purple-600 py-3.5 text-sm font-semibold uppercase tracking-wider text-white disabled:opacity-60 cursor-pointer"
+            className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink disabled:opacity-60 cursor-pointer"
           >
             {loading ? 'Sending…' : 'Send reset link'}
           </button>
-          <Link to="/login" className="block text-center text-sm text-purple-300 font-semibold">
+          <Link to="/login" className="block text-center text-sm text-brand-gold-light font-semibold">
             Back to sign in
           </Link>
         </form>

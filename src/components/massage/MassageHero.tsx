@@ -30,7 +30,7 @@ export const MassageHero: React.FC<MassageHeroProps> = ({ onViewServices }) => {
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-2xl"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-purple-300 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-brand-gold-light mb-3">
             Massage Therapy
           </p>
           <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-white tracking-tight leading-[1.06]">
@@ -45,7 +45,7 @@ export const MassageHero: React.FC<MassageHeroProps> = ({ onViewServices }) => {
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
               to={bookMassageHref()}
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-purple-600 px-7 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white hover:bg-purple-500 shadow-[0_12px_40px_-14px_rgba(147,51,234,0.65)] transition-all hover:-translate-y-0.5 motion-reduce:transform-none"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-7 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-brand-ink hover:bg-brand-gold-light shadow-[0_12px_40px_-14px_rgba(176,139,75,0.5)] transition-all hover:-translate-y-0.5 motion-reduce:transform-none"
             >
               <Calendar className="h-4 w-4" aria-hidden />
               Book a Massage
@@ -54,7 +54,7 @@ export const MassageHero: React.FC<MassageHeroProps> = ({ onViewServices }) => {
             <button
               type="button"
               onClick={onViewServices}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-zinc-200 hover:border-purple-400/40 hover:text-white transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-zinc-200 hover:border-brand-gold/40 hover:text-white transition-all cursor-pointer"
             >
               View Services
             </button>

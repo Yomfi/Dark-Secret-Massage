@@ -1,15 +1,41 @@
 @import "tailwindcss";
 
+/*
+ * Massager Studio theme tokens — colours sampled from the official logo JPEG.
+ * Gold #B08B4B · Ink #161616 · Off-white #F7F4EF
+ */
+@theme {
+  --color-brand-gold: #b08b4b;
+  --color-brand-gold-light: #c9a56a;
+  --color-brand-gold-dark: #8f6d35;
+  --color-brand-ink: #161616;
+  --color-brand-surface: #0b0b0c;
+  --color-brand-surface-elevated: #121214;
+  --color-brand-offwhite: #f7f4ef;
+  --color-brand-cream: #faf7f2;
+}
+
 @layer base {
   :root {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color-scheme: dark;
+    --ms-gold: #b08b4b;
+    --ms-gold-light: #c9a56a;
+    --ms-gold-dark: #8f6d35;
+    --ms-ink: #161616;
+    --ms-surface: #0b0b0c;
+    --ms-offwhite: #f7f4ef;
   }
 
   body {
-    background-color: #060608;
-    color: #e4e4e9;
+    background-color: var(--ms-surface);
+    color: #e8e4dc;
     overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--ms-gold) 35%, transparent);
+    color: var(--ms-offwhite);
   }
 }
 
@@ -19,12 +45,12 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #08080c;
+  background: #0b0b0c;
 }
 ::-webkit-scrollbar-thumb {
-  background: #23232d;
+  background: #2a2a2c;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #39394a;
+  background: color-mix(in srgb, var(--ms-gold) 45%, #2a2a2c);
 }

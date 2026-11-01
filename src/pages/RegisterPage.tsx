@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
@@ -52,9 +53,8 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
       </header>
 
@@ -64,7 +64,7 @@ export const RegisterPage: React.FC = () => {
           className="w-full max-w-lg rounded-3xl border border-white/[0.08] bg-[#0a0a10] p-6 sm:p-8 space-y-4"
         >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">Create account</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">Create account</p>
             <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Join Massager Studio</h1>
             <p className="mt-2 text-base text-zinc-400 font-normal">
               Account creation is simple. Pathway preferences come next.
@@ -101,7 +101,7 @@ export const RegisterPage: React.FC = () => {
               type="checkbox"
               checked={form.termsAccepted}
               onChange={(e) => patch({ termsAccepted: e.target.checked })}
-              className="mt-1 accent-purple-500"
+              className="mt-1 accent-brand-gold"
             />
             <span>I accept the Massager Studio terms and privacy policy.</span>
           </label>
@@ -109,14 +109,14 @@ export const RegisterPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-purple-600 py-3.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 disabled:opacity-60 cursor-pointer"
+            className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 cursor-pointer"
           >
             {loading ? 'Creating account…' : 'Create account'}
           </button>
 
           <p className="text-sm text-zinc-400 text-center">
             Already have an account?{' '}
-            <Link to="/login" className="text-purple-300 font-semibold hover:text-purple-200">
+            <Link to="/login" className="text-brand-gold-light font-semibold hover:text-brand-gold-light">
               Sign in
             </Link>
           </p>
@@ -147,7 +147,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-purple-500"
+        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
       />
     </label>
   );

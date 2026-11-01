@@ -44,7 +44,7 @@ const SORTS: { value: MarketplaceSort; label: string }[] = [
 ];
 
 const fieldClass =
-  'w-full min-h-[44px] h-11 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-zinc-200 outline-none focus:border-purple-400/40';
+  'w-full min-h-[44px] h-11 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-zinc-200 outline-none focus:border-brand-gold/40';
 
 const labelClass = 'block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5';
 
@@ -209,8 +209,8 @@ function FilterFields({
           onClick={() => citySearchRef.current?.submit()}
           className={
             isSheet
-              ? 'w-full inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold uppercase tracking-widest transition-colors'
-              : 'w-full inline-flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-widest transition-colors'
+              ? 'w-full inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-sm font-semibold uppercase tracking-widest transition-colors'
+              : 'w-full inline-flex items-center justify-center gap-2 h-11 min-h-[44px] rounded-xl bg-brand-gold hover:bg-brand-gold-light text-brand-ink text-xs font-semibold uppercase tracking-widest transition-colors'
           }
         >
           <Search className="w-4 h-4" />
@@ -246,7 +246,7 @@ export const ExploreFilters: React.FC<Props> = (props) => {
         <button
           type="button"
           onClick={() => mobileCityRef.current?.submit()}
-          className="inline-flex items-center justify-center gap-1.5 shrink-0 min-h-[44px] px-3 rounded-xl bg-purple-600 text-xs uppercase tracking-widest text-white"
+          className="inline-flex items-center justify-center gap-1.5 shrink-0 min-h-[44px] px-3 rounded-xl bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
           aria-label="Search city"
         >
           <Search className="w-4 h-4" />

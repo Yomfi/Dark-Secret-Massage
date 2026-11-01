@@ -23,7 +23,7 @@ export const MassageTrustStrip: React.FC = () => {
             transition={{ duration: 0.4, delay: reduceMotion ? 0 : index * 0.06 }}
             className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-purple-400/20 bg-purple-500/10 text-purple-300">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand-gold/20 bg-brand-gold/10 text-brand-gold-light">
               <Icon className="h-[18px] w-[18px]" aria-hidden />
             </span>
             <p className="text-sm sm:text-base font-semibold text-white">{title}</p>

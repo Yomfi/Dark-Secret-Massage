@@ -137,7 +137,7 @@ function ContactPanel({
             <button
               type="button"
               onClick={() => requestContact('enquire')}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-purple-600 text-[11px] uppercase tracking-widest text-white"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 min-h-[48px] rounded-full bg-brand-gold text-[11px] uppercase tracking-widest text-brand-ink"
             >
               Enquire
             </button>
@@ -162,7 +162,7 @@ function ContactPanel({
             {price ? 'From' : 'Contact'}
           </p>
           {price ? (
-            <p className="mt-1 text-2xl font-semibold text-purple-200 tracking-tight">{price}</p>
+            <p className="mt-1 text-2xl font-semibold text-brand-gold-light tracking-tight">{price}</p>
           ) : (
             <p className="mt-1 text-lg font-semibold text-white">Get in touch</p>
           )}
@@ -195,7 +195,7 @@ function ContactPanel({
             <button
               type="button"
               onClick={() => requestContact('call')}
-              className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-purple-400/40 transition-colors"
+              className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-100 hover:border-brand-gold/40 transition-colors"
             >
               <Phone className="w-4 h-4" /> Call
             </button>
@@ -203,14 +203,14 @@ function ContactPanel({
           <button
             type="button"
             onClick={() => requestContact('enquire')}
-            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-purple-600 hover:bg-purple-500 text-xs uppercase tracking-widest text-white transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full bg-brand-gold hover:bg-brand-gold-light text-xs uppercase tracking-widest text-brand-ink transition-colors"
           >
             Enquire
           </button>
           <button
             type="button"
             onClick={saveProfile}
-            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-purple-400/40 transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 min-h-[46px] rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-brand-gold/40 transition-colors"
           >
             <Heart className="w-4 h-4" /> Save
           </button>
@@ -300,7 +300,7 @@ function ProfileGallery({
                 type="button"
                 onClick={() => setIndex(i)}
                 className={`shrink-0 w-[4.75rem] h-[5.75rem] rounded-xl overflow-hidden border bg-[#0a0a0f] transition-opacity ${
-                  i === index ? 'border-purple-400 opacity-100' : 'border-white/10 opacity-75 hover:opacity-100'
+                  i === index ? 'border-brand-gold opacity-100' : 'border-white/10 opacity-75 hover:opacity-100'
                 }`}
               >
                 <PortraitMedia src={src} alt="" aspectClassName="w-full h-full" />
@@ -400,7 +400,7 @@ export const MarketplaceProfilePage: React.FC = () => {
         <main className="flex-1 flex items-center justify-center px-4 pt-24">
           <div className="text-center">
             <h1 className="text-2xl font-semibold">Profile not found</h1>
-            <Link to="/explore/accra" className="mt-4 inline-block text-purple-300 hover:text-purple-200 text-sm">
+            <Link to="/explore/accra" className="mt-4 inline-block text-brand-gold-light hover:text-brand-gold-light text-sm">
               Back to explore
             </Link>
           </div>
@@ -459,7 +459,7 @@ export const MarketplaceProfilePage: React.FC = () => {
 
           <div className="space-y-5">
             <header>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-purple-300/90">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-brand-gold-light/90">
                 {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
                 {profile.providerKind !== 'agency' && genderLabel(profile.gender)
                   ? ` · ${genderLabel(profile.gender)}`
@@ -477,14 +477,14 @@ export const MarketplaceProfilePage: React.FC = () => {
                 <VerifiedBadge verified={profile.verified} />
               </div>
               <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-400">
-                <MapPin className="w-4 h-4 text-purple-300 shrink-0" />
+                <MapPin className="w-4 h-4 text-brand-gold-light shrink-0" />
                 {profile.city}, {profile.country}
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {profile.services.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-purple-400/25 bg-purple-500/10 text-purple-100"
+                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-brand-gold/25 bg-brand-gold/10 text-brand-cream"
                   >
                     {tag}
                   </span>
@@ -500,7 +500,7 @@ export const MarketplaceProfilePage: React.FC = () => {
             {/* Mobile contact teaser (full sticky bar below) */}
             <div className="lg:hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               {formatPrice(profile.startingPrice, profile.currency) ? (
-                <p className="text-lg font-semibold text-purple-200">
+                <p className="text-lg font-semibold text-brand-gold-light">
                   From {formatPrice(profile.startingPrice, profile.currency)}
                 </p>
               ) : (
@@ -592,7 +592,7 @@ export const MarketplaceProfilePage: React.FC = () => {
                             {member.services.slice(0, 3).map((s) => (
                               <span
                                 key={s}
-                                className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-purple-400/25 text-purple-100"
+                                className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-brand-gold/25 text-brand-cream"
                               >
                                 {s}
                               </span>
@@ -624,7 +624,7 @@ export const MarketplaceProfilePage: React.FC = () => {
                       )}
                     </div>
                     {offering.priceFrom != null && (
-                      <p className="text-sm text-purple-200 font-medium">
+                      <p className="text-sm text-brand-gold-light font-medium">
                         From {formatPrice(offering.priceFrom, profile.currency)}
                       </p>
                     )}

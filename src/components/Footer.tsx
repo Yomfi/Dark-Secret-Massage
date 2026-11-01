@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
@@ -20,16 +21,13 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
         <div className="md:col-span-4 space-y-4">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span className="text-sm font-bold tracking-[0.26em] uppercase text-white font-sans">
-              MASSAGER STUDIO
-            </span>
+            <BrandLogo variant="plate" withWordmark markHeight={28} />
           </div>
           <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-light max-w-sm">
             A private platform for trusted professional massage and wellness services across Ghana.
           </p>
           <div className="flex items-center gap-2 text-xs text-zinc-400 pt-2">
-            <MapPin className="w-3.5 h-3.5 text-purple-400" />
+            <MapPin className="w-3.5 h-3.5 text-brand-gold" />
             <span>Accra · Tema · Kumasi & across Ghana</span>
           </div>
           <SocialLinks />
@@ -100,7 +98,7 @@ export const Footer: React.FC<FooterProps> = ({
             <li>
               <button
                 onClick={goDashboard}
-                className="hover:text-purple-300 transition-colors cursor-pointer text-left"
+                className="hover:text-brand-gold-light transition-colors cursor-pointer text-left"
               >
                 Member Portal
               </button>

@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Building2, UserRound } from 'lucide-react';
@@ -465,14 +466,13 @@ export const ProviderRegisterPage: React.FC = () => {
   };
 
   const field =
-    'w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-zinc-100 outline-none focus:border-purple-400/40';
+    'w-full min-h-[44px] rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-zinc-100 outline-none focus:border-brand-gold/40';
 
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9]">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
         <Link to="/login" className="text-xs uppercase tracking-widest text-zinc-400 hover:text-white">
           Sign In
@@ -480,7 +480,7 @@ export const ProviderRegisterPage: React.FC = () => {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-gold-light">
           Provider registration
         </p>
         <h1 className="mt-2 text-3xl font-bold text-white tracking-tight">Become a Massage Provider</h1>
@@ -492,11 +492,11 @@ export const ProviderRegisterPage: React.FC = () => {
           <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
             <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-widest text-zinc-400">
               <span>Profile completion</span>
-              <span className="text-purple-200">{Math.max(profileCompletion, localCompletion)}%</span>
+              <span className="text-brand-gold-light">{Math.max(profileCompletion, localCompletion)}%</span>
             </div>
             <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
               <div
-                className="h-full bg-purple-500 transition-all"
+                className="h-full bg-brand-gold transition-all"
                 style={{ width: `${Math.max(profileCompletion, localCompletion)}%` }}
               />
             </div>
@@ -509,7 +509,7 @@ export const ProviderRegisterPage: React.FC = () => {
               key={s.id}
               className={`text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full border ${
                 i <= stepIndex
-                  ? 'border-purple-400/40 bg-purple-500/15 text-purple-100'
+                  ? 'border-brand-gold/40 bg-brand-gold/15 text-brand-cream'
                   : 'border-white/10 text-zinc-500'
               }`}
             >
@@ -537,10 +537,10 @@ export const ProviderRegisterPage: React.FC = () => {
                   setStep('gender');
                   setError(null);
                 }}
-                className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-purple-400/40 transition-colors"
+                className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-brand-gold/40 transition-colors"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/15 text-purple-300">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-gold-light">
                     <UserRound className="w-6 h-6" />
                   </span>
                   <div>
@@ -561,10 +561,10 @@ export const ProviderRegisterPage: React.FC = () => {
                   setStep('account');
                   setError(null);
                 }}
-                className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-purple-400/40 transition-colors"
+                className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-5 hover:border-brand-gold/40 transition-colors"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/15 text-purple-300">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-gold-light">
                     <Building2 className="w-6 h-6" />
                   </span>
                   <div>
@@ -597,7 +597,7 @@ export const ProviderRegisterPage: React.FC = () => {
                     onClick={() => setGender(opt.id)}
                     className={`min-h-[56px] rounded-2xl border text-sm font-semibold uppercase tracking-widest ${
                       gender === opt.id
-                        ? 'border-purple-400/50 bg-purple-500/20 text-white'
+                        ? 'border-brand-gold/50 bg-brand-gold/20 text-white'
                         : 'border-white/10 text-zinc-300'
                     }`}
                   >
@@ -612,7 +612,7 @@ export const ProviderRegisterPage: React.FC = () => {
                   setError(null);
                   setStep('account');
                 }}
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white disabled:opacity-50"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink disabled:opacity-50"
               >
                 Continue
               </button>
@@ -737,7 +737,7 @@ export const ProviderRegisterPage: React.FC = () => {
               <button
                 disabled={loading}
                 type="submit"
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white disabled:opacity-60"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink disabled:opacity-60"
               >
                 {loading ? 'Creating…' : 'Continue'}
               </button>
@@ -765,7 +765,7 @@ export const ProviderRegisterPage: React.FC = () => {
               <button
                 disabled={loading}
                 type="submit"
-                className="w-full min-h-[44px] rounded-full bg-purple-600 text-xs uppercase tracking-widest text-white"
+                className="w-full min-h-[44px] rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
               >
                 Verify phone
               </button>
@@ -790,7 +790,7 @@ export const ProviderRegisterPage: React.FC = () => {
               <button
                 disabled={loading}
                 type="submit"
-                className="w-full min-h-[44px] rounded-full bg-purple-600 text-xs uppercase tracking-widest text-white"
+                className="w-full min-h-[44px] rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
               >
                 Verify email
               </button>
@@ -882,7 +882,7 @@ export const ProviderRegisterPage: React.FC = () => {
                       onClick={() => toggleService(label)}
                       className={`px-3 py-1.5 rounded-full text-[11px] uppercase tracking-wider border ${
                         profile.services.includes(label)
-                          ? 'border-purple-400/40 bg-purple-500/20 text-purple-100'
+                          ? 'border-brand-gold/40 bg-brand-gold/20 text-brand-cream'
                           : 'border-white/10 text-zinc-400'
                       }`}
                     >
@@ -1025,7 +1025,7 @@ export const ProviderRegisterPage: React.FC = () => {
               <button
                 disabled={loading}
                 type="submit"
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
               >
                 Save profile
               </button>
@@ -1081,7 +1081,7 @@ export const ProviderRegisterPage: React.FC = () => {
                       onClick={() => setTeamDraft({ ...teamDraft, gender: g })}
                       className={`min-h-[44px] rounded-xl border text-xs uppercase tracking-widest ${
                         teamDraft.gender === g
-                          ? 'border-purple-400/40 bg-purple-500/20 text-white'
+                          ? 'border-brand-gold/40 bg-brand-gold/20 text-white'
                           : 'border-white/10 text-zinc-400'
                       }`}
                     >
@@ -1110,7 +1110,7 @@ export const ProviderRegisterPage: React.FC = () => {
                       }
                       className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider border ${
                         teamDraft.services.includes(label)
-                          ? 'border-purple-400/40 text-purple-100'
+                          ? 'border-brand-gold/40 text-brand-cream'
                           : 'border-white/10 text-zinc-500'
                       }`}
                     >
@@ -1149,7 +1149,7 @@ export const ProviderRegisterPage: React.FC = () => {
                       onClick={() => setTeamDraft({ ...teamDraft, status: s })}
                       className={`min-h-[44px] rounded-xl border text-xs uppercase tracking-widest ${
                         teamDraft.status === s
-                          ? 'border-purple-400/40 bg-purple-500/20 text-white'
+                          ? 'border-brand-gold/40 bg-brand-gold/20 text-white'
                           : 'border-white/10 text-zinc-400'
                       }`}
                     >
@@ -1168,7 +1168,7 @@ export const ProviderRegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setStep('identity')}
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
               >
                 Continue to verification
               </button>
@@ -1226,7 +1226,7 @@ export const ProviderRegisterPage: React.FC = () => {
               <button
                 disabled={loading}
                 type="submit"
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
               >
                 Submit identity
               </button>
@@ -1236,7 +1236,7 @@ export const ProviderRegisterPage: React.FC = () => {
           {step === 'payment' && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-white">Verification fee</h2>
-              <p className="text-2xl font-semibold text-purple-200">GHS 100</p>
+              <p className="text-2xl font-semibold text-brand-gold-light">GHS 100</p>
               <p className="text-sm text-zinc-400">
                 Payment alone does not verify your profile. Identity checks and admin approval are also required.
               </p>
@@ -1247,7 +1247,7 @@ export const ProviderRegisterPage: React.FC = () => {
                 type="button"
                 disabled={loading}
                 onClick={onPaymentContinue}
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
               >
                 Continue to admin review
               </button>
@@ -1266,7 +1266,7 @@ export const ProviderRegisterPage: React.FC = () => {
                 type="button"
                 disabled={loading}
                 onClick={onSubmitReview}
-                className="w-full min-h-[48px] rounded-full bg-purple-600 text-sm font-semibold uppercase tracking-widest text-white"
+                className="w-full min-h-[48px] rounded-full bg-brand-gold text-sm font-semibold uppercase tracking-widest text-brand-ink"
               >
                 Submit for review
               </button>

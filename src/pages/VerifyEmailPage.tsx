@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authApi } from '../lib/api';
@@ -32,9 +33,8 @@ export const VerifyEmailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
       </header>
 
@@ -55,7 +55,7 @@ export const VerifyEmailPage: React.FC = () => {
               </p>
               <Link
                 to="/login"
-                className="block w-full rounded-full bg-purple-600 py-3.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500"
+                className="block w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light"
               >
                 Sign in
               </Link>
@@ -71,7 +71,7 @@ export const VerifyEmailPage: React.FC = () => {
               <p className="text-sm text-zinc-500">
                 Sign in and request a new confirmation email from your profile if you still need one.
               </p>
-              <Link to="/login" className="block text-sm text-purple-300 font-semibold">
+              <Link to="/login" className="block text-sm text-brand-gold-light font-semibold">
                 Back to sign in
               </Link>
             </>
@@ -83,7 +83,7 @@ export const VerifyEmailPage: React.FC = () => {
               <p className="text-base text-zinc-400">
                 This page needs the token from your verification email.
               </p>
-              <Link to="/login" className="block text-sm text-purple-300 font-semibold">
+              <Link to="/login" className="block text-sm text-brand-gold-light font-semibold">
                 Back to sign in
               </Link>
             </>

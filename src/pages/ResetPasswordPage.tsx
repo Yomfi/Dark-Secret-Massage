@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authApi } from '../lib/api';
@@ -46,9 +47,8 @@ export const ResetPasswordPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#060608] text-[#e4e4e9] flex flex-col">
       <header className="border-b border-white/[0.06] px-4 h-14 flex items-center">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-sm font-bold tracking-[0.24em] uppercase text-white">Massager Studio</span>
+        <Link to="/" className="inline-flex items-center" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
         </Link>
       </header>
 
@@ -61,7 +61,7 @@ export const ResetPasswordPage: React.FC = () => {
               <p className="text-base text-zinc-400">
                 This reset link is missing its token. Request a new password reset email to continue.
               </p>
-              <Link to="/forgot-password" className="block text-center text-sm text-purple-300 font-semibold">
+              <Link to="/forgot-password" className="block text-center text-sm text-brand-gold-light font-semibold">
                 Request a new link
               </Link>
             </>
@@ -74,7 +74,7 @@ export const ResetPasswordPage: React.FC = () => {
               </p>
               <Link
                 to="/login"
-                className="block w-full rounded-full bg-purple-600 py-3.5 text-center text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500"
+                className="block w-full rounded-full bg-brand-gold py-3.5 text-center text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light"
               >
                 Sign in
               </Link>
@@ -101,7 +101,7 @@ export const ResetPasswordPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
                   required
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-purple-500"
+                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
                 />
               </label>
 
@@ -113,19 +113,19 @@ export const ResetPasswordPage: React.FC = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
                   required
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-purple-500"
+                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base text-white focus:outline-none focus:border-brand-gold"
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-purple-600 py-3.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 disabled:opacity-60 cursor-pointer"
+                className="w-full rounded-full bg-brand-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 cursor-pointer"
               >
                 {loading ? 'Updating…' : 'Update password'}
               </button>
 
-              <Link to="/login" className="block text-center text-sm text-purple-300 font-semibold">
+              <Link to="/login" className="block text-center text-sm text-brand-gold-light font-semibold">
                 Back to sign in
               </Link>
             </form>

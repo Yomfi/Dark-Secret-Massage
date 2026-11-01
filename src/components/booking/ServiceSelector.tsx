@@ -48,7 +48,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
               }}
               className={`group relative w-full text-left rounded-2xl border p-4 sm:p-5 transition-all duration-300 cursor-pointer ${
                 selected
-                  ? 'border-purple-500/70 bg-purple-950/35 shadow-[0_0_32px_-12px_rgba(168,85,247,0.55)]'
+                  ? 'border-brand-gold/70 bg-brand-gold/12 shadow-[0_0_32px_-12px_rgba(176,139,75,0.45)]'
                   : 'border-white/[0.08] bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
               }`}
             >
@@ -59,7 +59,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
                       {service.name}
                     </h3>
                     {selected && (
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-white shrink-0">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-gold text-brand-ink shrink-0">
                         <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
                       </span>
                     )}
@@ -86,7 +86,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
 
               {selected && (
                 <div className="mt-4 pt-4 border-t border-white/[0.08]">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-purple-300 mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light mb-2">
                     Session duration
                   </p>
                   {errors.durationMinutes && (
@@ -105,7 +105,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
                         }}
                         className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                           durationMinutes === mins
-                            ? 'bg-purple-600 text-white border border-purple-400/60'
+                            ? 'bg-brand-gold text-white border border-brand-gold/60'
                             : 'bg-black/30 text-zinc-300 border border-white/10 hover:border-white/25 hover:text-white'
                         }`}
                       >

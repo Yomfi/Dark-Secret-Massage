@@ -107,15 +107,15 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     () => (
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-400 font-medium">
         <span className="inline-flex items-center gap-1.5">
-          <UserCheck className="h-4 w-4 text-purple-400" aria-hidden />
+          <UserCheck className="h-4 w-4 text-brand-gold" aria-hidden />
           Reviewed providers
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <Lock className="h-4 w-4 text-purple-400" aria-hidden />
+          <Lock className="h-4 w-4 text-brand-gold" aria-hidden />
           Private booking details
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="h-4 w-4 text-purple-400" aria-hidden />
+          <ShieldCheck className="h-4 w-4 text-brand-gold" aria-hidden />
           Secure payment ready
         </span>
       </div>
@@ -150,7 +150,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-[#060608] via-transparent to-[#060608]/50" />
         </div>
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-purple-300 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-brand-gold-light mb-3">
             Massage Therapy
           </p>
           <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-white tracking-tight leading-[1.08] max-w-xl">
@@ -269,7 +269,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                   <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-7 py-3 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 shadow-[0_12px_36px_-14px_rgba(147,51,234,0.7)] transition-all hover:-translate-y-0.5 cursor-pointer motion-reduce:transform-none"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-7 py-3 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light shadow-[0_12px_36px_-14px_rgba(176,139,75,0.55)] transition-all hover:-translate-y-0.5 cursor-pointer motion-reduce:transform-none"
                   >
                     Continue
                     <ArrowRight className="h-4 w-4" aria-hidden />
@@ -279,7 +279,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                     type="button"
                     onClick={handleSubmitRequest}
                     disabled={submitting}
-                    className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-7 py-3 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_36px_-14px_rgba(147,51,234,0.7)] transition-all hover:-translate-y-0.5 cursor-pointer motion-reduce:transform-none"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-7 py-3 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_12px_36px_-14px_rgba(176,139,75,0.55)] transition-all hover:-translate-y-0.5 cursor-pointer motion-reduce:transform-none"
                   >
                     {submitting ? 'Submitting…' : 'Confirm booking request'}
                     {!submitting && <ArrowRight className="h-4 w-4" aria-hidden />}
@@ -312,7 +312,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
             <button
               type="button"
               onClick={goNext}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-purple-600 px-5 py-3.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-purple-500 cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-5 py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink hover:bg-brand-gold-light cursor-pointer"
             >
               Continue
               <ArrowRight className="h-4 w-4" aria-hidden />
@@ -322,7 +322,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
               type="button"
               onClick={handleSubmitRequest}
               disabled={submitting}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-purple-600 px-5 py-3.5 text-sm font-semibold uppercase tracking-wider text-white disabled:opacity-60 cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-5 py-3.5 text-sm font-semibold uppercase tracking-wider text-brand-ink disabled:opacity-60 cursor-pointer"
             >
               {submitting ? 'Submitting…' : 'Confirm booking request'}
             </button>

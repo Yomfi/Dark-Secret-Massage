@@ -46,7 +46,7 @@ export const ExplorePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#050508] text-zinc-100">
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-950/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/15 via-transparent to-transparent" />
       </div>
 
       <Navbar
@@ -66,7 +66,7 @@ export const ExplorePage: React.FC = () => {
         />
 
         <header className="mt-8 mb-6">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-purple-300/80 mb-2">Explore</p>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-brand-gold-light/80 mb-2">Explore</p>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
             Massage Professionals in {city?.name || citySlug}
           </h1>
@@ -94,13 +94,13 @@ export const ExplorePage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => updateFilters({ sort: 'recommended' })}
-                className="px-5 py-2.5 rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-purple-400/40"
+                className="px-5 py-2.5 rounded-full border border-white/15 text-xs uppercase tracking-widest text-zinc-200 hover:border-brand-gold/40"
               >
                 Clear filters
               </button>
               <Link
                 to="/explore/accra"
-                className="px-5 py-2.5 rounded-full bg-purple-600 text-xs uppercase tracking-widest text-white"
+                className="px-5 py-2.5 rounded-full bg-brand-gold text-xs uppercase tracking-widest text-brand-ink"
               >
                 Browse Accra
               </Link>
