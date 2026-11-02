@@ -1,0 +1,80 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Container, PageHeading, buttonClass } from '../components/ui';
+import { fetchPublicContent } from '../lib/cmsCatalogue';
+
+type CmsPageDto = {
+  slug: string;
+  title: string;
+  bodyHtml: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+};
+
+/**
+ * Public renderer for pages published in the admin CMS. Drafts are never
+ * returned by /api/public/content.php, so only published content can appear.
+ */
+export const CmsPage: React.FC = () => {
+  const { slug = '' } = useParams();
+  const [page, setPage] = useState<CmsPageDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchPublicContent()
+      .then((content) => {
+        if (cancelled) return;
+        const pages = (content.pages as unknown as CmsPageDto[]) || [];
+        setPage(pages.find((item) => item.slug === slug) ?? null);
+        setError(null);
+      })
+      .catch(() => {
+        if (!cancelled) setError('This page could not be loaded.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  useEffect(() => {
+    if (page) document.title = page.seoTitle || `${page.title} — Massager Studio`;
+  }, [page]);
+
+  return (
+    <div className="min-h-screen bg-brand-surface text-zinc-200">
+      <Container as="main" className="py-16 sm:py-24">
+        {loading && <p className="text-zinc-400">Loading…</p>}
+
+        {!loading && (error || !page) && (
+          <>
+            <PageHeading
+              eyebrow="Massager Studio"
+              title="This page is not published yet"
+              description="Content appears here once it has been published from the studio CMS."
+            />
+            <Link to="/" className={buttonClass({ variant: 'secondary' }) + ' mt-8'}>
+              Back to home
+            </Link>
+          </>
+        )}
+
+        {!loading && page && (
+          <article className="mx-auto max-w-3xl">
+            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{page.title}</h1>
+            <div
+              className="prose prose-invert mt-8 max-w-none text-base leading-relaxed text-zinc-300"
+              // Admin-authored HTML that has passed publication review.
+              dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
+            />
+          </article>
+        )}
+      </Container>
+    </div>
+  );
+};

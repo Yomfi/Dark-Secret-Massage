@@ -8,6 +8,7 @@ import { ClientDashboard } from './components/ClientDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { MassageBookingPage } from './pages/MassageBookingPage';
 import { MassagePage } from './pages/MassagePage';
+import { CmsPage } from './pages/CmsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -142,6 +143,7 @@ function AppRoutes() {
         }
       />
       <Route path="/massage" element={<MassagePage />} />
+      <Route path="/p/:slug" element={<CmsPage />} />
       <Route path="/massage-services" element={<Navigate to="/massage" replace />} />
       <Route path="/explore" element={<Navigate to="/explore/accra" replace />} />
       <Route path="/explore/:citySlug" element={<ExplorePage />} />
