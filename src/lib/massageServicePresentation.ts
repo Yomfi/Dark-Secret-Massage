@@ -88,11 +88,17 @@ const FALLBACK: Omit<MassageServicePresentation, 'service'> = {
   locationAvailability: 'Studio or in-home',
 };
 
-export function getMassagePresentations(): MassageServicePresentation[] {
-  return MASSAGE_SERVICES.map((service) => ({
+export function buildMassagePresentations(
+  services: MassageService[]
+): MassageServicePresentation[] {
+  return services.map((service) => ({
     service,
     ...(PRESENTATION[service.id] || FALLBACK),
   }));
+}
+
+export function getMassagePresentations(): MassageServicePresentation[] {
+  return buildMassagePresentations(MASSAGE_SERVICES);
 }
 
 export function getMassagePresentation(serviceId: string): MassageServicePresentation | undefined {

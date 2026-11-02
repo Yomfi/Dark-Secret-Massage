@@ -9,12 +9,20 @@ import { MassageTrustStrip } from '../components/massage/MassageTrustStrip';
 import { MassageFinalCTA } from '../components/massage/MassageFinalCTA';
 import { Container } from '../components/ui/Layout';
 import { buttonClass } from '../components/ui/Button';
-import { getMassagePresentation, getMassagePresentations } from '../lib/massageServicePresentation';
+import { buildMassagePresentations } from '../lib/massageServicePresentation';
+import { mapCmsService, usePublicCatalogue } from '../lib/cmsCatalogue';
 
 export const MassagePage: React.FC = () => {
-  const items = useMemo(() => getMassagePresentations(), []);
+  const { services, loading } = usePublicCatalogue();
+  // Rebuild from the CMS-backed registry once the catalogue resolves.
+  const items = useMemo(
+    () => buildMassagePresentations(services.map(mapCmsService)),
+    [services]
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = selectedId ? getMassagePresentation(selectedId) ?? null : null;
+  const selected = selectedId
+    ? items.find((item) => item.service.id === selectedId) ?? null
+    : null;
 
   const scrollToServices = () => {
     document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -54,7 +62,7 @@ export const MassagePage: React.FC = () => {
 
       <main>
         <MassageHero onViewServices={scrollToServices} />
-        <MassageServiceGrid items={items} onViewDetails={setSelectedId} />
+        <MassageServiceGrid items={items} loading={loading} onViewDetails={setSelectedId} />
         <MassageHowItWorks />
         <MassageTrustStrip />
         <MassageFinalCTA />

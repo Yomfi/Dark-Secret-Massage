@@ -108,6 +108,42 @@ if ($action === 'create') {
     $price = $service ? (float) $service['price'] : max(0.0, (float) ($body['price'] ?? 0));
     $currency = $service ? (string) $service['currency'] : 'GHS';
 
+    // Server-side availability and ownership rules: never trust the wizard.
+    if ($scheduledAt !== '') {
+        $ts = strtotime($scheduledAt);
+        if ($ts === false || $ts < strtotime('today')) {
+            ds_error(400, 'VALIDATION_ERROR', 'Choose today or a future date.');
+        }
+
+        if ($providerProfileId !== '') {
+            $conflict = $pdo->prepare(
+                "SELECT id FROM bookings WHERE provider_profile_id = ?
+                 AND date(scheduled_at) = date(?) AND COALESCE(time_slot, '') = ?
+                 AND status IN ('pending','confirmed','reschedule_requested') LIMIT 1"
+            );
+            $conflict->execute([$providerProfileId, $scheduledAt, $timeSlot]);
+            if ($conflict->fetch()) {
+                ds_error(409, 'SLOT_UNAVAILABLE', 'That time is already booked. Please choose another slot.');
+            }
+        }
+
+        $own = $pdo->prepare(
+            "SELECT id FROM bookings WHERE customer_user_id = ?
+             AND date(scheduled_at) = date(?) AND COALESCE(time_slot, '') = ?
+             AND status IN ('pending','confirmed','reschedule_requested') LIMIT 1"
+        );
+        $own->execute([$user['id'], $scheduledAt, $timeSlot]);
+        if ($own->fetch()) {
+            ds_error(409, 'DUPLICATE_BOOKING', 'You already have a booking at that time.');
+        }
+    }
+
+    // A provider-owned service can only be booked with that provider.
+    if ($service && $providerProfileId !== '' && !empty($service['provider_profile_id'])
+        && (string) $service['provider_profile_id'] !== $providerProfileId) {
+        ds_error(409, 'SERVICE_PROVIDER_MISMATCH', 'That service belongs to a different provider.');
+    }
+
     $id = ds_new_id();
     $reference = 'MS-' . strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
 

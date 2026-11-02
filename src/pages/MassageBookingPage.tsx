@@ -21,8 +21,10 @@ import {
   type ProviderPreference,
   type StepFieldErrors,
 } from '../lib/massageBooking';
-import { MASSAGE_SERVICES } from '../data/mockData';
 import { Button, Container, PageHeading, surfaceClass } from '../components/ui';
+import { usePublicCatalogue } from '../lib/cmsCatalogue';
+import { customerApi } from '../lib/customerApi';
+import { ApiError } from '../lib/api';
 
 interface MassageBookingPageProps {
   onBookingRequested: (booking: MassageBookingRecord) => void;
@@ -47,21 +49,32 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     (location.state as { serviceId?: string } | null)?.serviceId ||
     undefined;
 
+  const { services, loading } = usePublicCatalogue();
+
   const [step, setStep] = useState(1);
-  const [draft, setDraft] = useState<MassageBookingDraft>(() => {
-    const base = createEmptyDraft(preselected);
-    const preService = MASSAGE_SERVICES.find((s) => s.id === preselected);
-    return {
-      ...base,
-      clientName: accountDefaults?.clientName || '',
-      clientPhone: accountDefaults?.clientPhone || '',
-      clientEmail: accountDefaults?.clientEmail || '',
-      durationMinutes: preService?.durationMinutes[0] ?? 0,
-    };
-  });
+  const [draft, setDraft] = useState<MassageBookingDraft>(() => ({
+    ...createEmptyDraft(preselected),
+    clientName: accountDefaults?.clientName || '',
+    clientPhone: accountDefaults?.clientPhone || '',
+    clientEmail: accountDefaults?.clientEmail || '',
+  }));
   const [errors, setErrors] = useState<StepFieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<MassageBookingRecord | null>(null);
+
+  // The catalogue arrives asynchronously: adopt the published duration for the
+  // preselected/selected service instead of inventing one.
+  useEffect(() => {
+    if (!draft.serviceId) return;
+    const service = services.find((s) => s.id === draft.serviceId);
+    if (!service) return;
+    setDraft((prev) =>
+      prev.durationMinutes === service.durationMinutes
+        ? prev
+        : { ...prev, durationMinutes: service.durationMinutes }
+    );
+  }, [services, draft.serviceId]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
@@ -96,12 +109,59 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
       return;
     }
     setSubmitting(true);
-    // Prototype: no Paystack charge — create pending_payment request only.
-    await new Promise((r) => setTimeout(r, 650));
-    const record = buildBookingRecord(draft);
-    onBookingRequested(record);
-    setCompleted(record);
-    setSubmitting(false);
+    setSubmitError(null);
+    try {
+      const address =
+        draft.locationType === 'home'
+          ? [
+              draft.homeLocation.address,
+              draft.homeLocation.landmark,
+              draft.homeLocation.cityArea,
+              draft.homeLocation.region,
+            ]
+              .filter(Boolean)
+              .join(', ')
+          : '';
+
+      const response = await customerApi.createBooking({
+        serviceId: draft.serviceId,
+        providerProfileId:
+          draft.providerPreference === 'specific' ? draft.preferredTherapistId : undefined,
+        scheduledAt: draft.date ? `${draft.date}T00:00:00` : '',
+        timeSlot: draft.timeSlotLabel,
+        locationType: draft.locationType === 'home' ? 'home' : 'studio',
+        address: address || undefined,
+        notes:
+          [draft.specialRequests, draft.tensionNotes, draft.accessibilityNeeds]
+            .filter(Boolean)
+            .join('\n') || undefined,
+        customerName: draft.clientName,
+        customerPhone: draft.clientPhone,
+      });
+
+      const record: MassageBookingRecord = {
+        ...buildBookingRecord(draft),
+        id: response.bookingId,
+        reference: response.reference,
+        status: 'pending',
+      };
+      onBookingRequested(record);
+      setCompleted(record);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        navigate('/login?redirect=/book-massage');
+        return;
+      }
+      setSubmitError(
+        err instanceof ApiError
+          ? err.code === 'EMAIL_NOT_VERIFIED'
+            ? 'Verify your email address before booking — check your inbox for the confirmation link.'
+            : err.message
+          : 'We could not save your request. Please try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const trustStrip = useMemo(
@@ -186,6 +246,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                       serviceId={draft.serviceId}
                       durationMinutes={draft.durationMinutes}
                       errors={errors}
+                      loading={loading}
                       onSelectService={(serviceId) => {
                         patchDraft({ serviceId });
                         setErrors((e) => ({ ...e, serviceId: '' }));
@@ -247,6 +308,15 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                   {step === 5 && <BookingReview draft={draft} onEditStep={goToStep} />}
                 </motion.div>
               </AnimatePresence>
+
+              {submitError && (
+                <p
+                  className="mt-6 rounded-xl border border-rose-500/30 bg-rose-950/30 px-4 py-3 text-sm font-medium text-rose-200"
+                  role="alert"
+                >
+                  {submitError}
+                </p>
+              )}
 
               {/* Desktop step controls */}
               <div className="mt-8 hidden items-center justify-between gap-4 border-t border-white/10 pt-6 lg:flex">

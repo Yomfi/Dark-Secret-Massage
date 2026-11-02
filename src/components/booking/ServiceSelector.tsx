@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Clock } from 'lucide-react';
+import { Check, Clock, Sparkles } from 'lucide-react';
 import { MASSAGE_SERVICES } from '../../data/mockData';
 import type { StepFieldErrors } from '../../lib/massageBooking';
 
@@ -7,6 +7,7 @@ interface ServiceSelectorProps {
   serviceId: string;
   durationMinutes: number;
   errors: StepFieldErrors;
+  loading?: boolean;
   onSelectService: (serviceId: string) => void;
   onSelectDuration: (minutes: number) => void;
 }
@@ -15,15 +16,19 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
   serviceId,
   durationMinutes,
   errors,
+  loading = false,
   onSelectService,
   onSelectDuration,
 }) => {
+  const services = MASSAGE_SERVICES;
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Choose your massage</h2>
         <p className="mt-2 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
-          Select a therapy and session length. Pricing starts from the listed rate for a 60-minute session.
+          Select a therapy and session length. Prices are set by the studio and confirmed again when
+          your request is saved.
         </p>
       </div>
 
@@ -33,8 +38,25 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
         </p>
       )}
 
+      {loading && services.length === 0 && (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
+          <p className="text-base text-zinc-300">Loading available therapies…</p>
+        </div>
+      )}
+
+      {!loading && services.length === 0 && (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center">
+          <Sparkles className="mx-auto h-6 w-6 text-brand-gold" aria-hidden />
+          <p className="mt-3 text-lg font-semibold text-white">No therapies published yet</p>
+          <p className="mx-auto mt-2 max-w-md text-base text-zinc-400">
+            Our studio is preparing its treatment menu. Bookings open as soon as the first services
+            are approved and published.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-3 sm:gap-4">
-        {MASSAGE_SERVICES.map((service) => {
+        {services.map((service) => {
           const selected = serviceId === service.id;
           return (
             <button
@@ -64,9 +86,11 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 text-sm sm:text-base text-zinc-300 font-normal leading-snug">
-                    {service.tagline}
-                  </p>
+                  {service.tagline && (
+                    <p className="mt-1.5 text-sm sm:text-base text-zinc-300 font-normal leading-snug">
+                      {service.tagline}
+                    </p>
+                  )}
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" aria-hidden />

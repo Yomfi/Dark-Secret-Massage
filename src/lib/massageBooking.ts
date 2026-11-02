@@ -1,5 +1,4 @@
 import { MASSAGE_SERVICES, type MassageService } from '../data/mockData';
-import { calculateBookingPrice } from './bookingAndMatchmaking';
 
 export type BookingStatus =
   | 'pending'
@@ -87,6 +86,10 @@ export function getServiceById(serviceId: string): MassageService | undefined {
 }
 
 /** Price from service starting rate (treated as 60-min base) + home travel fee. */
+/**
+ * Prices come from the published CMS service and are never derived locally:
+ * the API re-reads the stored price on create, so the wizard only mirrors it.
+ */
 export function calculateServicePrice(
   service: MassageService | undefined,
   durationMinutes: number,
@@ -95,7 +98,8 @@ export function calculateServicePrice(
   if (!service || !durationMinutes || !locationType) {
     return { baseRate: 0, travelFee: 0, totalGHS: 0 };
   }
-  return calculateBookingPrice(service.basePriceGHS, durationMinutes, locationType);
+  const total = Math.round(service.basePriceGHS * 100) / 100;
+  return { baseRate: total, travelFee: 0, totalGHS: total };
 }
 
 export function generateBookingReference(): string {
