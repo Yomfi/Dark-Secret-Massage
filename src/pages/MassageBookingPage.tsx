@@ -23,6 +23,7 @@ import {
 } from '../lib/massageBooking';
 import { Button, Container, PageHeading, surfaceClass } from '../components/ui';
 import { usePublicCatalogue } from '../lib/cmsCatalogue';
+import { useSite } from '../components/PublicSite';
 import { customerApi } from '../lib/customerApi';
 import { ApiError } from '../lib/api';
 
@@ -50,6 +51,8 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     undefined;
 
   const { massageServices, therapists, loading, error, reload } = usePublicCatalogue();
+  const { settings } = useSite();
+  const bookingNotice = (settings.booking_notice ?? '').trim();
 
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<MassageBookingDraft>(() => ({
@@ -218,6 +221,15 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
       </section>
 
       <Container as="main" className="py-8 sm:py-10">
+        {bookingNotice ? (
+          <div
+            role="status"
+            className="mb-8 rounded-2xl border border-brand-gold/35 bg-brand-gold/[0.07] px-4 py-3.5 text-[13.5px] leading-relaxed text-zinc-200"
+          >
+            {bookingNotice}
+          </div>
+        ) : null}
+
         <div className="mb-8 sm:mb-10">
           <BookingProgress currentStep={step} />
         </div>

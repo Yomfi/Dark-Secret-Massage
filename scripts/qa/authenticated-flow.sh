@@ -24,7 +24,17 @@ login agency qa-agency@local.test
 
 echo "admin_role=$ADMIN_ROLE"
 # A fresh booking owned by the customer session used for ownership checks.
-DATE=$(php -r 'for ($i = 1; $i <= 10; $i++) { $t = strtotime("+{$i} day"); if ((int) date("N", $t) <= 6) { echo date("Y-m-d", $t); break; } }')
+# Pick a real day where both the create and reschedule slots are free, so a
+# previous QA run cannot make this run fail for the wrong reason.
+DATE=$(php -r '
+for ($i = 1; $i <= 21; $i++) {
+    $d = date("Y-m-d", strtotime("+{$i} day"));
+    $url = "http://127.0.0.1:8791/api/public/availability.php?date={$d}&serviceId=qa-studio-60&durationMinutes=60";
+    $j = json_decode((string) @file_get_contents($url), true);
+    $ids = array_column($j["data"]["slots"] ?? [], "id");
+    if (in_array("slot-0900", $ids, true) && in_array("slot-1400", $ids, true)) { echo $d; break; }
+}')
+if [ -z "$DATE" ]; then echo "no free QA date found"; exit 1; fi
 IND=$(json individual); AGENCY=$(json agencyProfile); TEAM=$(json teamMember)
 php -r 'file_put_contents("/tmp/ds-qa/b.json", json_encode(["action"=>"create","serviceId"=>"qa-studio-60","scheduledAt"=>$argv[1]."T00:00:00","timeSlotId"=>"slot-0900","timeSlot"=>"09:00","locationType"=>"studio","customerName"=>"QA Customer","customerPhone"=>"+233200000009"]));' "$DATE"
 echo "booking_create=$(code cust customer/bookings.php /tmp/ds-qa/fresh.json /tmp/ds-qa/b.json)"

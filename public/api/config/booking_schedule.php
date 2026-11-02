@@ -670,6 +670,30 @@ function ds_booking_lock_key(?string $providerProfileId, string $date, string $e
     return 'ds_slot:' . substr(hash('sha256', ds_provider_slot_scope($providerProfileId) . '|' . $date . '|' . $extra), 0, 40);
 }
 
+/**
+ * Deterministic acquisition order for a set of locks.
+ *
+ * Every writer must take the same locks in the same order, otherwise two
+ * requests can each hold what the other needs. MySQL waits on GET_LOCK
+ * (there is no deadlock detector for advisory locks), so sorted, de-duplicated
+ * keys are the deadlock defence.
+ *
+ * @param list<string> $keys
+ * @return list<string>
+ */
+function ds_booking_lock_plan(array $keys): array
+{
+    $clean = [];
+    foreach ($keys as $key) {
+        if (is_string($key) && $key !== '') {
+            $clean[$key] = true;
+        }
+    }
+    $clean = array_keys($clean);
+    sort($clean, SORT_STRING);
+    return $clean;
+}
+
 function ds_acquire_booking_lock(string $key, int $timeoutSeconds = 8): bool
 {
     if (ds_pdo()->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
@@ -703,7 +727,7 @@ function ds_release_booking_lock(string $key): void
 function ds_run_booking_write(array $lockKeys, callable $fn)
 {
     $acquired = [];
-    foreach (array_values(array_unique($lockKeys)) as $key) {
+    foreach (ds_booking_lock_plan($lockKeys) as $key) {
         if (!ds_acquire_booking_lock($key)) {
             foreach ($acquired as $held) {
                 ds_release_booking_lock($held);
@@ -762,12 +786,21 @@ function ds_reschedule_booking(
     $status = (string) $booking['status'];
     $nextStatus = $status === 'reschedule_requested' ? 'confirmed' : $status;
 
+    $oldDate = substr((string) $booking['scheduled_at'], 0, 10);
     $lockKeys = [
         ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $newDate),
         'customer-day:' . $customerId . ':' . $newDate,
     ];
     if ($teamMemberId !== '') {
         $lockKeys[] = 'team-day:' . $teamMemberId . ':' . $newDate;
+    }
+    // Moving a booking also frees the old day, so serialise writers there too.
+    if ($oldDate !== '' && $oldDate !== $newDate) {
+        $lockKeys[] = ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $oldDate);
+        $lockKeys[] = 'customer-day:' . $customerId . ':' . $oldDate;
+        if ($teamMemberId !== '') {
+            $lockKeys[] = 'team-day:' . $teamMemberId . ':' . $oldDate;
+        }
     }
     $result = ds_run_booking_write($lockKeys, function () use (
         $bookingId, $booking, $newDate, $newSlotId, $newTimeSlot, $note, $duration,
@@ -845,12 +878,20 @@ function ds_assign_booking_team(
         return ['ok' => false, 'code' => 'ASSIGNMENT_CONFLICT', 'message' => 'This booking has no published slot to assign.'];
     }
 
+    $existingTeam = $booking['team_member_id'] !== null ? (string) $booking['team_member_id'] : '';
     $lockKeys = [
         ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $date),
         'customer-day:' . $customerId . ':' . $date,
     ];
     if ($teamMemberId !== '') {
         $lockKeys[] = 'team-day:' . $teamMemberId . ':' . $date;
+    }
+    // Reassignment frees the previous provider/team member; lock those too.
+    if ($existingProvider !== '' && $existingProvider !== $providerProfileId) {
+        $lockKeys[] = ds_booking_lock_key($existingProvider, $date);
+    }
+    if ($existingTeam !== '' && $existingTeam !== $teamMemberId) {
+        $lockKeys[] = 'team-day:' . $existingTeam . ':' . $date;
     }
 
     return ds_run_booking_write($lockKeys, function () use ($bookingId, $date, $slotId, $duration, $providerProfileId, $teamMemberId, $customerId): array {

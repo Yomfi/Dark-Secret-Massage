@@ -39,9 +39,12 @@ function ds_env(string $key)
     return false;
 }
 
-function ds_config(): array
+function ds_config(bool $reload = false): array
 {
     static $config = null;
+    if ($reload) {
+        $config = null;
+    }
     if ($config !== null) {
         return $config;
     }

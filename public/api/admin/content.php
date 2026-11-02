@@ -105,6 +105,14 @@ if ($action === 'save_page') {
     // Only a deliberate publish action may publish.
     $status = $action === 'save_page' ? 'draft' : $status;
 
+    if ($id === '') {
+        // Saving a page whose slug already exists updates that page instead of
+        // inserting a second row, so a slug can never resolve to two pages.
+        $stmt = $pdo->prepare('SELECT id FROM cms_pages WHERE slug = ? ORDER BY updated_at DESC LIMIT 1');
+        $stmt->execute([$slug]);
+        $id = (string) ($stmt->fetch()['id'] ?? '');
+    }
+
     if ($id !== '') {
         $stmt = $pdo->prepare('SELECT id FROM cms_pages WHERE id = ? LIMIT 1');
         $stmt->execute([$id]);

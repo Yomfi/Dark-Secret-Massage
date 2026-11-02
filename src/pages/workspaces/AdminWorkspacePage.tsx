@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
+import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { WorkspaceShell, type WorkspaceNavItem } from '../../components/workspace/WorkspaceShell';
 
@@ -430,7 +431,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   <tr key={b.id} className="border-t border-[#eee7d9]">
                     <td className={td}><p className="font-medium">{b.serviceName}</p><p className="text-[12px] text-[#6b6252]">{b.reference ?? b.id}</p></td>
                     <td className={td}>{b.customerName || '—'}<p className="text-[12px] text-[#6b6252]">{b.customerEmail}</p></td>
-                    <td className={td}>{b.scheduledAt ?? '—'}<p className="text-[12px] text-[#6b6252]">{b.timeSlot ?? ''}</p></td>
+                    <td className={td}>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6b6252]">{b.timeSlot ?? ''}</p></td>
                     <td className={td}>{b.providerName ?? 'Unassigned'}{b.teamMemberName ? <p className="text-[12px] text-[#6b6252]">{b.teamMemberName}</p> : null}</td>
                     <td className={td}><span className={badgeFor(b.status)}>{b.status.replace('_', ' ')}</span></td>
                     <td className={td}>
@@ -510,12 +511,48 @@ export const AdminWorkspacePage: React.FC = () => {
                   await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'save_settings', settings }) });
                 }, 'Website settings saved.');
               }}>
-                {['contact_email', 'contact_phone', 'contact_whatsapp', 'social_instagram', 'seo_title', 'seo_description'].map((key) => (
+                {[
+                  ['contact_email', 'Contact email'],
+                  ['contact_phone', 'Contact phone'],
+                  ['contact_whatsapp', 'WhatsApp'],
+                  ['social_instagram', 'Instagram URL'],
+                  ['seo_title', 'SEO title'],
+                  ['seo_description', 'SEO description'],
+                ].map(([key, labelText]) => (
                   <label key={key} className="text-[12px] font-medium text-[#6b6252]">
-                    {key.replace(/_/g, ' ')}
+                    {labelText}
                     <input name={key} defaultValue={content.settings[key] ?? ''} className={`${input} mt-1`} />
                   </label>
                 ))}
+
+                <div className="sm:col-span-2 mt-2 border-t border-[#eee7d9] pt-4">
+                  <h3 className="text-[13.5px] font-semibold">Booking schedule</h3>
+                  <p className="mt-1 text-[12px] leading-relaxed text-[#6b6252]">
+                    These values generate the public time slots. Leave them empty to show an honest
+                    “not published yet” state instead of inventing times.
+                  </p>
+                </div>
+                {[
+                  ['booking_days', 'Working days (e.g. Mon-Sat)'],
+                  ['booking_hours', 'Opening hours (e.g. 09:00-19:00)'],
+                  ['booking_slot_minutes', 'Slot length in minutes (e.g. 60)'],
+                  ['booking_timezone', 'Timezone (e.g. Africa/Accra)'],
+                ].map(([key, labelText]) => (
+                  <label key={key} className="text-[12px] font-medium text-[#6b6252]">
+                    {labelText}
+                    <input name={key} defaultValue={content.settings[key] ?? ''} className={`${input} mt-1`} />
+                  </label>
+                ))}
+                <label className="sm:col-span-2 text-[12px] font-medium text-[#6b6252]">
+                  Booking notice shown above the booking steps
+                  <textarea
+                    name="booking_notice"
+                    defaultValue={content.settings.booking_notice ?? ''}
+                    rows={3}
+                    className={`${input} mt-1 h-auto py-2`}
+                    placeholder="e.g. Same-day requests are reviewed by phone before confirmation."
+                  />
+                </label>
                 <div className="sm:col-span-2"><button className={btn} type="submit" disabled={busy}>Save settings</button></div>
               </form>
             </section>

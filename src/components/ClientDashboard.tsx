@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { apiRequest } from '../lib/api';
+import { formatScheduledDate } from '../lib/dates';
 
 type Booking = {
   id: string;
@@ -220,7 +221,7 @@ export const ClientDashboard: React.FC<{
                       <dt className="text-[#8a7a52]">When</dt>
                       <dd className="mt-0.5 font-medium">
                         <Clock className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                        {booking.scheduledAt ?? 'Awaiting confirmation'}
+                        {formatScheduledDate(booking.scheduledAt)}
                         {booking.timeSlot ? ` · ${booking.timeSlot}` : ''}
                       </dd>
                     </div>

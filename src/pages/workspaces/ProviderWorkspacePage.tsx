@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
+import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { WorkspaceShell, type WorkspaceNavItem } from '../../components/workspace/WorkspaceShell';
 
@@ -263,7 +264,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                 <tr key={b.id} className="border-t border-[#eee7d9]">
                   <td className={td}><p className="font-medium">{b.serviceName}</p><p className="text-[12px] text-[#6b6252]">{b.reference ?? b.id}</p></td>
                   <td className={td}>{b.customerName ?? '—'}</td>
-                  <td className={td}>{b.scheduledAt ?? '—'}<p className="text-[12px] text-[#6b6252]">{b.timeSlot ?? ''}</p></td>
+                  <td className={td}>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6b6252]">{b.timeSlot ?? ''}</p></td>
                   <td className={td}>{b.teamMemberName ?? '—'}</td>
                   <td className={td}>{b.status.replace('_', ' ')}</td>
                   <td className={td}>

@@ -123,9 +123,17 @@ export async function fetchPublicProviders(force = false): Promise<CmsProvider[]
 }
 
 function normaliseContent(raw: PublicContent): PublicContent {
+  // A re-saved page used to insert a second row with the same slug; keep the
+  // newest (first, API orders by updated_at) so links and list keys stay unique.
+  const seenSlugs = new Set<string>();
+  const pages = (Array.isArray(raw?.pages) ? raw.pages : []).filter((page) => {
+    if (!page || seenSlugs.has(page.slug)) return false;
+    seenSlugs.add(page.slug);
+    return true;
+  });
   return {
     settings: raw?.settings && typeof raw.settings === 'object' ? raw.settings : {},
-    pages: Array.isArray(raw?.pages) ? raw.pages : [],
+    pages,
     faqs: Array.isArray(raw?.faqs) ? raw.faqs : [],
     services: Array.isArray(raw?.services) ? raw.services : [],
   };
