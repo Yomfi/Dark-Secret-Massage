@@ -16,15 +16,19 @@ code() { curl -s -o "$3" -w '%{http_code}' -b "$J/$1" -H 'Content-Type: applicat
 login() { body "{\"identifier\":\"$2\",\"password\":\"$PW\"}" /tmp/ds-qa/login.json; curl -s -c "$J/$1" -H 'Content-Type: application/json' -d @/tmp/ds-qa/login.json "$BASE/api/auth/login.php" > /tmp/ds-qa/login-out.json; }
 
 login admin qa-admin@local.test
+ADMIN_ROLE=$(php -r '$d=json_decode(file_get_contents("/tmp/ds-qa/login-out.json"),true); echo $d["data"]["user"]["role"]??"FAIL";')
 login cust qa-customer@local.test
 login cust2 qa-customer2@local.test
 login ind qa-individual@local.test
 login agency qa-agency@local.test
 
-echo "admin_role=$(php -r '$d=json_decode(file_get_contents("/tmp/ds-qa/login-out.json"),true); echo $d["data"]["user"]["role"]??"FAIL";')"
-DATE=$(php -r '$d=json_decode(file_get_contents("/tmp/ds-qa/r2.json"),true); echo substr($d["data"]["scheduledAt"],0,10);')
-BOOKING=$(php -r '$d=json_decode(file_get_contents("/tmp/ds-qa/r2.json"),true); echo $d["data"]["bookingId"];')
+echo "admin_role=$ADMIN_ROLE"
+# A fresh booking owned by the customer session used for ownership checks.
+DATE=$(php -r 'for ($i = 1; $i <= 10; $i++) { $t = strtotime("+{$i} day"); if ((int) date("N", $t) <= 6) { echo date("Y-m-d", $t); break; } }')
 IND=$(json individual); AGENCY=$(json agencyProfile); TEAM=$(json teamMember)
+php -r 'file_put_contents("/tmp/ds-qa/b.json", json_encode(["action"=>"create","serviceId"=>"qa-studio-60","scheduledAt"=>$argv[1]."T00:00:00","timeSlotId"=>"slot-0900","timeSlot"=>"09:00","locationType"=>"studio","customerName"=>"QA Customer","customerPhone"=>"+233200000009"]));' "$DATE"
+echo "booking_create=$(code cust customer/bookings.php /tmp/ds-qa/fresh.json /tmp/ds-qa/b.json)"
+BOOKING=$(php -r '$d=json_decode(file_get_contents("/tmp/ds-qa/fresh.json"),true); echo $d["data"]["bookingId"]??"";')
 echo "booking=$BOOKING date=$DATE"
 
 # 1. Admin creates a studio service and it appears publicly.
