@@ -13,6 +13,7 @@ require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/provider.php';
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/mail_templates.php';
+require_once __DIR__ . '/cms.php';
 
 /**
  * Read a configuration variable from whichever source this host injects
@@ -97,16 +98,95 @@ function ds_config(): array
         'membership_currency' => ds_env('DS_MEMBERSHIP_CURRENCY') ?: 'GHS',
     ];
 
-    $localFile = __DIR__ . '/config.local.php';
-    if (is_file($localFile)) {
-        $local = require $localFile;
-        if (is_array($local)) {
-            $defaults = array_merge($defaults, $local);
+    // Configuration sources, in increasing precedence. A Hostinger Git deploy
+    // replaces public_html, so anything stored inside it is disposable; the
+    // deploy-safe locations live above the document root instead.
+    $loaded = [];
+    $keySources = [];
+    foreach (ds_config_file_candidates() as $label => $path) {
+        if (!is_file($path) || !is_readable($path)) {
+            continue;
         }
+        $data = require $path;
+        if (!is_array($data)) {
+            continue;
+        }
+        foreach ($data as $key => $value) {
+            if (is_string($key)) {
+                $keySources[$key] = $label;
+            }
+        }
+        $defaults = array_merge($defaults, $data);
+        $loaded[] = $label;
     }
+
+    $GLOBALS['ds_config_loaded_sources'] = $loaded;
+    $GLOBALS['ds_config_key_sources'] = $keySources;
 
     $config = $defaults;
     return $config;
+}
+
+/**
+ * Candidate config files, lowest precedence first.
+ *
+ * `DS_CONFIG_PATH` is an explicit, server-set override. The remaining paths sit
+ * above the deployed document root so a deployment replacement cannot delete
+ * them, and they are never web-accessible.
+ *
+ * @return array<string, string> label => absolute path
+ */
+function ds_config_file_candidates(): array
+{
+    $candidates = ['in_tree' => __DIR__ . '/config.local.php'];
+
+    $docRoot = trim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    if ($docRoot !== '') {
+        $parent = dirname($docRoot);
+        $candidates['parent_of_document_root'] = $parent . '/massager-studio.config.local.php';
+        $candidates['parent_of_document_root_dir'] = $parent . '/massager-studio/config.local.php';
+    }
+
+    // public_html/api/config → three levels up is the site directory above public_html.
+    $candidates['three_levels_up'] = dirname(__DIR__, 3) . '/massager-studio.config.local.php';
+
+    $home = rtrim((string) ($_SERVER['HOME'] ?? ''), '/');
+    if ($home !== '') {
+        $candidates['home_directory'] = $home . '/massager-studio.config.local.php';
+    }
+
+    $explicit = ds_env('DS_CONFIG_PATH');
+    if (is_string($explicit) && trim($explicit) !== '') {
+        $candidates['DS_CONFIG_PATH'] = trim($explicit);
+    }
+
+    return $candidates;
+}
+
+/** Which candidate labels were actually read (labels only, never paths). @return list<string> */
+function ds_config_loaded_sources(): array
+{
+    return is_array($GLOBALS['ds_config_loaded_sources'] ?? null)
+        ? $GLOBALS['ds_config_loaded_sources']
+        : [];
+}
+
+/** Which source supplied a key, by label only. */
+function ds_config_key_source(string $key): ?string
+{
+    $map = $GLOBALS['ds_config_key_sources'] ?? null;
+    return is_array($map) && isset($map[$key]) ? (string) $map[$key] : null;
+}
+
+/** Diagnostics: candidate labels with existence flags. No paths or values. @return array<string, array{exists: bool, readable: bool}> */
+function ds_config_candidates_status(): array
+{
+    $out = [];
+    foreach (ds_config_file_candidates() as $label => $path) {
+        $exists = is_file($path);
+        $out[$label] = ['exists' => $exists, 'readable' => $exists && is_readable($path)];
+    }
+    return $out;
 }
 
 function ds_is_prod(): bool
