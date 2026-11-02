@@ -32,7 +32,7 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
       <div className="flex flex-col sm:flex-row">
         <div className="relative w-full shrink-0 bg-brand-ink sm:w-[220px] lg:w-[240px]">
           <PortraitMedia
-            src={profile.primaryImage}
+            src={profile.primaryImage ?? ''}
             alt={profile.displayName}
             aspectClassName="aspect-[4/3] sm:aspect-auto sm:h-full sm:min-h-[228px]"
             hoverZoom

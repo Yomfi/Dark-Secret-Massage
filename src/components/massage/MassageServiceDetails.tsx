@@ -126,7 +126,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({ it
 
             <div className="sticky bottom-0 border-t border-white/[0.07] bg-brand-surface/95 px-5 py-4 backdrop-blur-xl">
               <Link to={bookMassageHref(item.service.id)} className={buttonClass({ size: 'lg', fullWidth: true })}>
-                Book now · GHS {item.service.basePriceGHS}
+                Book A Massage · GHS {item.service.basePriceGHS}
               </Link>
             </div>
           </motion.aside>

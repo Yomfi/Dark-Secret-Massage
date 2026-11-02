@@ -75,14 +75,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Button variant="ghost" size="sm" onClick={onOpenDashboard}>
             {isAuthenticated ? 'My account' : 'Sign in'}
           </Button>
-          <Button size="sm" onClick={onOpenBooking}>
-            Book now
+          <Button size="sm" onClick={onOpenBooking} className="px-4 whitespace-nowrap">
+            Book A Massage
           </Button>
         </div>
 
         <div className="flex items-center gap-1.5 sm:hidden">
-          <Button size="sm" onClick={onOpenBooking} className="px-3.5">
-            Book now
+          <Button size="sm" onClick={onOpenBooking} className="px-3 whitespace-nowrap text-[12.5px]">
+            Book A Massage
           </Button>
           <button
             type="button"

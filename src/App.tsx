@@ -19,6 +19,8 @@ import { MarketplaceProfilePage } from './pages/MarketplaceProfilePage';
 import { ProviderRegisterPage } from './pages/ProviderRegisterPage';
 import { ProviderDashboardPage } from './pages/ProviderDashboardPage';
 import { AdminProviderReviewsPage } from './pages/AdminProviderReviewsPage';
+import { AdminWorkspacePage } from './pages/workspaces/AdminWorkspacePage';
+import { ProviderWorkspacePage } from './pages/workspaces/ProviderWorkspacePage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { BookingRequest } from './lib/bookingAndMatchmaking';
 import type { MassageBookingRecord } from './lib/massageBooking';
@@ -71,21 +73,8 @@ function AppRoutes() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
 
-  const [userBookings, setUserBookings] = useState<StoredBooking[]>([
-    {
-      id: 'bk-exec-01',
-      therapistId: 'therapist-1',
-      serviceType: 'Deep Tissue Recovery Therapy',
-      durationMinutes: 90,
-      date: '2026-10-24',
-      timeSlot: '16:30 - 18:00',
-      locationType: 'studio',
-      clientName: 'Kwabena Mensah',
-      clientPhone: '+233 24 555 0192',
-      totalGHS: 975,
-      status: 'confirmed',
-    },
-  ]);
+  // Bookings are persisted by the API; this only mirrors the local request result.
+  const [userBookings, setUserBookings] = useState<StoredBooking[]>([]);
 
   const bookMassagePath = (serviceId?: string) =>
     serviceId ? `/book-massage?service=${encodeURIComponent(serviceId)}` : '/book-massage';
@@ -159,7 +148,17 @@ function AppRoutes() {
       <Route path="/profile/:profileSlug" element={<MarketplaceProfilePage />} />
       <Route path="/provider/register" element={<ProviderRegisterPage />} />
       <Route path="/provider/dashboard" element={<ProviderDashboardPage />} />
+      <Route path="/provider/workspace" element={<ProviderWorkspacePage />} />
+      <Route path="/admin" element={<AdminWorkspacePage />} />
       <Route path="/admin/provider-reviews" element={<AdminProviderReviewsPage />} />
+      <Route
+        path="/account"
+        element={
+          <ProtectedRoute>
+            <ClientDashboard onBackToHome={() => navigate('/')} onOpenBooking={() => navigate('/book-massage')} />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={

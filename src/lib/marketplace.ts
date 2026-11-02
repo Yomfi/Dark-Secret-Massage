@@ -17,7 +17,7 @@ export type MarketplaceFilters = {
   sort?: MarketplaceSort;
 };
 
-export function formatPrice(amount: number | undefined, currency: string): string | null {
+export function formatPrice(amount: number | null | undefined, currency: string): string | null {
   if (amount == null) return null;
   return `${currency} ${amount.toLocaleString()}`;
 }
@@ -113,7 +113,7 @@ export function filterAndSortProfiles(
   result.sort((a, b) => {
     switch (sort) {
       case 'recent':
-        return b.createdAt.localeCompare(a.createdAt);
+        return String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? ''));
       case 'price_asc':
         return (a.startingPrice ?? Number.POSITIVE_INFINITY) - (b.startingPrice ?? Number.POSITIVE_INFINITY);
       case 'price_desc':

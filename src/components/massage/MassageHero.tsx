@@ -47,7 +47,7 @@ export const MassageHero: React.FC<MassageHeroProps> = ({ onViewServices }) => {
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link to={bookMassageHref()} className={buttonClass({ size: 'lg', className: 'sm:w-auto' })}>
               <Calendar className="h-4 w-4" aria-hidden />
-              Book now
+              Book A Massage
             </Link>
             <button
               type="button"

@@ -1,13 +1,14 @@
 import type { ServiceCategoryId } from './serviceCategories';
 
-/** DEMO marketplace profiles — fictional until real providers submit & approve. */
+/**
+ * Marketplace listing types plus a small runtime cache.
+ *
+ * Listings are sourced from `/api/public/providers.php`, which returns only
+ * admin-approved, published providers. There is intentionally no demo data and
+ * no fallback fixtures: an empty directory renders a real empty state.
+ */
 
-export type MarketplaceProfileType =
-  | 'massage_provider'
-  | 'wellness_provider'
-  | 'matchmaking_profile'
-  | 'social_profile'
-  | 'dating_profile';
+export type MarketplaceProfileType = 'massage_provider' | 'wellness_provider';
 
 export type MarketplaceGender = 'women' | 'men' | 'female' | 'male';
 
@@ -37,6 +38,7 @@ export type AgencyTeamMember = {
 export type MarketplaceAvailability = 'today' | 'this_week' | 'flexible';
 
 export type ServiceOffering = {
+  id?: string;
   name: string;
   durationMinutes?: number;
   priceFrom?: number;
@@ -47,28 +49,25 @@ export type MarketplaceProfile = {
   slug: string;
   displayName: string;
   profileType: MarketplaceProfileType;
-  /** Public marketplace kind — individual masseuse or agency */
   providerKind: MarketplaceProviderKind;
-  gender?: MarketplaceGender;
+  gender?: MarketplaceGender | null;
   citySlug: string;
   city: string;
   region: string;
   country: string;
-  nationality?: string;
   shortBio: string;
   about: string;
-  /** Tag chips shown on cards and profile headers */
   services: string[];
-  /** Detailed offerings for massage/wellness providers */
   serviceOfferings?: ServiceOffering[];
   primaryCategory: ServiceCategoryId;
-  startingPrice?: number;
+  startingPrice?: number | null;
   currency: string;
   availability: MarketplaceAvailability;
-  availableDays?: string;
+  availableDays?: string | null;
   serviceSetting: ServiceSetting[];
-  serviceArea?: string;
-  primaryImage: string;
+  serviceArea?: string | null;
+  primaryImage?: string;
+  age?: number;
   gallery: string[];
   phone?: string;
   whatsapp?: string;
@@ -76,505 +75,129 @@ export type MarketplaceProfile = {
   verified: boolean;
   featured: boolean;
   languages?: string[];
-  age?: number;
-  height?: string;
-  smoking?: string;
-  occupation?: string;
-  interests?: string[];
-  /** @deprecated Archived matchmaking fields — not shown publicly */
-  lookingFor?: string;
-  relationshipIntention?: string;
-  preferredConnection?: string;
-  socialPreference?: string;
   teamMembers?: AgencyTeamMember[];
-  workingHours?: string;
-  yearsExperience?: number;
-  isDemo: true;
-  createdAt: string;
+  workingHours?: string | null;
+  yearsExperience?: number | null;
+  isDemo: false;
+  createdAt?: string | null;
 };
 
 export const PROFILE_TYPE_LABELS: Record<MarketplaceProfileType, string> = {
   massage_provider: 'Massage',
   wellness_provider: 'Wellness',
-  matchmaking_profile: 'Massage',
-  social_profile: 'Massage',
-  dating_profile: 'Massage',
 };
 
-const PUBLIC_PROFILE_TYPES: MarketplaceProfileType[] = ['massage_provider', 'wellness_provider'];
-
 export function isPublicMassageProfile(profile: MarketplaceProfile): boolean {
-  return PUBLIC_PROFILE_TYPES.includes(profile.profileType);
+  return profile.profileType === 'massage_provider' || profile.profileType === 'wellness_provider';
 }
 
-export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [
-  {
-    id: 'demo-ama-k',
-    slug: 'ama-k',
-    displayName: 'Ama K.',
-    profileType: 'massage_provider',
-    providerKind: 'individual',
-    gender: 'women',
-    citySlug: 'accra',
-    city: 'Accra',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 28,
-    shortBio:
-      'Warm, friendly and professional wellness provider offering private relaxation sessions across Accra.',
-    about:
-      'I create calm, private sessions for people who want to unwind after Accra’s pace. Expect a welcoming atmosphere, clear professional boundaries and tailored pressure — from gentle Swedish relaxation to focused deep tissue. Studio appointments and discreet home visits available across central Accra.',
-    services: ['Swedish Massage', 'Deep Tissue Massage', 'Relaxation Massage', 'Home Massage'],
-    serviceOfferings: [
-      { name: 'Swedish Massage', durationMinutes: 60, priceFrom: 350 },
-      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 420 },
-      { name: 'Relaxation Massage', durationMinutes: 60, priceFrom: 350 },
-      { name: 'Home Massage', durationMinutes: 90, priceFrom: 480 },
-    ],
-    primaryCategory: 'massage',
-    startingPrice: 350,
-    currency: 'GHS',
-    availability: 'today',
-    availableDays: 'Mon–Sat · Flexible evenings',
-    serviceSetting: ['studio', 'in_home'],
-    serviceArea: 'Accra · Airport Residential · Cantonments · Osu',
-    primaryImage: '/profiles/demo-ama-k.jpg',
-    gallery: [
-      '/profiles/demo-ama-k.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-      '/profiles/demo-gallery-rooftop.jpg',
-      '/profiles/demo-lifestyle-city.jpg',
-    ],
-    phone: '+233200000101',
-    whatsapp: '+233200000101',
-    publicContactEnabled: true,
-    verified: true,
-    featured: true,
-    languages: ['English', 'Twi'],
-    occupation: 'Massage therapist',
-    interests: ['Wellness', 'Travel', 'Afrobeats'],
-    isDemo: true,
-    createdAt: '2026-09-12',
-  },
-  {
-    id: 'demo-akosua-m',
-    slug: 'akosua-m',
-    displayName: 'Akosua M.',
-    profileType: 'wellness_provider',
-    providerKind: 'individual',
-    gender: 'women',
-    citySlug: 'accra',
-    city: 'East Legon',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 29,
-    shortBio:
-      'Stylish wellness host offering aromatherapy and spa-inspired sessions in East Legon.',
-    about:
-      'My sessions lean spa and restorative — soft lighting, aromatherapy and unhurried care. Ideal if you want a polished private wellness reset. Clear timing, private studio setting in East Legon, and optional add-on spa rituals.',
-    services: ['Aromatherapy', 'Spa Session', 'Relaxation Massage'],
-    serviceOfferings: [
-      { name: 'Aromatherapy', durationMinutes: 60, priceFrom: 450 },
-      { name: 'Spa Session', durationMinutes: 90, priceFrom: 550 },
-      { name: 'Relaxation Massage', durationMinutes: 60, priceFrom: 420 },
-    ],
-    primaryCategory: 'spa',
-    startingPrice: 450,
-    currency: 'GHS',
-    availability: 'this_week',
-    availableDays: 'Tue–Sun · Daytime & early evening',
-    serviceSetting: ['studio'],
-    serviceArea: 'East Legon · Accra',
-    primaryImage: '/profiles/demo-akosua-m.jpg',
-    gallery: [
-      '/profiles/demo-akosua-m.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-      '/profiles/demo-gallery-cafe.jpg',
-      '/spa_treatment_room.jpg',
-    ],
-    phone: '+233200000102',
-    whatsapp: '+233200000102',
-    publicContactEnabled: true,
-    verified: false,
-    featured: true,
-    languages: ['English'],
-    occupation: 'Spa & wellness host',
-    interests: ['Skincare', 'Jazz', 'Design'],
-    isDemo: true,
-    createdAt: '2026-09-20',
-  },
-  {
-    id: 'demo-kwame-m',
-    slug: 'kwame-m',
-    displayName: 'Kwame M.',
-    profileType: 'massage_provider',
-    providerKind: 'individual',
-    gender: 'men',
-    citySlug: 'accra',
-    city: 'Accra',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 32,
-    shortBio:
-      'Professional male massage therapist offering deep tissue and sports recovery across Accra.',
-    about:
-      'Focused, professional sessions with clear boundaries. I specialise in deep tissue and sports recovery for clients who want strong, effective work after training or long desk days. Studio and selected home visits in Accra.',
-    services: ['Deep Tissue Massage', 'Sports Massage', 'Swedish Massage'],
-    serviceOfferings: [
-      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 400 },
-      { name: 'Sports Massage', durationMinutes: 60, priceFrom: 380 },
-      { name: 'Swedish Massage', durationMinutes: 60, priceFrom: 360 },
-    ],
-    primaryCategory: 'massage',
-    startingPrice: 360,
-    currency: 'GHS',
-    availability: 'today',
-    availableDays: 'Mon–Sat',
-    serviceSetting: ['studio', 'in_home'],
-    serviceArea: 'Accra · Ridge · Cantonments · Labone',
-    primaryImage: '/profiles/demo-kwame-m.jpg',
-    gallery: [
-      '/profiles/demo-kwame-m.jpg',
-      '/spa_treatment_room.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-    ],
-    phone: '+233200000201',
-    whatsapp: '+233200000201',
-    publicContactEnabled: true,
-    verified: true,
-    featured: true,
-    languages: ['English', 'Twi'],
-    occupation: 'Massage therapist',
-    interests: ['Fitness', 'Wellness'],
-    isDemo: true,
-    createdAt: '2026-10-05',
-  },
-  {
-    id: 'demo-kofi-a',
-    slug: 'kofi-a',
-    displayName: 'Kofi A.',
-    profileType: 'massage_provider',
-    providerKind: 'individual',
-    gender: 'men',
-    citySlug: 'accra',
-    city: 'East Legon',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 30,
-    shortBio: 'Calm, professional relaxation and Swedish massage for clients in East Legon.',
-    about:
-      'Gentle-to-firm Swedish and relaxation massage in a private studio setting. Clear booking windows, professional hygiene standards and a quiet space to reset.',
-    services: ['Swedish Massage', 'Relaxation Massage', 'Aromatherapy'],
-    serviceOfferings: [
-      { name: 'Swedish Massage', durationMinutes: 60, priceFrom: 370 },
-      { name: 'Relaxation Massage', durationMinutes: 75, priceFrom: 390 },
-      { name: 'Aromatherapy', durationMinutes: 60, priceFrom: 410 },
-    ],
-    primaryCategory: 'massage',
-    startingPrice: 370,
-    currency: 'GHS',
-    availability: 'this_week',
-    availableDays: 'Tue–Sun',
-    serviceSetting: ['studio'],
-    serviceArea: 'East Legon · Accra',
-    primaryImage: '/profiles/demo-kofi-m.jpg',
-    gallery: [
-      '/profiles/demo-kofi-m.jpg',
-      '/profiles/demo-gallery-cafe.jpg',
-      '/spa_treatment_room.jpg',
-    ],
-    phone: '+233200000202',
-    whatsapp: '+233200000202',
-    publicContactEnabled: true,
-    verified: false,
-    featured: true,
-    languages: ['English'],
-    occupation: 'Massage therapist',
-    isDemo: true,
-    createdAt: '2026-10-08',
-  },
-  {
-    id: 'demo-yaw-b',
-    slug: 'yaw-b',
-    displayName: 'Yaw B.',
-    profileType: 'wellness_provider',
-    providerKind: 'individual',
-    gender: 'men',
-    citySlug: 'accra',
-    city: 'Accra',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 34,
-    shortBio: 'In-home and studio massage for professionals who want discreet, reliable care.',
-    about:
-      'I offer home massage and studio sessions with a focus on punctuality and professional care. Ideal for executives and travellers who want effective recovery without fuss.',
-    services: ['Home Massage', 'Deep Tissue Massage', 'Relaxation Massage'],
-    serviceOfferings: [
-      { name: 'Home Massage', durationMinutes: 90, priceFrom: 500 },
-      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 430 },
-      { name: 'Relaxation Massage', durationMinutes: 60, priceFrom: 380 },
-    ],
-    primaryCategory: 'home-massage',
-    startingPrice: 380,
-    currency: 'GHS',
-    availability: 'flexible',
-    availableDays: 'Daily · By appointment',
-    serviceSetting: ['studio', 'in_home'],
-    serviceArea: 'Accra · Airport · Osu · Cantonments',
-    primaryImage: '/profiles/demo-yaw-m.jpg',
-    gallery: [
-      '/profiles/demo-yaw-m.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-      '/profiles/demo-lifestyle-city.jpg',
-    ],
-    phone: '+233200000203',
-    whatsapp: '+233200000203',
-    publicContactEnabled: true,
-    verified: false,
-    featured: false,
-    languages: ['English', 'Ga'],
-    occupation: 'Mobile massage therapist',
-    isDemo: true,
-    createdAt: '2026-10-10',
-  },
-  {
-    id: 'demo-serwaa-a',
-    slug: 'serwaa-a',
-    displayName: 'Serwaa A.',
-    profileType: 'wellness_provider',
-    providerKind: 'individual',
-    gender: 'women',
-    citySlug: 'tema',
-    city: 'Tema',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 30,
-    shortBio: 'In-home wellness and relaxation sessions for professionals across Tema and Spintex.',
-    about:
-      'I bring a polished private setup to your home or lodging — ideal after travel or long shifts when you want comfort without leaving your space. Clear arrival window, professional care, discreet service.',
-    services: ['Home Massage', 'Relaxation Massage', 'Deep Tissue Massage'],
-    serviceOfferings: [
-      { name: 'Home Massage', durationMinutes: 75, priceFrom: 400 },
-      { name: 'Relaxation Massage', durationMinutes: 60, priceFrom: 380 },
-      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 450 },
-    ],
-    primaryCategory: 'home-massage',
-    startingPrice: 400,
-    currency: 'GHS',
-    availability: 'flexible',
-    availableDays: 'Daily · By appointment',
-    serviceSetting: ['in_home'],
-    serviceArea: 'Tema · Spintex · Community 25',
-    primaryImage: '/profiles/demo-serwaa-k.jpg',
-    gallery: [
-      '/profiles/demo-serwaa-k.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-      '/profiles/demo-gallery-cafe.jpg',
-    ],
-    phone: '+233200000103',
-    whatsapp: '+233200000103',
-    publicContactEnabled: true,
-    verified: false,
-    featured: false,
-    languages: ['English', 'Ga'],
-    occupation: 'Mobile wellness provider',
-    interests: ['Fitness', 'Wellness', 'Music'],
-    isDemo: true,
-    createdAt: '2026-10-01',
-  },
-  {
-    id: 'demo-esi-k',
-    slug: 'esi-k',
-    displayName: 'Esi K.',
-    profileType: 'massage_provider',
-    providerKind: 'individual',
-    gender: 'women',
-    citySlug: 'tema',
-    city: 'Tema',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 28,
-    shortBio: 'Sports and recovery-focused massage for athletes and desk workers in Tema.',
-    about:
-      'Focused recovery work for tension from training or long desk hours. Clear boundaries, clear timing and professional care in studio or at your location.',
-    services: ['Sports Massage', 'Deep Tissue Massage', 'Relaxation Massage'],
-    serviceOfferings: [
-      { name: 'Sports Massage', durationMinutes: 60, priceFrom: 370 },
-      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 420 },
-      { name: 'Relaxation Massage', durationMinutes: 60, priceFrom: 350 },
-    ],
-    primaryCategory: 'massage',
-    startingPrice: 370,
-    currency: 'GHS',
-    availability: 'today',
-    availableDays: 'Mon–Fri · Weekends on request',
-    serviceSetting: ['studio', 'in_home'],
-    serviceArea: 'Tema · Community 1–12',
-    primaryImage: '/profiles/demo-yaa-e.jpg',
-    gallery: [
-      '/profiles/demo-yaa-e.jpg',
-      '/profiles/demo-lifestyle-city.jpg',
-      '/profiles/demo-gallery-rooftop.jpg',
-    ],
-    phone: '+233200000105',
-    whatsapp: '+233200000105',
-    publicContactEnabled: true,
-    verified: false,
-    featured: false,
-    languages: ['English'],
-    occupation: 'Sports massage therapist',
-    interests: ['Fitness', 'Nutrition'],
-    isDemo: true,
-    createdAt: '2026-10-02',
-  },
-  {
-    id: 'demo-esi-b',
-    slug: 'esi-b',
-    displayName: 'Esi B.',
-    profileType: 'massage_provider',
-    providerKind: 'individual',
-    gender: 'women',
-    citySlug: 'kumasi',
-    city: 'Kumasi',
-    region: 'Ashanti',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    age: 29,
-    shortBio:
-      'Confident wellness provider offering couples and individual relaxation sessions in Kumasi.',
-    about:
-      'Whether you book alone or as a pair, sessions are paced, private and focused on genuine rest. Clear timing, professional care and a calm studio setting in Kumasi.',
-    services: ['Couples Massage', 'Swedish Massage', 'Relaxation Massage'],
-    serviceOfferings: [
-      { name: 'Couples Massage', durationMinutes: 90, priceFrom: 520 },
-      { name: 'Swedish Massage', durationMinutes: 60, priceFrom: 380 },
-      { name: 'Relaxation Massage', durationMinutes: 75, priceFrom: 400 },
-    ],
-    primaryCategory: 'couples-massage',
-    startingPrice: 520,
-    currency: 'GHS',
-    availability: 'this_week',
-    availableDays: 'Wed–Sun',
-    serviceSetting: ['studio', 'flexible'],
-    serviceArea: 'Kumasi central & selected hotels',
-    primaryImage: '/profiles/demo-esi-b.jpg',
-    gallery: [
-      '/profiles/demo-esi-b.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-      '/profiles/demo-gallery-rooftop.jpg',
-      '/spa_treatment_room.jpg',
-    ],
-    phone: '+233200000104',
-    whatsapp: '+233200000104',
-    publicContactEnabled: true,
-    verified: false,
-    featured: true,
-    languages: ['English', 'Twi'],
-    occupation: 'Massage & wellness',
-    interests: ['Wellness', 'Music', 'Travel'],
-    isDemo: true,
-    createdAt: '2026-09-28',
-  },
-  {
-    id: 'demo-serenity-touch',
-    slug: 'serenity-touch-spa',
-    displayName: 'Serenity Touch Spa',
-    profileType: 'wellness_provider',
-    providerKind: 'agency',
-    citySlug: 'accra',
-    city: 'East Legon',
-    region: 'Greater Accra',
-    country: 'Ghana',
-    nationality: 'Ghanaian',
-    shortBio: 'Massage agency offering studio and home-visit sessions with a vetted team in East Legon.',
-    about:
-      'Serenity Touch Spa is a private massage agency in East Legon. We list experienced massage professionals for studio appointments, home visits and hotel sessions — with clear pricing and professional standards.',
-    services: ['Swedish Massage', 'Deep Tissue Massage', 'Spa Session', 'Home Massage', 'Couples Massage'],
-    serviceOfferings: [
-      { name: 'Swedish Massage', durationMinutes: 60, priceFrom: 380 },
-      { name: 'Deep Tissue Massage', durationMinutes: 75, priceFrom: 450 },
-      { name: 'Spa Session', durationMinutes: 90, priceFrom: 560 },
-      { name: 'Home Massage', durationMinutes: 90, priceFrom: 520 },
-    ],
-    primaryCategory: 'spa',
-    startingPrice: 380,
-    currency: 'GHS',
-    availability: 'today',
-    availableDays: 'Mon–Sun',
-    workingHours: '9:00 – 20:00',
-    yearsExperience: 6,
-    serviceSetting: ['studio', 'home_visit', 'hotel_visit'],
-    serviceArea: 'East Legon · Accra · Airport Residential',
-    primaryImage: '/spa_treatment_room.jpg',
-    gallery: [
-      '/spa_treatment_room.jpg',
-      '/profiles/demo-lifestyle-lounge.jpg',
-      '/profiles/demo-gallery-cafe.jpg',
-    ],
-    phone: '+233200000300',
-    whatsapp: '+233200000300',
-    publicContactEnabled: true,
-    verified: true,
-    featured: true,
-    languages: ['English', 'Twi'],
-    teamMembers: [
-      {
-        id: 'team-ama',
-        displayName: 'Ama',
-        gender: 'women',
-        bio: 'Swedish and relaxation specialist.',
-        profileImage: '/profiles/demo-ama-k.jpg',
-        services: ['Swedish Massage', 'Relaxation Massage'],
-        yearsExperience: 4,
-        availability: 'today',
-        status: 'active',
-      },
-      {
-        id: 'team-kwame',
-        displayName: 'Kwame',
-        gender: 'men',
-        bio: 'Deep tissue and sports recovery.',
-        profileImage: '/profiles/demo-kwame-m.jpg',
-        services: ['Deep Tissue Massage', 'Sports Massage'],
-        yearsExperience: 5,
-        availability: 'this_week',
-        status: 'active',
-      },
-    ],
-    isDemo: true,
-    createdAt: '2026-10-12',
-  },
-];
+/** Runtime cache filled from the public providers endpoint. */
+let cache: MarketplaceProfile[] = [];
+
+export function setMarketplaceProfiles(profiles: MarketplaceProfile[]): void {
+  cache = profiles;
+}
+
+export function getMarketplaceProfiles(): MarketplaceProfile[] {
+  return cache;
+}
+
+/** Kept for compatibility: never populated with demo data. */
+export const MARKETPLACE_PROFILES: MarketplaceProfile[] = [];
 
 export function findMarketplaceProfile(slug: string): MarketplaceProfile | undefined {
-  const profile = MARKETPLACE_PROFILES.find((p) => p.slug === slug);
+  const profile = cache.find((p) => p.slug === slug);
   if (!profile || !isPublicMassageProfile(profile)) return undefined;
   return profile;
 }
 
 export function profilesForCity(citySlug: string): MarketplaceProfile[] {
-  return MARKETPLACE_PROFILES.filter(
-    (p) => p.citySlug === citySlug.toLowerCase() && isPublicMassageProfile(p),
+  const slug = citySlug.toLowerCase();
+  return cache.filter(
+    (p) =>
+      isPublicMassageProfile(p) &&
+      (p.citySlug === slug || p.city.toLowerCase().replace(/\s+/g, '-') === slug),
   );
 }
 
-export function siblingProfiles(
-  citySlug: string,
-  currentSlug: string,
-  filterService?: string | null,
-): MarketplaceProfile[] {
-  let list = MARKETPLACE_PROFILES.filter(
-    (p) => p.citySlug === citySlug && isPublicMassageProfile(p) && p.slug !== currentSlug,
-  );
+export function siblingProfiles(citySlug: string, currentSlug: string, filterService?: string | null): MarketplaceProfile[] {
+  let list = profilesForCity(citySlug).filter((p) => p.slug !== currentSlug);
   if (filterService) {
     list = list.filter((p) => p.primaryCategory === filterService);
   }
   return list;
+}
+
+/** Map the public providers API payload into the display model. */
+export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile {
+  const services = Array.isArray(raw.services) ? (raw.services as string[]) : [];
+  const offerings = Array.isArray(raw.serviceOfferings)
+    ? (raw.serviceOfferings as Array<Record<string, unknown>>)
+    : [];
+  const gallery = Array.isArray(raw.gallery) ? (raw.gallery as string[]) : [];
+  const settings = Array.isArray(raw.serviceSetting) ? (raw.serviceSetting as string[]) : [];
+  const team = Array.isArray(raw.teamMembers)
+    ? (raw.teamMembers as Array<Record<string, unknown>>).map((member) => ({
+        id: String(member.id ?? ''),
+        displayName: String(member.display_name ?? member.displayName ?? 'Team member'),
+        gender: String(member.gender ?? 'women') as MarketplaceGender,
+        bio: member.bio ? String(member.bio) : undefined,
+        profileImage: member.profile_image ? String(member.profile_image) : undefined,
+        services: Array.isArray(member.services_json) ? (member.services_json as string[]) : [],
+        status: (member.status === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
+      }))
+    : [];
+
+  return {
+    id: String(raw.id ?? ''),
+    slug: String(raw.slug ?? ''),
+    displayName: String(raw.displayName ?? 'Massage professional'),
+    profileType: 'massage_provider',
+    providerKind: raw.providerKind === 'agency' ? 'agency' : 'individual',
+    gender: (raw.gender as MarketplaceGender | null) ?? null,
+    citySlug: String(raw.citySlug ?? 'accra'),
+    city: String(raw.city ?? ''),
+    region: String(raw.region ?? ''),
+    country: String(raw.country ?? 'Ghana'),
+    shortBio: String(raw.shortBio ?? ''),
+    about: String(raw.about ?? ''),
+    services,
+    serviceOfferings: offerings.map((o) => ({
+      id: o.id ? String(o.id) : undefined,
+      name: String(o.name ?? ''),
+      durationMinutes: o.durationMinutes ? Number(o.durationMinutes) : undefined,
+      priceFrom: o.priceFrom ? Number(o.priceFrom) : undefined,
+    })),
+    primaryCategory: 'massage',
+    startingPrice: raw.startingPrice != null ? Number(raw.startingPrice) : null,
+    currency: String(raw.currency ?? 'GHS'),
+    availability: (raw.availability as MarketplaceAvailability) ?? 'flexible',
+    availableDays: raw.availableDays ? String(raw.availableDays) : null,
+    serviceSetting: settings.length > 0 ? settings : ['studio'],
+    serviceArea: raw.serviceArea ? String(raw.serviceArea) : null,
+    primaryImage: raw.primaryImage ? String(raw.primaryImage) : undefined,
+    gallery,
+    publicContactEnabled: Boolean(raw.publicContactEnabled),
+    verified: Boolean(raw.verified),
+    featured: false,
+    languages: Array.isArray(raw.languages) ? (raw.languages as string[]) : [],
+    teamMembers: team,
+    workingHours: raw.workingHours ? String(raw.workingHours) : null,
+    yearsExperience: raw.yearsExperience != null ? Number(raw.yearsExperience) : null,
+    isDemo: false,
+    createdAt: raw.createdAt ? String(raw.createdAt) : null,
+  };
+}
+
+/** Fetch public listings and hydrate the cache. */
+export async function fetchMarketplaceProfiles(): Promise<MarketplaceProfile[]> {
+  const res = await fetch('/api/public/providers.php', { credentials: 'omit' });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    throw new Error(payload?.error?.message || 'Unable to load providers.');
+  }
+  const providers = Array.isArray(payload.data?.providers) ? payload.data.providers : [];
+  const mapped = providers.map((p: Record<string, unknown>) => mapApiProvider(p));
+  setMarketplaceProfiles(mapped);
+  return mapped;
 }

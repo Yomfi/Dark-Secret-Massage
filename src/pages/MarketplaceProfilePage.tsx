@@ -17,6 +17,8 @@ import { Button, Container, IconButton } from '../components/ui';
 import { Footer } from '../components/Footer';
 import {
   findMarketplaceProfile,
+  mapApiProvider,
+  setMarketplaceProfiles,
   siblingProfiles,
   type MarketplaceProfile,
 } from '../data/marketplaceProfiles';
@@ -353,7 +355,32 @@ export const MarketplaceProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const profile = findMarketplaceProfile(profileSlug);
+  const [profile, setProfile] = useState<MarketplaceProfile | null>(() =>
+    findMarketplaceProfile(profileSlug) ?? null,
+  );
+  const [loading, setLoading] = useState(!profile);
+
+  // Deep links must work without coming from Explore: load the published record.
+  useEffect(() => {
+    if (profile || !profileSlug) return;
+    let cancelled = false;
+    fetch(`/api/public/providers.php?slug=${encodeURIComponent(profileSlug)}`)
+      .then((res) => res.json())
+      .then((payload) => {
+        if (cancelled) return;
+        const list = Array.isArray(payload?.data?.providers) ? payload.data.providers : [];
+        const mapped = list.map((p: Record<string, unknown>) => mapApiProvider(p));
+        if (mapped.length > 0) setMarketplaceProfiles(mapped);
+        setProfile(mapped[0] ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, profileSlug]);
 
   const navProps = {
     onOpenBooking: () => navigate('/book-massage'),
@@ -390,6 +417,17 @@ export const MarketplaceProfilePage: React.FC = () => {
     document.title = `${profile.displayName} — Massage in ${profile.city} | Massager Studio`;
   }, [profile]);
 
+  if (!profile && loading) {
+    return (
+      <div className="min-h-screen bg-[#050508] text-zinc-100">
+        <Navbar {...navProps} />
+        <main className="flex min-h-[70vh] items-center justify-center px-4 pt-24">
+          <p className="text-sm text-zinc-400">Loading provider…</p>
+        </main>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-[#050508] text-zinc-100 flex flex-col">
@@ -407,7 +445,9 @@ export const MarketplaceProfilePage: React.FC = () => {
     );
   }
 
-  const images = profile.gallery.length ? profile.gallery : [profile.primaryImage];
+  const images = (profile.gallery.length ? profile.gallery : [profile.primaryImage]).filter(
+    (src): src is string => typeof src === 'string' && src.length > 0,
+  );
   const isProvider =
     profile.profileType === 'massage_provider' || profile.profileType === 'wellness_provider';
 

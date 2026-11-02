@@ -73,7 +73,7 @@ export const MassageServiceCard: React.FC<MassageServiceCardProps> = ({
             to={bookMassageHref(service.id)}
             className={buttonClass({ className: 'w-full shrink-0 sm:flex-1' })}
           >
-            Book now
+            Book A Massage
           </Link>
         </div>
       </div>

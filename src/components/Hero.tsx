@@ -6,11 +6,7 @@ import { CitySearch } from './marketplace/CitySearch';
 import { buttonClass } from './ui/Button';
 import { Container } from './ui/Layout';
 
-interface HeroProps {
-  verifiedCount?: string;
-}
-
-export const Hero: React.FC<HeroProps> = ({ verifiedCount = '1,200+' }) => {
+export const Hero: React.FC = () => {
   return (
     <section className="relative isolate flex min-h-[92svh] flex-col justify-center overflow-hidden pb-14 pt-28 sm:pb-16 sm:pt-32">
       <div className="absolute inset-0 -z-10">
@@ -65,16 +61,11 @@ export const Hero: React.FC<HeroProps> = ({ verifiedCount = '1,200+' }) => {
           </ul>
         </div>
 
-        <div className="mx-auto mt-10 flex max-w-xl items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur">
-          <div className="flex -space-x-2 overflow-hidden">
-            <VisualMedia type="avatar-ama" className="h-8 w-8 ring-2 ring-brand-surface" alt="Ama" />
-            <VisualMedia type="avatar-kwame" className="h-8 w-8 ring-2 ring-brand-surface" alt="Kwame" />
-            <VisualMedia type="avatar-abena" className="h-8 w-8 ring-2 ring-brand-surface" alt="Abena" />
-            <VisualMedia type="avatar-elikem" className="h-8 w-8 ring-2 ring-brand-surface" alt="Elikem" />
-            <VisualMedia type="avatar-yaa" className="h-8 w-8 ring-2 ring-brand-surface" alt="Yaa" />
-          </div>
-          <p className="text-[13px] text-zinc-300">
-            <span className="font-semibold text-white">{verifiedCount}</span> verified Ghanaians
+        <div className="mx-auto mt-10 flex max-w-xl items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+          <p className="text-[12.5px] leading-relaxed text-zinc-300">
+            Profiles appear here only after identity review and admin approval. Verified counts are not
+            published until real providers are approved.
           </p>
         </div>
       </Container>

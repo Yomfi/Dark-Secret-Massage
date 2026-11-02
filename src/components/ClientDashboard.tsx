@@ -1,416 +1,356 @@
-import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
-  ShieldCheck,
-  Calendar,
-  MessageSquare,
-  Lock,
-  User,
   ArrowLeft,
-  Sparkles,
-  Clock,
-  MapPin,
+  Calendar,
   CheckCircle2,
-  Send,
-  EyeOff,
-  Bell,
-  Settings,
+  Clock,
+  Lock,
+  MapPin,
+  RefreshCw,
+  User as UserIcon,
 } from 'lucide-react';
-import { BookingRequest } from '../lib/bookingAndMatchmaking';
 import { BrandLogo } from './BrandLogo';
+import { apiRequest } from '../lib/api';
 
-interface ClientDashboardProps {
+type Booking = {
+  id: string;
+  reference: string | null;
+  status: string;
+  serviceName: string;
+  price: number;
+  currency: string;
+  scheduledAt: string | null;
+  timeSlot: string | null;
+  locationType: string | null;
+  providerName?: string | null;
+  canCancel?: boolean;
+  canReschedule?: boolean;
+};
+
+type CustomerPayload = {
+  bookings: Booking[];
+  upcoming: Booking[];
+  receipts: Array<{ id: string; reference: string | null; serviceName: string; amount: number; currency: string; status: string; date: string | null }>;
+};
+
+type ProfilePayload = {
+  user: { firstName: string; lastName: string; email: string; phone: string; role: string };
+  emailVerified: boolean;
+  accountStatus: string;
+};
+
+const surface = 'rounded-2xl border border-[#e6dfd2] bg-white p-5 shadow-[0_1px_2px_rgba(24,20,12,0.04)]';
+const statusTone: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-800 border-amber-200',
+  confirmed: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  reschedule_requested: 'bg-sky-50 text-sky-800 border-sky-200',
+  completed: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+  cancelled: 'bg-red-50 text-red-700 border-red-200',
+  no_show: 'bg-red-50 text-red-700 border-red-200',
+};
+
+export const ClientDashboard: React.FC<{
   onBackToHome: () => void;
   onOpenBooking: () => void;
-  userBookings: Array<
-    BookingRequest & { totalGHS: number; id: string; status?: string; reference?: string }
-  >;
-}
-
-export const ClientDashboard: React.FC<ClientDashboardProps> = ({
-  onBackToHome,
-  onOpenBooking,
-  userBookings,
-}) => {
+  userBookings?: unknown[];
+}> = ({ onBackToHome, onOpenBooking }) => {
   const [searchParams] = useSearchParams();
-  const initialTab =
-    searchParams.get('tab') === 'messages'
-      ? 'messages'
-      : searchParams.get('tab') === 'privacy'
-        ? 'privacy'
-        : 'massage';
-  const [activeTab, setActiveTab] = useState<'massage' | 'messages' | 'privacy'>(initialTab);
-  const [messages, setMessages] = useState<Array<{ sender: string; text: string; time: string; isUser: boolean }>>([
-    {
-      sender: 'Wellness Director',
-      text: 'Your upcoming Deep Tissue Recovery session with Akua Darko, RMT is confirmed. Our therapist will arrive equipped with organic Ghanaian shea infusions and sterile clinical linens.',
-      time: 'Yesterday',
-      isUser: false,
-    },
-  ]);
-  const [newMessage, setNewMessage] = useState('');
-  const [privateMode, setPrivateMode] = useState(true);
+  const initialTab = searchParams.get('tab') === 'profile' ? 'profile' : 'bookings';
+  const [tab, setTab] = useState<'bookings' | 'profile'>(initialTab);
+  const [data, setData] = useState<CustomerPayload | null>(null);
+  const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-    const msg = {
-      sender: 'Kwabena Mensah',
-      text: newMessage,
-      time: 'Just now',
-      isUser: true,
-    };
-    setMessages((prev) => [...prev, msg]);
-    setNewMessage('');
+  const load = () => {
+    setError(null);
+    Promise.all([
+      apiRequest<CustomerPayload>('/customer/bookings.php'),
+      apiRequest<ProfilePayload>('/customer/profile.php'),
+    ])
+      .then(([bookings, me]) => {
+        setData(bookings);
+        setProfile(me);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Unable to load your account.'));
+  };
 
-    // Simulated concierge reply
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'Concierge Support',
-          text: 'Thank you for your note. Your personal liaison has been notified and will respond discreetly shortly.',
-          time: 'Just now',
-          isUser: false,
-        },
-      ]);
-    }, 1500);
+  useEffect(load, []);
+
+  const cancel = async (bookingId: string) => {
+    const reason = window.prompt('Reason for cancelling (optional)') ?? '';
+    setBusy(true);
+    try {
+      await apiRequest(`/customer/bookings.php`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'cancel', bookingId, reason }),
+      });
+      setNotice('Booking cancelled.');
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to cancel this booking.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reschedule = async (bookingId: string) => {
+    const note = window.prompt('What date or time would suit you better?') ?? '';
+    if (!note.trim()) return;
+    setBusy(true);
+    try {
+      await apiRequest(`/customer/bookings.php`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'reschedule', bookingId, note }),
+      });
+      setNotice('Reschedule request sent.');
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to request a reschedule.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#07070a] text-zinc-200">
-      {/* Top Shell Navigation */}
-      <header className="sticky top-0 z-40 bg-[#09090e]/95 backdrop-blur-md border-b border-white/[0.08] px-4 sm:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
+    <div className="min-h-screen bg-[#faf7f0] text-[#221f19]">
+      <header className="sticky top-0 z-40 border-b border-[#e6dfd2] bg-[#f2eee4]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={onBackToHome}
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex h-11 items-center gap-2 rounded-lg px-2 text-[12px] font-semibold uppercase tracking-wider text-[#6b6252] hover:text-[#221f19] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f]"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Public Showcase</span>
+              <ArrowLeft className="h-4 w-4" aria-hidden /> Home
             </button>
-            <div className="h-4 w-px bg-white/10 hidden sm:block" />
-            <div className="flex items-center gap-2 min-w-0">
-              <BrandLogo variant="plate" withWordmark markHeight={24} />
-              <span className="text-[10px] uppercase font-mono tracking-wider text-brand-gold-light bg-brand-ink/60 border border-brand-gold/20 px-2 py-0.5 rounded-full">
-                Portal
-              </span>
-            </div>
+            <BrandLogo variant="plate" withWordmark markHeight={24} />
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-3 py-1 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>ID Verified · Member GH-8891</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-gold-dark to-indigo-600 flex items-center justify-center font-bold text-xs text-white">
-                KM
+          <div className="flex items-center gap-3">
+            {profile ? (
+              <div className="hidden text-right sm:block">
+                <p className="text-[13px] font-semibold">{profile.user.firstName} {profile.user.lastName}</p>
+                <p className="text-[11px] text-[#6b6252]">{profile.user.email}</p>
               </div>
-              <div className="hidden lg:block text-left text-xs">
-                <div className="font-semibold text-white">Kwabena Mensah</div>
-                <div className="text-zinc-500 text-[10px]">Accra & London</div>
-              </div>
-            </div>
+            ) : null}
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#221f19] text-[13px] font-semibold text-[#e5c17a]">
+              {profile?.user.firstName?.[0] ?? 'M'}
+            </span>
           </div>
         </div>
       </header>
 
-      {/* Main Dashboard Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto space-x-2 border-b border-white/[0.08] pb-4 mb-8">
-          <button
-            onClick={() => setActiveTab('massage')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'massage'
-                ? 'bg-brand-gold text-white shadow-lg shadow-brand-ink/50'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Massage Bookings ({userBookings.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('messages')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'messages'
-                ? 'bg-brand-gold text-white shadow-lg shadow-brand-ink/50'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>Concierge Messages</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('privacy')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'privacy'
-                ? 'bg-brand-gold text-white shadow-lg shadow-brand-ink/50'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Lock className="w-4 h-4" />
-            <span>Privacy & Vetting</span>
-          </button>
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="mb-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a7a52]">My account</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Your bookings</h1>
         </div>
 
-        {activeTab === 'massage' && (
-          <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white">
-                  Your Massage Appointments
-                </h2>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                  Professional wellness appointments adhering to hospital-grade hygiene and strict privacy.
-                </p>
-              </div>
+        <nav className="mb-6 flex gap-2 border-b border-[#e6dfd2] pb-3" aria-label="Account sections">
+          {[
+            { id: 'bookings' as const, label: 'Bookings', icon: Calendar },
+            { id: 'profile' as const, label: 'Profile', icon: UserIcon },
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`inline-flex h-11 items-center gap-2 rounded-lg px-4 text-[13px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f] ${
+                tab === id ? 'bg-[#221f19] text-white' : 'text-[#6b6252] hover:bg-[#ece6d8]'
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden /> {label}
+            </button>
+          ))}
+        </nav>
+
+        {error ? (
+          <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+            {error}
+          </div>
+        ) : null}
+        {notice ? (
+          <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">
+            {notice}
+          </div>
+        ) : null}
+
+        {!data && !error ? (
+          <p className="py-16 text-center text-[13.5px] text-[#6b6252]">Loading your account…</p>
+        ) : null}
+
+        {tab === 'bookings' && data ? (
+          data.bookings.length === 0 ? (
+            <div className={`${surface} text-center`}>
+              <Calendar className="mx-auto h-10 w-10 text-[#b7a883]" aria-hidden />
+              <h2 className="mt-3 text-[17px] font-semibold">No bookings yet</h2>
+              <p className="mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-[#6b6252]">
+                When you request a massage, it will appear here with its status and reference so you can
+                track it from request to completion.
+              </p>
               <button
+                type="button"
                 onClick={onOpenBooking}
-                className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full transition-all cursor-pointer self-start sm:self-auto"
+                className="mt-5 inline-flex h-12 items-center rounded-xl bg-[#221f19] px-5 text-[13.5px] font-semibold text-white hover:bg-[#3a342a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f]"
               >
-                + Book New Wellness Session
+                Book A Massage
               </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userBookings.map((b) => (
-                <div
-                  key={b.id}
-                  className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 space-y-4"
-                >
-                  <div className="flex items-center justify-between">
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {data.bookings.map((booking) => (
+                <article key={booking.id} className={surface}>
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">
-                        {b.locationType === 'studio' ? 'Private Studio Sanctuary' : 'In-Home Visit'}
+                      <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize ${statusTone[booking.status] ?? 'border-zinc-200 bg-zinc-50 text-zinc-700'}`}>
+                        {booking.status.replace('_', ' ')}
                       </span>
-                      <h4 className="text-lg font-bold text-white mt-0.5">{b.serviceType}</h4>
+                      <h3 className="mt-2 text-[16px] font-semibold">{booking.serviceName}</h3>
+                      <p className="mt-0.5 text-[12px] text-[#6b6252]">
+                        {booking.reference ? `Ref ${booking.reference}` : 'Reference pending'}
+                      </p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-brand-gold-light">
-                      GHS {b.totalGHS}
-                    </span>
+                    <p className="text-[14px] font-semibold">{booking.currency} {booking.price.toLocaleString()}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs text-zinc-300 bg-black/30 p-3 rounded-xl border border-white/5">
+                  <dl className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-[#eee7d9] bg-[#fbf8f1] p-3 text-[12px]">
                     <div>
-                      <span className="text-zinc-500 block text-[11px]">Date & Time</span>
-                      <span className="font-medium text-white">{b.date} · {b.timeSlot}</span>
+                      <dt className="text-[#8a7a52]">When</dt>
+                      <dd className="mt-0.5 font-medium">
+                        <Clock className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                        {booking.scheduledAt ?? 'Awaiting confirmation'}
+                        {booking.timeSlot ? ` · ${booking.timeSlot}` : ''}
+                      </dd>
                     </div>
                     <div>
-                      <span className="text-zinc-500 block text-[11px]">Duration</span>
-                      <span className="font-medium text-white">{b.durationMinutes} Minutes</span>
+                      <dt className="text-[#8a7a52]">Where</dt>
+                      <dd className="mt-0.5 font-medium capitalize">
+                        <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                        {booking.locationType === 'home' ? 'Home visit' : 'Studio'}
+                      </dd>
                     </div>
-                  </div>
+                    {booking.providerName ? (
+                      <div className="col-span-2">
+                        <dt className="text-[#8a7a52]">Provider</dt>
+                        <dd className="mt-0.5 font-medium">{booking.providerName}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
 
-                  <div className="text-xs text-zinc-400 flex items-center justify-between pt-2">
-                    <span
-                      className={`flex items-center gap-1.5 font-medium ${
-                        b.status === 'pending_payment' || b.status === 'pending'
-                          ? 'text-amber-400'
-                          : 'text-emerald-400'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>
-                        {b.status === 'pending_payment'
-                          ? 'Pending payment / review'
-                          : b.status === 'pending'
-                            ? 'Pending review'
-                            : 'Session recorded'}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() =>
-                        alert(
-                          `Reference: ${b.reference || b.id}. Status: ${b.status || 'recorded'}.`
-                        )
-                      }
-                      className="text-brand-gold hover:text-brand-gold-light text-xs font-medium cursor-pointer"
-                    >
-                      Session Details
-                    </button>
-                  </div>
-                </div>
+                  {booking.canCancel || booking.canReschedule ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {booking.canReschedule ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => reschedule(booking.id)}
+                          className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d9cfba] px-3.5 text-[12.5px] font-semibold hover:bg-[#f2eee4] disabled:opacity-60"
+                        >
+                          <RefreshCw className="h-4 w-4" aria-hidden /> Request reschedule
+                        </button>
+                      ) : null}
+                      {booking.canCancel ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => cancel(booking.id)}
+                          className="inline-flex h-11 items-center rounded-lg border border-red-200 px-3.5 text-[12.5px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                        >
+                          Cancel booking
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </article>
               ))}
-
-              {/* Sample standard confirmed session */}
-              <div className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">
-                      Private Studio Sanctuary
-                    </span>
-                    <h4 className="text-lg font-bold text-white mt-0.5">
-                      Volcanic Hot Stone Ritual
-                    </h4>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-brand-gold-light">GHS 800</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs text-zinc-300 bg-black/30 p-3 rounded-xl border border-white/5">
-                  <div>
-                    <span className="text-zinc-500 block text-[11px]">Date & Time</span>
-                    <span className="font-medium text-white">Oct 24, 2026 · 16:30</span>
-                  </div>
-                  <div>
-                    <span className="text-zinc-500 block text-[11px]">Therapist</span>
-                    <span className="font-medium text-white">Akua Darko, RMT</span>
-                  </div>
-                </div>
-
-                <div className="text-xs text-zinc-400 flex items-center justify-between pt-2">
-                  <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Airport Residential Studio</span>
-                  </span>
-                  <span className="text-zinc-500 font-mono text-[11px]">Ref: #MS-HOT-281</span>
-                </div>
-              </div>
             </div>
-          </div>
-        )}
+          )
+        ) : null}
 
-        {/* Tab 3: Concierge Messaging UI */}
-        {activeTab === 'messages' && (
-          <div className="rounded-3xl bg-[#0c0c14] border border-white/[0.08] overflow-hidden max-w-4xl mx-auto flex flex-col h-[600px]">
-            {/* Chat header */}
-            <div className="px-6 py-4 bg-[#09090e] border-b border-white/[0.08] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-ink/80 border border-brand-gold/30 flex items-center justify-center text-brand-gold-light font-bold text-sm">
-                  MS
+        {tab === 'bookings' && data && data.receipts.length > 0 ? (
+          <section className="mt-8">
+            <h2 className="mb-3 text-[15px] font-semibold">Receipts</h2>
+            <div className={`${surface} overflow-x-auto p-0`}>
+              <table className="w-full min-w-[540px] text-left text-[13px]">
+                <thead className="bg-[#f2eee4] text-[11px] uppercase tracking-wider text-[#6b6252]">
+                  <tr>
+                    <th className="px-4 py-3">Reference</th>
+                    <th className="px-4 py-3">Service</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Completed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.receipts.map((r) => (
+                    <tr key={r.id} className="border-t border-[#eee7d9]">
+                      <td className="px-4 py-3 font-medium">{r.reference ?? '—'}</td>
+                      <td className="px-4 py-3">{r.serviceName}</td>
+                      <td className="px-4 py-3">{r.currency} {r.amount.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-[#6b6252]">{r.date ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[11.5px] text-[#8a7a52]">
+              Receipts list completed bookings only. No online payment gateway is integrated, so no card
+              transactions are recorded.
+            </p>
+          </section>
+        ) : null}
+
+        {tab === 'profile' && profile ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <section className={surface}>
+              <h2 className="text-[15px] font-semibold">Account details</h2>
+              <dl className="mt-3 space-y-3 text-[13px]">
+                <div>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Name</dt>
+                  <dd className="mt-0.5 font-medium">{profile.user.firstName} {profile.user.lastName}</dd>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">
-                    Private Concierge Desk (Accra & London)
-                  </h3>
-                  <div className="text-[11px] text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>Discreet Encrypted Channel</span>
-                  </div>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Email</dt>
+                  <dd className="mt-0.5 font-medium">{profile.user.email}</dd>
                 </div>
-              </div>
-              <div className="text-xs text-zinc-500">256-bit SSL</div>
-            </div>
-
-            {/* Chat message stream */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.map((m, idx) => (
-                <div
-                  key={idx}
-                  className={`flex flex-col max-w-[80%] ${
-                    m.isUser ? 'ml-auto items-end' : 'mr-auto items-start'
-                  }`}
+                <div>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Phone (contact only)</dt>
+                  <dd className="mt-0.5 font-medium">{profile.user.phone || 'Not provided'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Email status</dt>
+                  <dd className={`mt-0.5 inline-flex items-center gap-1.5 font-medium ${profile.emailVerified ? 'text-emerald-700' : 'text-amber-700'}`}>
+                    {profile.emailVerified ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : <Lock className="h-4 w-4" aria-hidden />}
+                    {profile.emailVerified ? 'Confirmed' : 'Not confirmed'}
+                  </dd>
+                </div>
+              </dl>
+              {!profile.emailVerified ? (
+                <Link
+                  to="/verify-email?sent=0"
+                  className="mt-4 inline-flex h-11 items-center rounded-lg border border-[#d9cfba] px-3.5 text-[12.5px] font-semibold hover:bg-[#f2eee4]"
                 >
-                  <span className="text-[10px] text-zinc-500 mb-1 px-1">
-                    {m.sender} · {m.time}
-                  </span>
-                  <div
-                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                      m.isUser
-                        ? 'bg-brand-gold text-white rounded-tr-none'
-                        : 'bg-[#141420] text-zinc-200 border border-white/10 rounded-tl-none'
-                    }`}
-                  >
-                    {m.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Chat input form */}
-            <form
-              onSubmit={handleSendMessage}
-              className="p-4 bg-[#09090e] border-t border-white/[0.08] flex items-center gap-3"
-            >
-              <input
-                type="text"
-                placeholder="Message your wellness director..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/10 rounded-full text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-brand-gold"
-              />
-              <button
-                type="submit"
-                className="w-11 h-11 rounded-full bg-brand-gold hover:bg-brand-gold-light text-brand-ink flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-lg"
-                aria-label="Send message"
+                  Confirm your email
+                </Link>
+              ) : null}
+            </section>
+            <section className={surface}>
+              <h2 className="text-[15px] font-semibold">Security</h2>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#6b6252]">
+                Use the password reset flow to change your password securely. Your phone number is contact
+                information only and is never used as a sign-in gate.
+              </p>
+              <Link
+                to="/forgot-password"
+                className="mt-4 inline-flex h-11 items-center rounded-lg border border-[#d9cfba] px-3.5 text-[12.5px] font-semibold hover:bg-[#f2eee4]"
               >
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
+                Change password
+              </Link>
+            </section>
           </div>
-        )}
-
-        {/* Tab 4: Privacy & Vetting Profile Controls */}
-        {activeTab === 'privacy' && (
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="rounded-2xl bg-[#0c0c14] border border-white/[0.08] p-6 sm:p-8 space-y-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Lock className="w-5 h-5 text-brand-gold" />
-                <span>Confidentiality & Profile Settings</span>
-              </h3>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Discreet Anonymous Mode</div>
-                    <div className="text-xs text-zinc-400">
-                      Keeps booking details private and limits what appears on shared statements.
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setPrivateMode(!privateMode)}
-                    className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                      privateMode ? 'bg-brand-gold' : 'bg-zinc-700'
-                    }`}
-                  >
-                    <span
-                      className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                        privateMode ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Government ID Verification</div>
-                    <div className="text-xs text-zinc-400">
-                      Ghana National ID Card verified on record. Re-verification scheduled in 12 months.
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-3 py-1 rounded-full">
-                    Active & Verified
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Billing Confidentiality</div>
-                    <div className="text-xs text-zinc-400">
-                      Bank and card statements reflect discreet neutral descriptor "MS MGMT ACCRA".
-                    </div>
-                  </div>
-                  <span className="text-xs text-zinc-400 font-mono">Enforced</span>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-white/[0.08] flex justify-between items-center text-xs text-zinc-500">
-                <span>Want to pause or archive your membership?</span>
-                <button
-                  onClick={() => alert('Your request to pause membership has been sent to your concierge.')}
-                  className="text-brand-gold hover:text-brand-gold-light font-medium cursor-pointer"
-                >
-                  Contact Concierge
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        ) : null}
+      </main>
     </div>
   );
 };

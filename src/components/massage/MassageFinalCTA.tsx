@@ -20,7 +20,7 @@ export const MassageFinalCTA: React.FC = () => (
         </div>
         <Link to={bookMassageHref()} className={buttonClass({ size: 'lg', className: 'w-full sm:w-auto' })}>
           <Calendar className="h-4 w-4" aria-hidden />
-          Book now
+          Book A Massage
         </Link>
       </div>
     </div>

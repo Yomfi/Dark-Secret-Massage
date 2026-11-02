@@ -44,9 +44,9 @@ export const MassagePage: React.FC = () => {
             </a>
             <Link
               to="/book-massage"
-              className={buttonClass({ size: 'sm' })}
+              className={buttonClass({ size: 'sm' }) + ' whitespace-nowrap'}
             >
-              Book now
+              Book A Massage
             </Link>
           </nav>
         </Container>
