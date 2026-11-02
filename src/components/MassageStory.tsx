@@ -104,7 +104,7 @@ export const MassageStory: React.FC<MassageStoryProps> = ({
               className="inline-flex items-center gap-2 px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-wider text-brand-ink bg-brand-gold hover:bg-brand-gold-light rounded-full shadow-lg shadow-brand-ink/40 transition-all cursor-pointer group"
             >
               <Calendar className="w-4 h-4" />
-              <span>Book a Massage Service</span>
+              <span>Book A Massage</span>
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>

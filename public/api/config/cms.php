@@ -207,6 +207,11 @@ function ds_cms_migrate(): void
                 }
             }
         }
+        // Column metadata is cached per request: without this the endpoints that
+        // call ds_column_exists() immediately afterwards still see the old shape.
+        if (function_exists('ds_flush_table_columns')) {
+            ds_flush_table_columns('provider_profiles');
+        }
     }
 }
 

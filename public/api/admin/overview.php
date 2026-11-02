@@ -22,11 +22,20 @@ $count = static function (string $sql, array $params = []) use ($pdo): int {
     }
 };
 
-$customers = $count("SELECT COUNT(*) AS c FROM users WHERE role = 'user'");
-$individuals = $count("SELECT COUNT(*) AS c FROM users WHERE role = 'massage_provider'");
+// QA/test accounts created during mail verification must not inflate real
+// activity counts. They are identified by the reserved QA address patterns and
+// are never published, so they stay invisible to the public site.
+$qaFilter = "email NOT LIKE '%+qa-%' AND email NOT LIKE '%@fldubai.com'";
+
+$customers = $count("SELECT COUNT(*) AS c FROM users WHERE role = 'user' AND $qaFilter");
+$individuals = $count("SELECT COUNT(*) AS c FROM users WHERE role = 'massage_provider' AND $qaFilter");
 $agencies = 0;
 if (ds_table_exists('provider_profiles')) {
-    $agencies = $count("SELECT COUNT(*) AS c FROM provider_profiles WHERE provider_type = 'agency'");
+    $agencies = $count(
+        "SELECT COUNT(*) AS c FROM provider_profiles p
+         INNER JOIN users u ON u.id = p.user_id
+         WHERE p.provider_type = 'agency' AND u.$qaFilter"
+    );
 }
 
 $pendingReviews = 0;
@@ -86,7 +95,12 @@ $activeServices = ds_table_exists('services')
     ? $count('SELECT COUNT(*) AS c FROM services WHERE provider_profile_id IS NULL AND is_active = 1')
     : 0;
 
-$unverifiedEmails = $count("SELECT COUNT(*) AS c FROM users WHERE email_verified_at IS NULL AND role <> 'admin'");
+$unverifiedEmails = $count(
+    "SELECT COUNT(*) AS c FROM users WHERE email_verified_at IS NULL AND role <> 'admin' AND $qaFilter"
+);
+$qaAccounts = $count(
+    "SELECT COUNT(*) AS c FROM users WHERE NOT ($qaFilter)"
+);
 
 ds_success([
     'counts' => [
@@ -99,6 +113,7 @@ ds_success([
         'bookings' => $bookingsTotal,
         'revenueCompleted' => $revenue,
         'unverifiedEmails' => $unverifiedEmails,
+        'qaAccountsExcluded' => $qaAccounts,
     ],
     'bookingsByStatus' => $bookingsByStatus,
     'tasks' => array_map(static fn (array $row): array => [

@@ -51,7 +51,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBooking, onOpenDashboard }
               </li>
               <li>
                 <button type="button" onClick={goBooking} className={`${linkClass} text-left`}>
-                  Book a session
+                  Book A Massage
                 </button>
               </li>
               <li>

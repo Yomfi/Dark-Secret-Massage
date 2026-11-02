@@ -101,7 +101,7 @@ function ds_table_exists(string $table): bool
 /** @return array<string, true> */
 function ds_table_columns(string $table): array
 {
-    static $cache = [];
+    $cache = $GLOBALS['ds_table_columns_cache'] ?? [];
     if (isset($cache[$table])) {
         return $cache[$table];
     }
@@ -126,8 +126,21 @@ function ds_table_columns(string $table): array
         }
     }
 
-    $cache[$table] = $cols;
+    $GLOBALS['ds_table_columns_cache'][$table] = $cols;
     return $cols;
+}
+
+/**
+ * Drop cached column metadata so a migration that just ran ALTER is visible to
+ * the rest of the same request (otherwise admin publish reports 503 forever).
+ */
+function ds_flush_table_columns(?string $table = null): void
+{
+    if ($table === null) {
+        $GLOBALS['ds_table_columns_cache'] = [];
+        return;
+    }
+    unset($GLOBALS['ds_table_columns_cache'][$table]);
 }
 
 function ds_column_exists(string $table, string $column): bool

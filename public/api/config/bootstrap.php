@@ -13,6 +13,9 @@ require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/provider.php';
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/mail_templates.php';
+// CMS/booking helpers are function-only; loading them here keeps every
+// endpoint that calls ds_cms_ready()/ds_cms_migrate() from fataling.
+require_once __DIR__ . '/cms.php';
 
 /**
  * Read a configuration variable from whichever source this host injects
