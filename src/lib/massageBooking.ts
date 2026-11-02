@@ -102,12 +102,6 @@ export function calculateServicePrice(
   return { baseRate: total, travelFee: 0, totalGHS: total };
 }
 
-export function generateBookingReference(): string {
-  const stamp = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `MS-${stamp.slice(-4)}${rand}`;
-}
-
 export type StepFieldErrors = Record<string, string>;
 
 export function validateStep(
@@ -165,22 +159,34 @@ function isValidPhone(phone: string): boolean {
   return digits.length >= 9 && digits.length <= 15;
 }
 
-export function buildBookingRecord(draft: MassageBookingDraft): MassageBookingRecord {
-  const service = getServiceById(draft.serviceId)!;
-  const locationType = draft.locationType as LocationType;
-  const pricing = calculateServicePrice(service, draft.durationMinutes, locationType);
-  const reference = generateBookingReference();
-
+/**
+ * Build the receipt shown in the UI from the API's authoritative response:
+ * reference, price and duration are the stored ones, never recomputed locally.
+ */
+export function bookingRecordFromServer(
+  draft: MassageBookingDraft,
+  server: {
+    bookingId: string;
+    reference: string;
+    status: string;
+    serviceName: string;
+    price: number;
+    durationMinutes: number;
+    scheduledAt?: string | null;
+  }
+): MassageBookingRecord {
+  const locationType = (draft.locationType || 'studio') as LocationType;
   return {
     ...draft,
     locationType,
-    id: `bk-${Date.now().toString(36)}`,
-    reference,
-    serviceName: service.name,
-    totalGHS: pricing.totalGHS,
-    baseRate: pricing.baseRate,
-    travelFee: pricing.travelFee,
-    status: 'pending_payment',
+    id: server.bookingId,
+    reference: server.reference,
+    serviceName: server.serviceName,
+    totalGHS: server.price,
+    baseRate: server.price,
+    travelFee: 0,
+    durationMinutes: server.durationMinutes || draft.durationMinutes,
+    status: (server.status || 'pending') as BookingStatus,
     createdAt: new Date().toISOString(),
     studioLabel: locationType === 'studio' ? STUDIO_LOCATION_LABEL : undefined,
   };

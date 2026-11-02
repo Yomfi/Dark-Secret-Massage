@@ -12,7 +12,7 @@ import { BookingReview } from '../components/booking/BookingReview';
 import { BookingSummary } from '../components/booking/BookingSummary';
 import { BookingConfirmation } from '../components/booking/BookingConfirmation';
 import {
-  buildBookingRecord,
+  bookingRecordFromServer,
   createEmptyDraft,
   validateStep,
   type HomeLocationDetails,
@@ -128,6 +128,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
         providerProfileId:
           draft.providerPreference === 'specific' ? draft.preferredTherapistId : undefined,
         scheduledAt: draft.date ? `${draft.date}T00:00:00` : '',
+        timeSlotId: draft.timeSlotId,
         timeSlot: draft.timeSlotLabel,
         locationType: draft.locationType === 'home' ? 'home' : 'studio',
         address: address || undefined,
@@ -139,12 +140,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
         customerPhone: draft.clientPhone,
       });
 
-      const record: MassageBookingRecord = {
-        ...buildBookingRecord(draft),
-        id: response.bookingId,
-        reference: response.reference,
-        status: 'pending',
-      };
+      const record: MassageBookingRecord = bookingRecordFromServer(draft, response);
       onBookingRequested(record);
       setCompleted(record);
     } catch (err) {
@@ -277,6 +273,11 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                     <DateTimeSelector
                       date={draft.date}
                       timeSlotId={draft.timeSlotId}
+                      serviceId={draft.serviceId}
+                      durationMinutes={draft.durationMinutes}
+                      providerProfileId={
+                        draft.providerPreference === 'specific' ? draft.preferredTherapistId : undefined
+                      }
                       errors={errors}
                       onSelectDate={(date) => patchDraft({ date })}
                       onSelectSlot={(timeSlotId, timeSlotLabel) =>

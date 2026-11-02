@@ -103,6 +103,10 @@ if (!ds_column_exists('provider_profiles', 'is_published')) {
 }
 
 if ($action === 'publish') {
+    $targetUser = ds_find_user_by_id($userId);
+    if (!$targetUser || ds_is_qa_email((string) ($targetUser['email'] ?? ''))) {
+        ds_error(409, 'TEST_ACCOUNT', 'Test accounts cannot be published to the public site.');
+    }
     // Publication requires an admin-approved identity review; never self-granted.
     if (!ds_provider_publicly_eligible_after_publish($userId)) {
         ds_error(409, 'NOT_ELIGIBLE', 'Only verified, active providers with email confirmation can be published.');

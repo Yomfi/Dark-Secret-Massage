@@ -30,6 +30,10 @@ $sql = "SELECT p.*, u.email_verified_at, u.account_status, v.verification_status
         WHERE v.verification_status = 'verified'
           AND u.account_status = 'active'
           AND u.email_verified_at IS NOT NULL";
+if (ds_table_exists('qa_accounts')) {
+    // Defence in depth: a registered test identity is never listed publicly.
+    $sql .= ' AND ' . ds_qa_sql_exclusion('u.email');
+}
 $params = [];
 if ($slug !== '') {
     $sql .= ' AND p.slug = ?';

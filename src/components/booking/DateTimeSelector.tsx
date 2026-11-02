@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  getAvailableSlotsForDate,
+  fetchAvailability,
   PERIOD_LABELS,
+  SLOT_REASON_LABELS,
   todayISO,
+  type AvailabilitySlot,
   type TimePeriod,
 } from '../../lib/bookingAvailability';
 import type { StepFieldErrors } from '../../lib/massageBooking';
@@ -10,6 +12,9 @@ import type { StepFieldErrors } from '../../lib/massageBooking';
 interface DateTimeSelectorProps {
   date: string;
   timeSlotId: string;
+  serviceId: string;
+  durationMinutes: number;
+  providerProfileId?: string;
   errors: StepFieldErrors;
   onSelectDate: (date: string) => void;
   onSelectSlot: (slotId: string, label: string) => void;
@@ -20,12 +25,56 @@ const PERIODS: TimePeriod[] = ['morning', 'afternoon', 'evening'];
 export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
   date,
   timeSlotId,
+  serviceId,
+  durationMinutes,
+  providerProfileId,
   errors,
   onSelectDate,
   onSelectSlot,
 }) => {
   const minDate = todayISO();
-  const slots = useMemo(() => getAvailableSlotsForDate(date), [date]);
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  const load = useCallback(async (signal: { cancelled: boolean }) => {
+    if (!date) {
+      setSlots([]);
+      setError(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchAvailability({
+        date,
+        serviceId: serviceId || undefined,
+        providerProfileId: providerProfileId || undefined,
+      });
+      if (!signal.cancelled) setSlots(result.slots);
+    } catch (err) {
+      if (signal.cancelled) return;
+      setSlots([]);
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'We could not load live availability. Please retry.'
+      );
+    } finally {
+      if (!signal.cancelled) setLoading(false);
+    }
+  }, [date, serviceId, providerProfileId]);
+
+  useEffect(() => {
+    const signal = { cancelled: false };
+    void load(signal);
+    return () => {
+      signal.cancelled = true;
+    };
+  }, [load, attempt]);
+
+  const openCount = slots.filter((slot) => slot.available).length;
 
   return (
     <div className="space-y-6">
@@ -34,7 +83,9 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
           Choose a date and time
         </h2>
         <p className="mt-2 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
-          Pick an open slot. Unavailable times cannot be selected.
+          {durationMinutes
+            ? `Showing ${durationMinutes}-minute slots that are genuinely open on the studio calendar.`
+            : 'Pick an open slot. Unavailable times cannot be selected.'}
         </p>
       </div>
 
@@ -60,7 +111,34 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
         )}
       </div>
 
-      {date ? (
+      {!date ? (
+        <p className="text-base text-zinc-400 font-normal">Select a date to view available times.</p>
+      ) : loading ? (
+        <div
+          className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center"
+          role="status"
+        >
+          <p className="text-base text-zinc-300">Checking live availability…</p>
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-950/30 p-5" role="alert">
+          <p className="text-sm font-medium text-rose-200">{error}</p>
+          <button
+            type="button"
+            onClick={() => setAttempt((value) => value + 1)}
+            className="mt-3 rounded-lg border border-rose-400/40 px-3 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-900/40 cursor-pointer"
+          >
+            Retry availability
+          </button>
+        </div>
+      ) : slots.length === 0 ? (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
+          <p className="text-base font-semibold text-white">No times published for this date</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            Try another date, or contact the studio to request a time outside the published calendar.
+          </p>
+        </div>
+      ) : (
         <div className="space-y-5">
           {errors.timeSlot && (
             <p className="text-sm font-medium text-rose-300" role="alert">
@@ -68,8 +146,14 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             </p>
           )}
 
+          <p className="text-sm text-zinc-400">
+            {openCount > 0
+              ? `${openCount} open ${openCount === 1 ? 'slot' : 'slots'} on this date.`
+              : 'Every published slot on this date is already taken.'}
+          </p>
+
           {PERIODS.map((period) => {
-            const periodSlots = slots.filter((s) => s.period === period);
+            const periodSlots = slots.filter((slot) => slot.period === period);
             if (periodSlots.length === 0) return null;
             return (
               <div key={period}>
@@ -97,7 +181,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                         {slot.label}
                         {disabled && (
                           <span className="block text-[10px] font-medium no-underline mt-0.5 tracking-wide uppercase text-zinc-600">
-                            Unavailable
+                            {SLOT_REASON_LABELS[slot.reason ?? ''] ?? 'Unavailable'}
                           </span>
                         )}
                       </button>
@@ -108,8 +192,6 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             );
           })}
         </div>
-      ) : (
-        <p className="text-base text-zinc-400 font-normal">Select a date to view available times.</p>
       )}
     </div>
   );

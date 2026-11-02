@@ -19,3 +19,4 @@ public/api/config/config.local.php
 # Local-only QA artifacts and imported chat context
 verification/
 .cloud-attachments/
+screenshots/

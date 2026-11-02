@@ -8,6 +8,9 @@ export interface MassageService {
   durationMinutes: number[];
   basePriceGHS: number;
   benefits: string[];
+  /** Published CMS media/category, when the studio supplied them. */
+  image?: string | null;
+  category?: string | null;
 }
 
 /**

@@ -62,6 +62,8 @@ export function mapCmsService(row: CmsService): MassageService {
     durationMinutes: [row.durationMinutes],
     basePriceGHS: row.price,
     benefits: [],
+    image: row.image ?? null,
+    category: row.category ?? null,
   };
 }
 

@@ -72,18 +72,89 @@ if ($action === 'assign_team') {
     if ((string) $member['status'] !== 'active') {
         ds_error(409, 'NOT_ELIGIBLE', 'Inactive team members cannot be assigned bookings.');
     }
+    $date = substr((string) $booking['scheduled_at'], 0, 10);
+    $slotId = ds_booking_slot_id($booking);
+    $slot = $slotId !== null ? ds_booking_slot_definition($slotId) : null;
+    if ($date === '' || $slotId === null || $slot === null) {
+        ds_error(409, 'ASSIGNMENT_CONFLICT', 'This booking has no published slot to assign.');
+    }
+
+    // Overlap check against the team member's own schedule for the full session.
+    $start = ds_clock_minutes($slot['start']);
+    $duration = max(15, (int) $booking['duration_minutes']);
+    $statuses = ds_active_booking_statuses();
+    $in = implode(',', array_fill(0, count($statuses), '?'));
     $conflict = $pdo->prepare(
-        "SELECT id FROM bookings WHERE team_member_id = ? AND id <> ?
-         AND status IN ('pending','confirmed','reschedule_requested') AND scheduled_at = ? LIMIT 1"
+        "SELECT * FROM bookings WHERE team_member_id = ? AND id <> ? AND date(scheduled_at) = ? AND status IN ($in)"
     );
-    $conflict->execute([$teamMemberId, $bookingId, $booking['scheduled_at']]);
-    if ($conflict->fetch()) {
+    $conflict->execute(array_merge([$teamMemberId, $bookingId, $date], $statuses));
+    foreach ($conflict->fetchAll() ?: [] as $existing) {
+        if (ds_slot_interval_conflict($existing, $start, $duration)) {
+            ds_error(409, 'ASSIGNMENT_CONFLICT', 'That team member already has a booking in this slot.');
+        }
+    }
+
+    $teamKey = ds_booking_slot_key('team', $teamMemberId, $date, $slotId);
+    try {
+        $pdo->prepare('UPDATE bookings SET team_member_id = ?, team_slot_key = ?, updated_at = ? WHERE id = ?')
+            ->execute([$teamMemberId, $teamKey, $now, $bookingId]);
+    } catch (PDOException $e) {
         ds_error(409, 'ASSIGNMENT_CONFLICT', 'That team member already has a booking in this slot.');
     }
-    $pdo->prepare('UPDATE bookings SET team_member_id = ?, updated_at = ? WHERE id = ?')
-        ->execute([$teamMemberId, $now, $bookingId]);
     ds_booking_log($bookingId, $user['id'], 'team_assigned', (string) $booking['status'], (string) $booking['status']);
     ds_success(['assigned' => true]);
+}
+
+if ($action === 'reschedule') {
+    $status = (string) $booking['status'];
+    if (!in_array($status, ['pending', 'confirmed', 'reschedule_requested'], true)) {
+        ds_error(409, 'INVALID_TRANSITION', 'This booking can no longer be rescheduled.');
+    }
+    $newDate = substr(trim((string) ($body['scheduledAt'] ?? '')), 0, 10);
+    $newSlotId = trim((string) ($body['timeSlotId'] ?? ''));
+    if ($newDate === '' || $newSlotId === '') {
+        ds_error(400, 'VALIDATION_ERROR', 'Choose the new date and time.');
+    }
+    $duration = max(15, (int) $booking['duration_minutes']);
+    $check = ds_validate_booking_slot(
+        $newDate,
+        $newSlotId,
+        $duration,
+        $profileId,
+        (string) $booking['customer_user_id'],
+        $bookingId
+    );
+    if (!$check['ok']) {
+        ds_error($check['code'] === 'VALIDATION_ERROR' ? 400 : 409, $check['code'], $check['message']);
+    }
+    $slot = ds_booking_slot_definition($newSlotId);
+    $label = $slot['label'] . ' (' . $slot['start'] . '–' . $slot['end'] . ')';
+    $teamMemberId = $booking['team_member_id'] !== null ? (string) $booking['team_member_id'] : '';
+    $nextStatus = $status === 'reschedule_requested' ? 'confirmed' : $status;
+    try {
+        $pdo->prepare(
+            'UPDATE bookings SET scheduled_at = ?, time_slot = ?, slot_id = ?, provider_slot_key = ?,
+                team_slot_key = ?, customer_slot_key = ?, status = ?, updated_at = ? WHERE id = ?'
+        )->execute([
+            $newDate . 'T00:00:00',
+            $label,
+            $newSlotId,
+            ds_booking_slot_key('provider', $profileId, $newDate, $newSlotId),
+            $teamMemberId !== '' ? ds_booking_slot_key('team', $teamMemberId, $newDate, $newSlotId) : null,
+            ds_booking_slot_key('customer', (string) $booking['customer_user_id'], $newDate, $newSlotId),
+            $nextStatus,
+            $now,
+            $bookingId,
+        ]);
+    } catch (PDOException $e) {
+        $message = $e->getMessage();
+        if (stripos($message, 'customer_slot_uniq') !== false) {
+            ds_error(409, 'DUPLICATE_BOOKING', 'The customer already has a booking at that time.');
+        }
+        ds_error(409, 'SLOT_UNAVAILABLE', 'That time was just booked. Please choose another slot.');
+    }
+    ds_booking_log($bookingId, $user['id'], 'provider_rescheduled', $status, $nextStatus, $label);
+    ds_success(['bookingId' => $bookingId, 'status' => $nextStatus, 'scheduledAt' => $newDate . 'T00:00:00', 'timeSlot' => $label]);
 }
 
 $to = strtolower(trim((string) ($body['status'] ?? '')));
@@ -96,6 +167,10 @@ if (!ds_booking_transition_allowed($from, $to)) {
 
 $pdo->prepare('UPDATE bookings SET status = ?, updated_at = ? WHERE id = ?')
     ->execute([$to, $now, $bookingId]);
+if (in_array($to, ['cancelled', 'no_show'], true)) {
+    // Releasing the slot keys makes the time bookable again.
+    ds_clear_booking_slot_keys($bookingId);
+}
 ds_booking_log($bookingId, $user['id'], 'provider_status_changed', $from, $to, $note !== '' ? $note : null);
 
 ds_success(['bookingId' => $bookingId, 'status' => $to]);
