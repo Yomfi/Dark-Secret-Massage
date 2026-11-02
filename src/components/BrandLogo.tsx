@@ -56,7 +56,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         </span>
       )}
       {withWordmark ? (
-        <span className="text-[11px] sm:text-[12px] font-semibold tracking-[0.18em] sm:tracking-[0.22em] uppercase text-white whitespace-nowrap truncate">
+        <span className="hidden text-[12px] font-semibold tracking-[0.22em] uppercase text-white whitespace-nowrap sm:inline">
           {BRAND.name}
         </span>
       ) : null}
