@@ -40,6 +40,16 @@ ds_json([
     'mail_missing_keys' => array_values($mailMissing),
     'config_local_exists' => $configLocalExists,
     'config_local_readable' => $configLocalReadable,
+    // Deploy-safety diagnostics: labels, booleans and error classes only.
+    'config_candidates' => ds_config_candidates_status(),
+    'config_loaded_sources' => ds_config_loaded_sources(),
+    'config_file_errors' => ds_config_file_errors(),
+    'mail_key_source' => [
+        'smtp_host' => ds_config_key_source('smtp_host'),
+        'smtp_user' => ds_config_key_source('smtp_user'),
+        'smtp_pass' => ds_config_key_source('smtp_pass'),
+        'mail_from' => ds_config_key_source('mail_from'),
+    ],
     'env_db_pass_present' => $envDbPassPresent,
     'effective_db_pass_present' => $effectiveDbPassPresent,
     'mail_env_sources' => [

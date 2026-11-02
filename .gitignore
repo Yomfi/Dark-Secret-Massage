@@ -14,6 +14,7 @@ coverage/
 .secrets.local
 public/api/config/config.local.php
 **/api/config/config.local.php
+**/massager-studio.config.local.php
 
 # Local-only QA artifacts and imported chat context
 verification/
