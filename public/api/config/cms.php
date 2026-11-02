@@ -608,7 +608,9 @@ function ds_register_qa_email(string $email, string $note = 'Registered test acc
 /** SQL predicate excluding QA identities; requires the users table aliased as u. */
 function ds_qa_sql_exclusion(string $emailColumn = 'u.email'): string
 {
-    return "($emailColumn NOT LIKE '%+qa-%' AND NOT EXISTS (SELECT 1 FROM qa_accounts qa WHERE qa.email = $emailColumn))";
+    // CAST BINARY avoids "illegal mix of collations" when qa_accounts was created
+    // under a different default collation than users (MySQL 8+).
+    return "($emailColumn NOT LIKE '%+qa-%' AND NOT EXISTS (SELECT 1 FROM qa_accounts qa WHERE CAST(qa.email AS BINARY) = CAST($emailColumn AS BINARY)))";
 }
 
 // Schedules, slot generation, validation, transactions and locking live in a

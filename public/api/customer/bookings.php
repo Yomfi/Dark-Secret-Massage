@@ -25,7 +25,7 @@ if ($method === 'GET') {
     try {
         $stmt = $pdo->prepare(
             'SELECT b.*, p.display_name AS provider_name, p.slug AS provider_slug
-             FROM bookings b LEFT JOIN provider_profiles p ON p.id = b.provider_profile_id
+             FROM bookings b LEFT JOIN provider_profiles p ON CAST(p.id AS BINARY) = CAST(b.provider_profile_id AS BINARY)
              WHERE b.customer_user_id = ? ORDER BY COALESCE(b.scheduled_at, b.created_at) DESC LIMIT 100'
         );
         $stmt->execute([$user['id']]);
@@ -144,7 +144,10 @@ if ($action === 'create') {
     $scheduledValue = $date . 'T00:00:00';
     $booking = null;
     try {
-        $booking = ds_run_in_transaction(function () use (
+        $booking = ds_run_booking_write([
+            ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $date),
+            'customer-day:' . $user['id'] . ':' . $date,
+        ], function () use (
             $pdo, $date, $slotId, $duration, $providerProfileId, $user, $timeSlot, $service, $serviceName,
             $price, $currency, $scheduledValue, $locationType, $address, $customerName, $customerPhone,
             $notes, $now

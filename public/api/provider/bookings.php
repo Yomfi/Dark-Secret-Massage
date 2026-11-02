@@ -22,7 +22,7 @@ $pdo = ds_pdo();
 if ($method === 'GET') {
     $stmt = $pdo->prepare(
         'SELECT b.*, t.display_name AS team_name
-         FROM bookings b LEFT JOIN agency_team_members t ON t.id = b.team_member_id
+         FROM bookings b LEFT JOIN agency_team_members t ON CAST(t.id AS BINARY) = CAST(b.team_member_id AS BINARY)
          WHERE b.provider_profile_id = ? ORDER BY COALESCE(b.scheduled_at, b.created_at) DESC LIMIT 100'
     );
     $stmt->execute([$profileId]);
@@ -71,6 +71,9 @@ if ($action === 'assign_team') {
     }
     if ((string) $member['status'] !== 'active') {
         ds_error(409, 'NOT_ELIGIBLE', 'Inactive team members cannot be assigned bookings.');
+    }
+    if (!in_array((string) $booking['status'], ['pending', 'confirmed', 'reschedule_requested'], true)) {
+        ds_error(409, 'INVALID_TRANSITION', 'A ' . (string) $booking['status'] . ' booking cannot be reassigned.');
     }
     $assignment = ds_assign_booking_team($bookingId, $booking, $teamMemberId, $profileId);
     if (empty($assignment['ok'])) {

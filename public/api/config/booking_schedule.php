@@ -660,6 +660,67 @@ function ds_lock_booking_resources(
     }
 }
 
+/**
+ * Database-level reservation lock. Row locks alone cannot serialise a studio
+ * booking when the schedule settings row does not exist yet, so every write
+ * path takes a MySQL advisory lock keyed by the resource and the date.
+ */
+function ds_booking_lock_key(?string $providerProfileId, string $date, string $extra = ''): string
+{
+    return 'ds_slot:' . substr(hash('sha256', ds_provider_slot_scope($providerProfileId) . '|' . $date . '|' . $extra), 0, 40);
+}
+
+function ds_acquire_booking_lock(string $key, int $timeoutSeconds = 8): bool
+{
+    if (ds_pdo()->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+        return true;
+    }
+    $stmt = ds_pdo()->prepare('SELECT GET_LOCK(?, ?) AS acquired');
+    $stmt->execute([$key, max(1, $timeoutSeconds)]);
+    $row = $stmt->fetch();
+    return (int) ($row['acquired'] ?? 0) === 1;
+}
+
+function ds_release_booking_lock(string $key): void
+{
+    if (ds_pdo()->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+        return;
+    }
+    try {
+        ds_pdo()->prepare('SELECT RELEASE_LOCK(?)')->execute([$key]);
+    } catch (Throwable $e) {
+        // The connection closing releases it anyway.
+    }
+}
+
+/**
+ * Run a booking write under the resource locks for its day, then in a
+ * transaction. Two overlapping requests — even with different start times and
+ * durations — serialise here instead of both passing a SELECT check.
+ *
+ * @param list<string> $lockKeys
+ */
+function ds_run_booking_write(array $lockKeys, callable $fn)
+{
+    $acquired = [];
+    foreach (array_values(array_unique($lockKeys)) as $key) {
+        if (!ds_acquire_booking_lock($key)) {
+            foreach ($acquired as $held) {
+                ds_release_booking_lock($held);
+            }
+            return ['lock_timeout' => true];
+        }
+        $acquired[] = $key;
+    }
+    try {
+        return ds_run_in_transaction($fn);
+    } finally {
+        foreach ($acquired as $held) {
+            ds_release_booking_lock($held);
+        }
+    }
+}
+
 /** True when a database error means "someone else holds the slot right now". */
 function ds_is_slot_conflict(Throwable $e): bool
 {
@@ -701,7 +762,14 @@ function ds_reschedule_booking(
     $status = (string) $booking['status'];
     $nextStatus = $status === 'reschedule_requested' ? 'confirmed' : $status;
 
-    $result = ds_run_in_transaction(function () use (
+    $lockKeys = [
+        ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $newDate),
+        'customer-day:' . $customerId . ':' . $newDate,
+    ];
+    if ($teamMemberId !== '') {
+        $lockKeys[] = 'team-day:' . $teamMemberId . ':' . $newDate;
+    }
+    $result = ds_run_booking_write($lockKeys, function () use (
         $bookingId, $booking, $newDate, $newSlotId, $newTimeSlot, $note, $duration,
         $providerProfileId, $teamMemberId, $customerId, $nextStatus
     ): array {
@@ -777,8 +845,36 @@ function ds_assign_booking_team(
         return ['ok' => false, 'code' => 'ASSIGNMENT_CONFLICT', 'message' => 'This booking has no published slot to assign.'];
     }
 
-    return ds_run_in_transaction(function () use ($bookingId, $date, $slotId, $duration, $providerProfileId, $teamMemberId, $customerId): array {
+    $lockKeys = [
+        ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $date),
+        'customer-day:' . $customerId . ':' . $date,
+    ];
+    if ($teamMemberId !== '') {
+        $lockKeys[] = 'team-day:' . $teamMemberId . ':' . $date;
+    }
+
+    return ds_run_booking_write($lockKeys, function () use ($bookingId, $date, $slotId, $duration, $providerProfileId, $teamMemberId, $customerId): array {
         ds_lock_booking_resources($providerProfileId !== '' ? $providerProfileId : null, $customerId, $teamMemberId !== '' ? $teamMemberId : null);
+
+        if ($teamMemberId !== '' && ds_table_exists('agency_team_members')) {
+            $memberStmt = ds_pdo()->prepare('SELECT availability FROM agency_team_members WHERE id = ? LIMIT 1');
+            $memberStmt->execute([$teamMemberId]);
+            $memberRow = $memberStmt->fetch() ?: null;
+            $pattern = trim((string) ($memberRow['availability'] ?? ''));
+            if ($pattern !== '') {
+                $memberDays = ds_parse_working_days($pattern);
+                $memberHours = ds_parse_working_hours($pattern);
+                $weekday = (int) date('N', strtotime($date . ' 12:00:00'));
+                $slot = ds_booking_slot_definition($slotId);
+                $start = $slot ? ds_clock_minutes($slot['start']) : 0;
+                if ($memberDays !== null && !in_array($weekday, $memberDays, true)) {
+                    return ['ok' => false, 'code' => 'TEAM_UNAVAILABLE', 'message' => 'That team member does not work on this day.'];
+                }
+                if ($memberHours !== null && ($start < ds_clock_minutes($memberHours['start']) || $start + $duration > ds_clock_minutes($memberHours['end']))) {
+                    return ['ok' => false, 'code' => 'TEAM_UNAVAILABLE', 'message' => 'That session is outside the team member\'s working hours.'];
+                }
+            }
+        }
 
         if ($providerProfileId !== '') {
             $check = ds_validate_booking_slot($date, $slotId, $duration, $providerProfileId, null, $bookingId);
@@ -837,7 +933,15 @@ function ds_cancel_booking(
     $customerId = (string) $booking['customer_user_id'];
     $from = (string) $booking['status'];
 
-    ds_run_in_transaction(function () use ($bookingId, $providerProfileId, $teamMemberId, $customerId, $extraColumns): void {
+    $date = substr((string) $booking['scheduled_at'], 0, 10);
+    $lockKeys = [
+        ds_booking_lock_key($providerProfileId !== '' ? $providerProfileId : null, $date),
+        'customer-day:' . $customerId . ':' . $date,
+    ];
+    if ($teamMemberId !== '') {
+        $lockKeys[] = 'team-day:' . $teamMemberId . ':' . $date;
+    }
+    ds_run_booking_write($lockKeys, function () use ($bookingId, $providerProfileId, $teamMemberId, $customerId, $extraColumns): void {
         ds_lock_booking_resources(
             $providerProfileId !== '' ? $providerProfileId : null,
             $customerId,

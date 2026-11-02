@@ -16,8 +16,8 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare(
             'SELECT b.*, p.display_name AS provider_name, p.slug AS provider_slug, t.display_name AS team_name
              FROM bookings b
-             LEFT JOIN provider_profiles p ON p.id = b.provider_profile_id
-             LEFT JOIN agency_team_members t ON t.id = b.team_member_id
+             LEFT JOIN provider_profiles p ON CAST(p.id AS BINARY) = CAST(b.provider_profile_id AS BINARY)
+             LEFT JOIN agency_team_members t ON CAST(t.id AS BINARY) = CAST(b.team_member_id AS BINARY)
              WHERE b.id = ? LIMIT 1'
         );
         try {
@@ -75,8 +75,8 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare(
             "SELECT b.*, p.display_name AS provider_name, t.display_name AS team_name
              FROM bookings b
-             LEFT JOIN provider_profiles p ON p.id = b.provider_profile_id
-             LEFT JOIN agency_team_members t ON t.id = b.team_member_id
+             LEFT JOIN provider_profiles p ON CAST(p.id AS BINARY) = CAST(b.provider_profile_id AS BINARY)
+             LEFT JOIN agency_team_members t ON CAST(t.id AS BINARY) = CAST(b.team_member_id AS BINARY)
              WHERE $whereSql ORDER BY b.created_at DESC LIMIT $perPage OFFSET $offset"
         );
         $stmt->execute($params);
@@ -153,6 +153,9 @@ if ($action === 'assign') {
         }
     }
 
+    if (!in_array((string) $booking['status'], ['pending', 'confirmed', 'reschedule_requested'], true)) {
+        ds_error(409, 'INVALID_TRANSITION', 'A ' . (string) $booking['status'] . ' booking cannot be reassigned.');
+    }
     $assignment = ds_assign_booking_team($bookingId, $booking, $teamMemberId, $providerProfileId);
     if (empty($assignment['ok'])) {
         ds_error(409, 'ASSIGNMENT_CONFLICT', (string) ($assignment['message'] ?? 'That provider or team member already has a booking in this slot.'));

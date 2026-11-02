@@ -42,6 +42,7 @@ if (!in_array($role, ['admin', 'support_admin', 'moderator'], true)) {
 }
 
 $rotate = !empty($args['rotate']);
+$interactive = !empty($args['set-password']);
 $existing = ds_find_user_by_email($email);
 
 if ($existing && !$rotate) {
@@ -49,10 +50,43 @@ if ($existing && !$rotate) {
     exit(2);
 }
 
-$alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*';
-$password = '';
-for ($i = 0; $i < 24; $i++) {
-    $password .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+function ds_prompt_hidden(string $label): string
+{
+    if (function_exists('shell_exec')) {
+        @shell_exec('stty -echo');
+    }
+    echo $label;
+    $value = trim((string) fgets(STDIN));
+    if (function_exists('shell_exec')) {
+        @shell_exec('stty echo');
+    }
+    echo PHP_EOL;
+    return $value;
+}
+
+if ($interactive) {
+    if (!stream_isatty(STDIN)) {
+        fwrite(STDERR, "--set-password needs an interactive terminal (or omit it and use the generated password).\n");
+        exit(5);
+    }
+    $password = ds_prompt_hidden('New admin password (input hidden): ');
+    $confirm = ds_prompt_hidden('Confirm password: ');
+    if ($password !== $confirm) {
+        fwrite(STDERR, "Passwords do not match.\n");
+        exit(6);
+    }
+    if (strlen($password) < 12) {
+        fwrite(STDERR, "Password must be at least 12 characters.\n");
+        exit(7);
+    }
+    $generated = false;
+} else {
+    $alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*';
+    $password = '';
+    for ($i = 0; $i < 24; $i++) {
+        $password .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+    }
+    $generated = true;
 }
 $hash = password_hash($password, PASSWORD_DEFAULT);
 $now = ds_now_sql();
@@ -102,6 +136,10 @@ if ($existing) {
 }
 
 echo "user_id: {$userId}\n";
-echo "password (shown once, store it in a password manager):\n{$password}\n";
+if ($generated) {
+    echo "password (shown once, store it in a password manager):\n{$password}\n";
+} else {
+    echo "password updated (not printed).\n";
+}
 ds_audit('admin.provisioned', 'user', $userId, ['email' => $email, 'role' => $role, 'rotate' => $rotate], $userId);
 exit(0);

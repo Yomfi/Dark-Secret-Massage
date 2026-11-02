@@ -20,7 +20,14 @@ if (PHP_SAPI !== 'cli') {
 
 require_once dirname(__DIR__) . '/public/api/config/bootstrap.php';
 
-$apply = in_array('--apply', $argv ?? [], true);
+$args = [];
+foreach (array_slice($argv ?? [], 1) as $arg) {
+    if (preg_match('/^--([a-z-]+)(?:=(.*))?$/', (string) $arg, $m)) {
+        $args[$m[1]] = $m[2] ?? true;
+    }
+}
+$apply = !empty($args['apply']);
+$backup = trim((string) ($args['backup'] ?? ''));
 $pdo = ds_pdo();
 $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 $database = (string) ds_config()['db_name'];
@@ -29,9 +36,22 @@ echo "target: {$driver} / {$database}\n";
 echo 'schema ready before: ' . (ds_cms_ready() ? 'yes' : 'no') . "\n";
 
 if (!$apply) {
-    echo "dry run — nothing changed. Re-run with --apply after taking a backup.\n";
+    echo "dry run — nothing changed.\n";
+    echo "apply with: php scripts/migrate.php --apply --backup=/path/to/verified-dump.sql\n";
     exit(ds_cms_ready() ? 0 : 2);
 }
+
+// A verified dump must exist before any schema write. This cannot undo an
+// earlier unbacked deploy, but it prevents another one.
+if ($backup === '' || !is_file($backup) || !is_readable($backup) || filesize($backup) < 1) {
+    fwrite(STDERR, "Refusing to migrate: pass --backup=<existing, non-empty dump file>.\n");
+    exit(3);
+}
+if ((string) (ds_config()['app_env'] ?? '') === 'production' && empty($args['confirm-production'])) {
+    fwrite(STDERR, "Refusing to migrate production without --confirm-production.\n");
+    exit(4);
+}
+echo 'backup verified: ' . $backup . ' (' . filesize($backup) . " bytes)\n";
 
 ds_cms_migrate();
 
