@@ -168,6 +168,44 @@ if (!$user) {
     ds_error(500, 'INTERNAL_ERROR', 'Unable to create provider account.');
 }
 
+// Email is the verification gate for providers too, so send the confirmation
+// link at signup instead of waiting for the dashboard's resend action.
+$verificationEmailSent = false;
+$verificationToken = null;
+try {
+    if (ds_table_exists('email_verification_tokens')) {
+        $verificationToken = bin2hex(random_bytes(32));
+        $pdo->prepare(
+            'INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at, created_at)
+             VALUES (?, ?, ?, ?, ?)'
+        )->execute([
+            ds_new_id(),
+            $id,
+            hash('sha256', $verificationToken),
+            (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s'),
+            $now,
+        ]);
+    }
+} catch (Throwable $e) {
+    // No stored token means nothing to verify — skip the email too.
+    $verificationToken = null;
+}
+
+if ($verificationToken !== null) {
+    $sentVerification = ds_send_template(
+        'verify_account',
+        (string) ($user['email'] ?? $input['email']),
+        trim((string) ($user['first_name'] ?? $input['firstName'])),
+        [
+            'first_name' => (string) ($user['first_name'] ?? $input['firstName']),
+            'link' => ds_app_link('/verify-email', ['token' => $verificationToken]),
+            'expires_hours' => 24,
+        ],
+        ['user' => (string) $id]
+    );
+    $verificationEmailSent = $sentVerification['sent'];
+}
+
 ds_login_user($user);
 ds_success([
     'user' => ds_user_dto($user),
@@ -175,5 +213,6 @@ ds_success([
     'gender' => $gender !== '' ? $gender : null,
     // Email is the verification gate; the phone number is contact information only.
     'nextStep' => 'email_verification',
+    'verificationEmailSent' => $verificationEmailSent,
     'membership' => ds_membership_status(),
 ], 201);
