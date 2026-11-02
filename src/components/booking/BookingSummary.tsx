@@ -7,10 +7,12 @@ import {
   calculateServicePrice,
   type MassageBookingDraft,
 } from '../../lib/massageBooking';
-import { CERTIFIED_THERAPISTS } from '../../data/mockData';
+import type { MassageService, MassageTherapist } from '../../lib/catalogue';
 
 interface BookingSummaryProps {
   draft: MassageBookingDraft;
+  services: MassageService[];
+  providers: MassageTherapist[];
   compact?: boolean;
   onEditStep?: (step: number) => void;
   showEdit?: boolean;
@@ -18,16 +20,18 @@ interface BookingSummaryProps {
 
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
   draft,
+  services,
+  providers,
   compact = false,
   onEditStep,
   showEdit = false,
 }) => {
   const [open, setOpen] = useState(false);
-  const service = getServiceById(draft.serviceId);
+  const service = getServiceById(services, draft.serviceId);
   const pricing = calculateServicePrice(service, draft.durationMinutes, draft.locationType);
   const therapist =
     draft.providerPreference === 'specific'
-      ? CERTIFIED_THERAPISTS.find((t) => t.id === draft.preferredTherapistId)
+      ? providers.find((t) => t.id === draft.preferredTherapistId)
       : null;
 
   const locationLabel =

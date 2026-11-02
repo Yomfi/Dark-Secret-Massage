@@ -49,7 +49,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     (location.state as { serviceId?: string } | null)?.serviceId ||
     undefined;
 
-  const { services, loading } = usePublicCatalogue();
+  const { massageServices, therapists, loading, error, reload } = usePublicCatalogue();
 
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<MassageBookingDraft>(() => ({
@@ -67,14 +67,16 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
   // preselected/selected service instead of inventing one.
   useEffect(() => {
     if (!draft.serviceId) return;
-    const service = services.find((s) => s.id === draft.serviceId);
+    const service = massageServices.find((s) => s.id === draft.serviceId);
     if (!service) return;
+    const publishedDuration = service.durationMinutes[0];
+    if (!publishedDuration) return;
     setDraft((prev) =>
-      prev.durationMinutes === service.durationMinutes
+      prev.durationMinutes === publishedDuration
         ? prev
-        : { ...prev, durationMinutes: service.durationMinutes }
+        : { ...prev, durationMinutes: publishedDuration }
     );
-  }, [services, draft.serviceId]);
+  }, [massageServices, draft.serviceId]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
@@ -221,7 +223,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
         </div>
 
         <div className="mb-6 lg:hidden">
-          <BookingSummary draft={draft} compact />
+          <BookingSummary draft={draft} services={massageServices} providers={therapists} compact />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
@@ -239,10 +241,13 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                 >
                   {step === 1 && (
                     <ServiceSelector
+                      services={massageServices}
                       serviceId={draft.serviceId}
                       durationMinutes={draft.durationMinutes}
                       errors={errors}
                       loading={loading}
+                      error={error}
+                      onRetry={reload}
                       onSelectService={(serviceId) => {
                         patchDraft({ serviceId });
                         setErrors((e) => ({ ...e, serviceId: '' }));
@@ -296,6 +301,8 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                       tensionNotes={draft.tensionNotes}
                       accessibilityNeeds={draft.accessibilityNeeds}
                       errors={errors}
+                      providers={therapists}
+                      providersLoading={loading}
                       onChange={(patch) => patchDraft(patch as Partial<MassageBookingDraft>)}
                       onProviderPreference={(providerPreference: ProviderPreference) =>
                         patchDraft({
@@ -306,7 +313,14 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                       }
                     />
                   )}
-                  {step === 5 && <BookingReview draft={draft} onEditStep={goToStep} />}
+                  {step === 5 && (
+                    <BookingReview
+                      draft={draft}
+                      services={massageServices}
+                      providers={therapists}
+                      onEditStep={goToStep}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
 
@@ -354,7 +368,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
           </div>
 
           <div className="hidden lg:block lg:col-span-5 xl:col-span-4">
-            <BookingSummary draft={draft} showEdit={step === 5} onEditStep={goToStep} />
+            <BookingSummary draft={draft} services={massageServices} providers={therapists} showEdit={step === 5} onEditStep={goToStep} />
           </div>
         </div>
       </Container>

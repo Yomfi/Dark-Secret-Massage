@@ -6,19 +6,21 @@ import {
   calculateServicePrice,
   type MassageBookingDraft,
 } from '../../lib/massageBooking';
-import { CERTIFIED_THERAPISTS } from '../../data/mockData';
+import type { MassageService, MassageTherapist } from '../../lib/catalogue';
 
 interface BookingReviewProps {
   draft: MassageBookingDraft;
+  services: MassageService[];
+  providers: MassageTherapist[];
   onEditStep: (step: number) => void;
 }
 
-export const BookingReview: React.FC<BookingReviewProps> = ({ draft, onEditStep }) => {
-  const service = getServiceById(draft.serviceId);
+export const BookingReview: React.FC<BookingReviewProps> = ({ draft, services, providers, onEditStep }) => {
+  const service = getServiceById(services, draft.serviceId);
   const pricing = calculateServicePrice(service, draft.durationMinutes, draft.locationType);
   const therapist =
     draft.providerPreference === 'specific'
-      ? CERTIFIED_THERAPISTS.find((t) => t.id === draft.preferredTherapistId)
+      ? providers.find((t) => t.id === draft.preferredTherapistId)
       : null;
 
   const locationDetail =

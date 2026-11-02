@@ -11,7 +11,7 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 ds_require_method('GET');
 
 if (!ds_cms_ready()) {
-    ds_cms_migrate();
+    ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
 
 ds_success([

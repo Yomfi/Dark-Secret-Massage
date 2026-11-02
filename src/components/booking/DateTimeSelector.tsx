@@ -4,6 +4,7 @@ import {
   PERIOD_LABELS,
   SLOT_REASON_LABELS,
   todayISO,
+  type AvailabilityResponse,
   type AvailabilitySlot,
   type TimePeriod,
 } from '../../lib/bookingAvailability';
@@ -33,38 +34,41 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
   onSelectSlot,
 }) => {
   const minDate = todayISO();
-  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
-  const load = useCallback(async (signal: { cancelled: boolean }) => {
-    if (!date) {
-      setSlots([]);
+  const load = useCallback(
+    async (signal: { cancelled: boolean }) => {
+      if (!date) {
+        setAvailability(null);
+        setError(null);
+        return;
+      }
+      setLoading(true);
       setError(null);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetchAvailability({
-        date,
-        serviceId: serviceId || undefined,
-        providerProfileId: providerProfileId || undefined,
-      });
-      if (!signal.cancelled) setSlots(result.slots);
-    } catch (err) {
-      if (signal.cancelled) return;
-      setSlots([]);
-      setError(
-        err instanceof Error && err.message
-          ? err.message
-          : 'We could not load live availability. Please retry.'
-      );
-    } finally {
-      if (!signal.cancelled) setLoading(false);
-    }
-  }, [date, serviceId, providerProfileId]);
+      try {
+        const result = await fetchAvailability({
+          date,
+          serviceId: serviceId || undefined,
+          providerProfileId: providerProfileId || undefined,
+        });
+        if (!signal.cancelled) setAvailability(result);
+      } catch (err) {
+        if (signal.cancelled) return;
+        setAvailability(null);
+        setError(
+          err instanceof Error && err.message
+            ? err.message
+            : 'We could not load live availability. Please retry.'
+        );
+      } finally {
+        if (!signal.cancelled) setLoading(false);
+      }
+    },
+    [date, serviceId, providerProfileId]
+  );
 
   useEffect(() => {
     const signal = { cancelled: false };
@@ -74,7 +78,10 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
     };
   }, [load, attempt]);
 
+  const slots: AvailabilitySlot[] = availability?.slots ?? [];
   const openCount = slots.filter((slot) => slot.available).length;
+  const hoursLabel =
+    availability?.start && availability?.end ? `${availability.start}–${availability.end}` : null;
 
   return (
     <div className="space-y-6">
@@ -84,9 +91,17 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
         </h2>
         <p className="mt-2 text-base sm:text-lg text-zinc-300 font-normal leading-relaxed">
           {durationMinutes
-            ? `Showing ${durationMinutes}-minute slots that are genuinely open on the studio calendar.`
+            ? `Showing ${durationMinutes}-minute slots that are genuinely open on the published calendar.`
             : 'Pick an open slot. Unavailable times cannot be selected.'}
         </p>
+        {availability?.configured && hoursLabel && (
+          <p className="mt-2 text-sm text-zinc-400">
+            Published hours: {hoursLabel}
+            {availability.source === 'provider' && availability.providerName
+              ? ` · ${availability.providerName}`
+              : ''}
+          </p>
+        )}
       </div>
 
       <div>
@@ -131,11 +146,27 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             Retry availability
           </button>
         </div>
+      ) : availability && !availability.configured ? (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
+          <p className="text-base font-semibold text-white">Booking hours are not published yet</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            {availability.message ||
+              'The studio has not published its booking days and hours, so no times can be offered.'}
+          </p>
+        </div>
+      ) : availability?.closed ? (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
+          <p className="text-base font-semibold text-white">Closed on this date</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            {availability.message || 'Choose another date inside the published working days.'}
+          </p>
+        </div>
       ) : slots.length === 0 ? (
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
           <p className="text-base font-semibold text-white">No times published for this date</p>
           <p className="mt-1 text-sm text-zinc-400">
-            Try another date, or contact the studio to request a time outside the published calendar.
+            {availability?.message ||
+              'Try another date, or contact the studio to request a time outside the published calendar.'}
           </p>
         </div>
       ) : (
@@ -169,7 +200,9 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                         key={slot.id}
                         type="button"
                         disabled={disabled}
-                        onClick={() => onSelectSlot(slot.id, `${slot.label} (${slot.start}–${slot.end})`)}
+                        onClick={() =>
+                          onSelectSlot(slot.id, `${slot.label} (${slot.start}–${slot.end})`)
+                        }
                         className={`rounded-xl border px-3 py-3 text-sm font-semibold transition-all ${
                           disabled
                             ? 'border-white/[0.05] bg-white/[0.015] text-zinc-600 cursor-not-allowed line-through decoration-zinc-600'

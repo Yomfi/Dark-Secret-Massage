@@ -21,8 +21,23 @@ $check = static function (string $name, bool $ok, string $detail = '') use (&$re
 
 $cleanup = static function () use ($pdo): void {
     $pdo->prepare("DELETE FROM bookings WHERE customer_user_id LIKE 'QATEST%' OR provider_profile_id LIKE 'QATEST%'")->execute();
+    $pdo->prepare("DELETE FROM provider_profiles WHERE id LIKE 'QATEST%'")->execute();
 };
 $cleanup();
+
+// Availability comes from a published schedule; the harness publishes one so it
+// tests the real code path rather than a hardcoded grid.
+ds_cms_set_setting('booking_days', 'Mon,Tue,Wed,Thu,Fri,Sat,Sun');
+ds_cms_set_setting('booking_hours', '09:00-19:30');
+ds_cms_set_setting('booking_slot_minutes', '60');
+
+// Provider-specific availability reads the provider's own working pattern.
+$pdo->prepare(
+    "INSERT INTO provider_profiles (id, user_id, slug, display_name, provider_type, city, country,
+        working_days, working_hours, profile_completion, updated_at)
+     VALUES ('QATEST-provider', 'QATEST-provider-user', 'qatest-provider', 'QA Test Provider',
+        'individual', 'Accra', 'Ghana', 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', '09:00-19:30', 0, ?)"
+)->execute([ds_now_sql()]);
 
 $date = date('Y-m-d', strtotime('+3 days'));
 $now = ds_now_sql();
@@ -51,8 +66,8 @@ $insert = static function (string $id, string $date, string $slotId, int $durati
 };
 
 $free = ds_available_slots($date, [], 60);
-$check('published grid has 7 slots', count($free) === 7, (string) count($free));
-$check('all slots free on an empty day', count(array_filter($free, static fn (array $s): bool => $s['available'])) === 7);
+$check('published grid comes from the schedule (10 one-hour starts)', count($free['slots']) === 10, (string) count($free['slots']));
+$check('all slots free on an empty day', count(array_filter($free['slots'], static fn (array $s): bool => $s['available'])) === 10);
 
 $insert('QATEST-1', $date, 'slot-0900', 60);
 
@@ -60,13 +75,13 @@ $blocked = ds_validate_booking_slot($date, 'slot-0900', 60, 'QATEST-provider', '
 $check('same provider slot rejected', $blocked['ok'] === false && $blocked['code'] === 'SLOT_UNAVAILABLE', $blocked['code']);
 
 $busy = ds_provider_day_bookings('QATEST-provider', $date);
-$afterBooked = ds_available_slots($date, $busy, 60);
+$afterBooked = ds_available_slots($date, $busy, 60)['slots'];
 $byId = [];
 foreach ($afterBooked as $slot) {
     $byId[$slot['id']] = $slot;
 }
 $check('booked slot unavailable', ($byId['slot-0900']['available'] ?? true) === false);
-$check('next slot still available', ($byId['slot-1030']['available'] ?? false) === true);
+$check('next slot still available', ($byId['slot-1000']['available'] ?? false) === true);
 
 // Concurrency: a second insert with the same provider key must be refused by the
 // database, not just by the earlier SELECT.
@@ -89,9 +104,9 @@ $check('cancelled booking frees the slot', $released['ok'] === true, $released['
 
 // Duration overlap: a 120-minute session at 09:00 covers the 10:30 slot.
 $pdo->prepare("UPDATE bookings SET duration_minutes = 120 WHERE id = 'QATEST-3'")->execute();
-$overlap = ds_validate_booking_slot($date, 'slot-1030', 60, 'QATEST-provider', null, null);
+$overlap = ds_validate_booking_slot($date, 'slot-1000', 60, 'QATEST-provider', null, null);
 $check('duration overlap rejected', $overlap['ok'] === false && $overlap['code'] === 'SLOT_UNAVAILABLE', $overlap['code']);
-$adjacent = ds_validate_booking_slot($date, 'slot-1200', 60, 'QATEST-provider', null, null);
+$adjacent = ds_validate_booking_slot($date, 'slot-1100', 60, 'QATEST-provider', null, null);
 $check('non-overlapping later slot accepted', $adjacent['ok'] === true, $adjacent['code']);
 
 $cleanup();

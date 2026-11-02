@@ -14,7 +14,7 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 $user = ds_require_user();
 if (!ds_cms_ready()) {
-    ds_cms_migrate();
+    ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
 
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -141,69 +141,83 @@ if ($action === 'create') {
         $timeSlot = $slot['label'] . ' (' . $slot['start'] . '–' . $slot['end'] . ')';
     }
 
-    $check = ds_validate_booking_slot(
-        $date,
-        $slotId,
-        $duration,
-        $providerProfileId !== '' ? $providerProfileId : null,
-        (string) $user['id']
-    );
-    if (!$check['ok']) {
-        ds_error($check['code'] === 'VALIDATION_ERROR' ? 400 : 409, $check['code'], $check['message']);
-    }
-
-    $id = ds_new_id();
-    $reference = 'MS-' . strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
     $scheduledValue = $date . 'T00:00:00';
-    $providerKey = $providerProfileId !== '' ? ds_booking_slot_key('provider', $providerProfileId, $date, $slotId) : null;
-    $customerKey = ds_booking_slot_key('customer', (string) $user['id'], $date, $slotId);
-
+    $booking = null;
     try {
-        $pdo->prepare(
-            'INSERT INTO bookings
-             (id, reference, customer_user_id, provider_profile_id, team_member_id, service_id, service_name,
-              duration_minutes, price, currency, status, scheduled_at, time_slot, slot_id, provider_slot_key,
-              team_slot_key, customer_slot_key, location_type, address, customer_name, customer_phone,
-              customer_email, notes, created_at, updated_at)
-             VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, \'pending\', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        )->execute([
-            $id,
-            $reference,
-            $user['id'],
-            $providerProfileId !== '' ? $providerProfileId : null,
-            (string) $service['id'],
-            $serviceName,
-            $duration,
-            $price,
-            $currency,
-            $scheduledValue,
-            $timeSlot,
-            $slotId,
-            $providerKey,
-            $customerKey,
-            $locationType,
-            $address !== '' ? $address : null,
-            $customerName !== '' ? $customerName : trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
-            $customerPhone !== '' ? $customerPhone : (string) ($user['phone'] ?? ''),
-            (string) ($user['email'] ?? ''),
-            $notes !== '' ? $notes : null,
-            $now,
-            $now,
-        ]);
+        $booking = ds_run_in_transaction(function () use (
+            $pdo, $date, $slotId, $duration, $providerProfileId, $user, $timeSlot, $service, $serviceName,
+            $price, $currency, $scheduledValue, $locationType, $address, $customerName, $customerPhone,
+            $notes, $now
+        ): array {
+            ds_lock_booking_resources(
+                $providerProfileId !== '' ? $providerProfileId : null,
+                (string) $user['id']
+            );
+            // Re-check under the lock: an earlier read cannot see a request that
+            // is committing at the same moment.
+            $check = ds_validate_booking_slot(
+                $date,
+                $slotId,
+                $duration,
+                $providerProfileId !== '' ? $providerProfileId : null,
+                (string) $user['id']
+            );
+            if (!$check['ok']) {
+                return ['conflict' => $check];
+            }
+
+            $id = ds_new_id();
+            $reference = 'MS-' . strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
+            $pdo->prepare(
+                'INSERT INTO bookings
+                 (id, reference, customer_user_id, provider_profile_id, team_member_id, service_id, service_name,
+                  duration_minutes, price, currency, status, scheduled_at, time_slot, slot_id, provider_slot_key,
+                  team_slot_key, customer_slot_key, location_type, address, customer_name, customer_phone,
+                  customer_email, notes, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, \'pending\', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute([
+                $id,
+                $reference,
+                $user['id'],
+                $providerProfileId !== '' ? $providerProfileId : null,
+                (string) $service['id'],
+                $serviceName,
+                $duration,
+                $price,
+                $currency,
+                $scheduledValue,
+                $timeSlot,
+                $slotId,
+                ds_booking_slot_key('provider', ds_provider_slot_scope($providerProfileId !== '' ? $providerProfileId : null), $date, $slotId),
+                ds_booking_slot_key('customer', (string) $user['id'], $date, $slotId),
+                $locationType,
+                $address !== '' ? $address : null,
+                $customerName !== '' ? $customerName : trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
+                $customerPhone !== '' ? $customerPhone : (string) ($user['phone'] ?? ''),
+                (string) ($user['email'] ?? ''),
+                $notes !== '' ? $notes : null,
+                $now,
+                $now,
+            ]);
+
+            return ['id' => $id, 'reference' => $reference];
+        });
     } catch (PDOException $e) {
-        // The UNIQUE slot keys are the concurrency gate: whoever loses the race
-        // gets a clear conflict instead of a double booking.
-        $message = $e->getMessage();
-        if (stripos($message, 'bookings_provider_slot_uniq') !== false
-            || stripos($message, 'bookings_team_slot_uniq') !== false) {
+        if (ds_is_slot_conflict($e)) {
+            if (stripos($e->getMessage(), 'bookings_customer_slot_uniq') !== false) {
+                ds_error(409, 'DUPLICATE_BOOKING', 'You already have a booking at that time.');
+            }
             ds_error(409, 'SLOT_UNAVAILABLE', 'That time was just booked. Please choose another slot.');
-        }
-        if (stripos($message, 'bookings_customer_slot_uniq') !== false) {
-            ds_error(409, 'DUPLICATE_BOOKING', 'You already have a booking at that time.');
         }
         ds_error(500, 'BOOKING_FAILED', 'We could not save that booking. Please try again.');
     }
 
+    if (isset($booking['conflict'])) {
+        $conflict = $booking['conflict'];
+        ds_error($conflict['code'] === 'VALIDATION_ERROR' ? 400 : 409, $conflict['code'], $conflict['message']);
+    }
+    $id = (string) $booking['id'];
+    $reference = (string) $booking['reference'];
     ds_booking_log($id, $user['id'], 'created', null, 'pending', null);
     ds_success([
         'bookingId' => $id,
@@ -231,11 +245,14 @@ if ($action === 'cancel') {
         ds_error(409, 'INVALID_TRANSITION', 'This booking can no longer be cancelled.');
     }
     $reason = trim((string) ($body['reason'] ?? ''));
-    $pdo->prepare('UPDATE bookings SET status = \'cancelled\', cancellation_reason = ?, updated_at = ? WHERE id = ?')
-        ->execute([$reason !== '' ? $reason : 'Cancelled by customer', $now, $bookingId]);
-    // A cancelled booking must not keep the slot locked.
-    ds_clear_booking_slot_keys($bookingId);
-    ds_booking_log($bookingId, $user['id'], 'customer_cancelled', (string) $booking['status'], 'cancelled', $reason);
+    ds_cancel_booking(
+        $bookingId,
+        $booking,
+        $user['id'],
+        'customer_cancelled',
+        $reason !== '' ? $reason : null,
+        ['status' => 'cancelled', 'cancellation_reason' => $reason !== '' ? $reason : 'Cancelled by customer']
+    );
     ds_success(['bookingId' => $bookingId, 'status' => 'cancelled']);
 }
 
@@ -261,61 +278,26 @@ if ($action === 'reschedule') {
         ds_success(['bookingId' => $bookingId, 'status' => 'reschedule_requested']);
     }
 
-    $slot = ds_booking_slot_definition($newSlotId);
-    if ($slot === null) {
-        ds_error(409, 'SLOT_UNAVAILABLE', 'That time is not part of the published calendar.');
-    }
-    if ($newTimeSlot === '') {
-        $newTimeSlot = $slot['label'] . ' (' . $slot['start'] . '–' . $slot['end'] . ')';
-    }
-
-    $providerProfileId = $booking['provider_profile_id'] !== null ? (string) $booking['provider_profile_id'] : '';
-    $check = ds_validate_booking_slot(
+    $result = ds_reschedule_booking(
+        $bookingId,
+        $booking,
         $newDate,
         $newSlotId,
-        max(15, (int) $booking['duration_minutes']),
-        $providerProfileId !== '' ? $providerProfileId : null,
-        (string) $user['id'],
-        $bookingId
+        $user['id'],
+        'customer_rescheduled',
+        $newTimeSlot !== '' ? $newTimeSlot : null,
+        $note !== '' ? $note : null
     );
-    if (!$check['ok']) {
-        ds_error($check['code'] === 'VALIDATION_ERROR' ? 400 : 409, $check['code'], $check['message']);
+    if (empty($result['ok'])) {
+        $code = (string) ($result['code'] ?? 'SLOT_UNAVAILABLE');
+        ds_error($code === 'VALIDATION_ERROR' ? 400 : 409, $code, (string) ($result['message'] ?? 'That slot is unavailable.'));
     }
-
-    $teamMemberId = $booking['team_member_id'] !== null ? (string) $booking['team_member_id'] : '';
-    $providerKey = $providerProfileId !== '' ? ds_booking_slot_key('provider', $providerProfileId, $newDate, $newSlotId) : null;
-    $teamKey = $teamMemberId !== '' ? ds_booking_slot_key('team', $teamMemberId, $newDate, $newSlotId) : null;
-    $customerKey = ds_booking_slot_key('customer', (string) $user['id'], $newDate, $newSlotId);
-    $nextStatus = $status === 'reschedule_requested' ? 'confirmed' : $status;
-
-    try {
-        $pdo->prepare(
-            'UPDATE bookings SET scheduled_at = ?, time_slot = ?, slot_id = ?, provider_slot_key = ?,
-                team_slot_key = ?, customer_slot_key = ?, status = ?, notes = ?, updated_at = ? WHERE id = ?'
-        )->execute([
-            $newDate . 'T00:00:00',
-            $newTimeSlot,
-            $newSlotId,
-            $providerKey,
-            $teamKey,
-            $customerKey,
-            $nextStatus,
-            $note !== '' ? $note : $booking['notes'],
-            $now,
-            $bookingId,
-        ]);
-    } catch (PDOException $e) {
-        $message = $e->getMessage();
-        if (stripos($message, 'bookings_customer_slot_uniq') !== false) {
-            ds_error(409, 'DUPLICATE_BOOKING', 'You already have a booking at that time.');
-        }
-        if (stripos($message, 'slot_uniq') !== false) {
-            ds_error(409, 'SLOT_UNAVAILABLE', 'That time was just booked. Please choose another slot.');
-        }
-        ds_error(500, 'RESCHEDULE_FAILED', 'We could not move that booking. Please try again.');
-    }
-
-    ds_booking_log($bookingId, $user['id'], 'customer_rescheduled', $status, $nextStatus, $newTimeSlot);
+    ds_success([
+        'bookingId' => $bookingId,
+        'status' => (string) ($result['status'] ?? $status),
+        'scheduledAt' => $newDate . 'T00:00:00',
+        'timeSlot' => (string) ($result['timeSlot'] ?? $newTimeSlot),
+    ]);
     ds_success([
         'bookingId' => $bookingId,
         'status' => $nextStatus,

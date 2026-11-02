@@ -12,7 +12,7 @@ interface NavbarProps {
 }
 
 const navLinkClass =
-  'inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80';
+  'inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5 text-[13.5px] font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80';
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenBooking,
@@ -45,11 +45,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           : 'border-transparent bg-gradient-to-b from-brand-surface/90 to-brand-surface/40 backdrop-blur-md',
       ].join(' ')}
     >
-      <Container className="flex h-16 items-center justify-between gap-4">
-        <div className="flex items-center gap-1">
+      <Container className="flex h-16 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-1">
           <Link
             to="/"
-            className="mr-2 inline-flex min-h-11 items-center rounded-lg"
+            className="mr-2 inline-flex min-h-11 shrink-0 items-center rounded-lg"
             aria-label="Massager Studio home"
           >
             <BrandLogo variant="plate" withWordmark markHeight={26} />
@@ -71,23 +71,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
         </div>
 
-        <div className="hidden items-center gap-2 sm:flex">
-          <Button variant="ghost" size="sm" onClick={onOpenDashboard}>
+        {/* shrink-0 keeps the primary CTA at its full width: the label used to
+            truncate around 1280px when the flex row compressed. */}
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+          <Button variant="ghost" size="sm" onClick={onOpenDashboard} className="shrink-0">
             {isAuthenticated ? 'My account' : 'Sign in'}
           </Button>
-          <Button size="sm" onClick={onOpenBooking} className="px-4 whitespace-nowrap">
+          <Button size="sm" onClick={onOpenBooking} className="shrink-0 px-4 whitespace-nowrap">
             Book A Massage
           </Button>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:hidden">
-          <Button size="sm" onClick={onOpenBooking} className="px-3 whitespace-nowrap text-[12.5px]">
+        <div className="flex shrink-0 items-center gap-1.5 sm:hidden">
+          <Button size="sm" onClick={onOpenBooking} className="shrink-0 px-3 whitespace-nowrap text-[12.5px]">
             Book A Massage
           </Button>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/12 text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >

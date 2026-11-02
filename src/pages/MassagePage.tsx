@@ -11,9 +11,11 @@ import { Container } from '../components/ui/Layout';
 import { buttonClass } from '../components/ui/Button';
 import { buildMassagePresentations } from '../lib/massageServicePresentation';
 import { mapCmsService, usePublicCatalogue } from '../lib/cmsCatalogue';
+import { useSite } from '../components/PublicSite';
 
 export const MassagePage: React.FC = () => {
   const { services, loading } = usePublicCatalogue();
+  const { faqs } = useSite();
   // Rebuild from the CMS-backed registry once the catalogue resolves.
   const items = useMemo(
     () => buildMassagePresentations(services.map(mapCmsService)),
@@ -64,6 +66,7 @@ export const MassagePage: React.FC = () => {
         <MassageHero onViewServices={scrollToServices} />
         <MassageServiceGrid items={items} loading={loading} onViewDetails={setSelectedId} />
         <MassageHowItWorks />
+        <FaqSection faqs={faqs} />
         <MassageTrustStrip />
         <MassageFinalCTA />
       </main>
@@ -87,3 +90,25 @@ export const MassagePage: React.FC = () => {
     </div>
   );
 };
+
+/** FAQs published from the admin CMS. Nothing renders when none are active. */
+function FaqSection({ faqs }: { faqs: Array<{ id: string; question: string; answer: string }> }) {
+  if (faqs.length === 0) return null;
+  return (
+    <section id="faqs" className="border-t border-white/[0.07]">
+      <Container className="py-14 sm:py-16">
+        <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          Questions clients ask
+        </h2>
+        <dl className="mt-8 divide-y divide-white/[0.07]">
+          {faqs.map((faq) => (
+            <div key={faq.id} className="py-5">
+              <dt className="text-base font-semibold text-white">{faq.question}</dt>
+              <dd className="mt-2 text-[15px] leading-relaxed text-zinc-400">{faq.answer}</dd>
+            </div>
+          ))}
+        </dl>
+      </Container>
+    </section>
+  );
+}

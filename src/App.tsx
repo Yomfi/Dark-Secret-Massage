@@ -23,6 +23,7 @@ import { AdminProviderReviewsPage } from './pages/AdminProviderReviewsPage';
 import { AdminWorkspacePage } from './pages/workspaces/AdminWorkspacePage';
 import { ProviderWorkspacePage } from './pages/workspaces/ProviderWorkspacePage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { PublicSiteProvider } from './components/PublicSite';
 import { BookingRequest } from './lib/bookingAndMatchmaking';
 import type { MassageBookingRecord } from './lib/massageBooking';
 
@@ -182,9 +183,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <PublicSiteProvider>
         <div className="min-h-screen bg-brand-surface font-sans text-zinc-200 selection:bg-brand-gold/35 selection:text-brand-offwhite">
           <AppRoutes />
         </div>
+        </PublicSiteProvider>
       </AuthProvider>
     </BrowserRouter>
   );

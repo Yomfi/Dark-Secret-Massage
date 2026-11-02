@@ -1,11 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiRequest } from './api';
-import {
-  setCertifiedTherapists,
-  setMassageServices,
-  type MassageService,
-} from '../data/mockData';
-import type { MassageTherapist } from './bookingAndMatchmaking';
+import type { MassageService, MassageTherapist } from './catalogue';
 
 export type CmsService = {
   id: string;
@@ -36,10 +31,21 @@ export type CmsProvider = {
   yearsExperience: number | null;
 };
 
+export type PublicFaq = { id: string; question: string; answer: string };
+
+export type PublicPage = {
+  slug: string;
+  title: string;
+  bodyHtml: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  ogImage: string | null;
+};
+
 export type PublicContent = {
   settings: Record<string, string>;
-  pages: Array<Record<string, unknown>>;
-  faqs: Array<Record<string, unknown>>;
+  pages: PublicPage[];
+  faqs: PublicFaq[];
   services: CmsService[];
 };
 
@@ -50,14 +56,14 @@ function firstSentence(text: string): string {
   return (match ? match[0] : trimmed).slice(0, 140);
 }
 
-/** CMS row → presentation model used by the existing public components. */
+/** CMS row → presentation model used by the public components. */
 export function mapCmsService(row: CmsService): MassageService {
   return {
     id: row.id,
     name: row.name,
     tagline: firstSentence(row.category ? `${row.category}. ${row.description}` : row.description),
     description: row.description,
-    // A CMS service has one published duration; the wizard no longer invents
+    // A CMS service has one published duration; the wizard never invents
     // 60/90/120 minute variants.
     durationMinutes: [row.durationMinutes],
     basePriceGHS: row.price,
@@ -89,58 +95,138 @@ export function mapCmsProvider(row: CmsProvider): MassageTherapist {
   };
 }
 
-export async function fetchPublicContent(): Promise<PublicContent> {
-  return apiRequest<PublicContent>('/public/content.php');
+/** Short-lived cache so navigation and refresh share one request without
+ *  depending on another page having loaded first. */
+let contentCache: { at: number; promise: Promise<PublicContent> } | null = null;
+const CACHE_MS = 10_000;
+
+export async function fetchPublicContent(force = false): Promise<PublicContent> {
+  const now = Date.now();
+  if (!force && contentCache && now - contentCache.at < CACHE_MS) {
+    return contentCache.promise;
+  }
+  const promise = apiRequest<PublicContent>('/public/content.php');
+  contentCache = { at: now, promise };
+  try {
+    return await promise;
+  } catch (error) {
+    contentCache = null;
+    throw error;
+  }
 }
 
-export async function fetchPublicProviders(): Promise<CmsProvider[]> {
-  const data = await apiRequest<{ providers: CmsProvider[] }>('/public/providers.php');
+export async function fetchPublicProviders(force = false): Promise<CmsProvider[]> {
+  const data = await apiRequest<{ providers: CmsProvider[] }>(
+    `/public/providers.php${force ? '?refresh=1' : ''}`
+  );
   return Array.isArray(data.providers) ? data.providers : [];
 }
 
-/**
- * Loads the published catalogue once per page and keeps the shared registries
- * in sync so booking components render real records (or a clear empty state).
- */
+function normaliseContent(raw: PublicContent): PublicContent {
+  return {
+    settings: raw?.settings && typeof raw.settings === 'object' ? raw.settings : {},
+    pages: Array.isArray(raw?.pages) ? raw.pages : [],
+    faqs: Array.isArray(raw?.faqs) ? raw.faqs : [],
+    services: Array.isArray(raw?.services) ? raw.services : [],
+  };
+}
+
+/** Published catalogue with explicit loading/error/empty states. */
 export function usePublicCatalogue() {
-  const [services, setServices] = useState<CmsService[]>([]);
+  const [content, setContent] = useState<PublicContent | null>(null);
   const [providers, setProviders] = useState<CmsProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(null);
 
     (async () => {
-      try {
-        const content = await fetchPublicContent();
-        if (cancelled) return;
-        const list = Array.isArray(content.services) ? content.services : [];
-        setServices(list);
-        setMassageServices(list.map(mapCmsService));
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Unable to load services.');
-      } finally {
-        if (!cancelled) setLoading(false);
+      const [contentResult, providerResult] = await Promise.allSettled([
+        fetchPublicContent(attempt > 0),
+        fetchPublicProviders(attempt > 0),
+      ]);
+
+      if (cancelled) return;
+
+      if (contentResult.status === 'fulfilled') {
+        setContent(normaliseContent(contentResult.value));
+        setError(null);
+      } else {
+        setContent(null);
+        setError(
+          contentResult.reason instanceof Error && contentResult.reason.message
+            ? contentResult.reason.message
+            : 'We could not load the treatment menu.'
+        );
       }
 
-      try {
-        const list = await fetchPublicProviders();
-        if (cancelled) return;
-        setProviders(list);
-        setCertifiedTherapists(list.map(mapCmsProvider));
-      } catch {
-        if (!cancelled) {
-          setProviders([]);
-          setCertifiedTherapists([]);
-        }
+      if (providerResult.status === 'fulfilled') {
+        setProviders(providerResult.value);
+      } else {
+        setProviders([]);
       }
+
+      setLoading(false);
     })();
 
     return () => {
       cancelled = true;
     };
+  }, [attempt]);
+
+  const reload = useCallback(() => setAttempt((value) => value + 1), []);
+
+  const services = content?.services ?? [];
+
+  return {
+    content,
+    settings: content?.settings ?? {},
+    faqs: content?.faqs ?? [],
+    pages: content?.pages ?? [],
+    services,
+    massageServices: services.map(mapCmsService),
+    providers,
+    therapists: providers.map(mapCmsProvider),
+    loading,
+    error,
+    reload,
+  };
+}
+
+/** Site-wide CMS settings/pages/FAQs (contact, social, SEO, published pages). */
+export function usePublicSite() {
+  const [content, setContent] = useState<PublicContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicContent()
+      .then((result) => {
+        if (cancelled) return;
+        setContent(normaliseContent(result));
+        setError(null);
+      })
+      .catch(() => {
+        if (!cancelled) setError('Site settings could not be loaded.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  return { services, providers, loading, error };
+  return {
+    settings: content?.settings ?? {},
+    pages: content?.pages ?? [],
+    faqs: content?.faqs ?? [],
+    loading,
+    error,
+  };
 }

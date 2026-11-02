@@ -2,9 +2,9 @@ import { apiRequest } from './api';
 
 /**
  * Availability is calculated by the API (`/api/public/availability.php`) from
- * real bookings, durations and the server clock. Nothing here invents,
- * randomises or hides slots locally: if the server cannot answer, the UI says so
- * instead of guessing.
+ * the published schedule, real bookings, durations and the server clock.
+ * Nothing here invents, randomises or hides slots locally: if the schedule is
+ * not published, or the server cannot answer, the UI says so.
  */
 
 export type TimePeriod = 'morning' | 'afternoon' | 'evening';
@@ -23,10 +23,19 @@ export type AvailabilityResponse = {
   date: string;
   durationMinutes: number;
   timezone: string;
+  configured: boolean;
+  closed: boolean;
+  source: 'studio' | 'provider';
+  providerName: string | null;
+  days: number[];
+  start: string | null;
+  end: string | null;
+  slotMinutes: number;
+  message: string;
   slots: AvailabilitySlot[];
 };
 
-const PERIOD_LABELS_INTERNAL: Record<string, TimePeriod> = {
+const PERIODS: Record<string, TimePeriod> = {
   morning: 'morning',
   afternoon: 'afternoon',
   evening: 'evening',
@@ -35,13 +44,12 @@ const PERIOD_LABELS_INTERNAL: Record<string, TimePeriod> = {
 function normaliseSlot(raw: Record<string, unknown>): AvailabilitySlot | null {
   const id = String(raw.id ?? '').trim();
   if (!id) return null;
-  const period = PERIOD_LABELS_INTERNAL[String(raw.period ?? '').toLowerCase()] ?? 'morning';
   return {
     id,
     label: String(raw.label ?? id),
     start: String(raw.start ?? ''),
     end: String(raw.end ?? ''),
-    period,
+    period: PERIODS[String(raw.period ?? '').toLowerCase()] ?? 'morning',
     available: raw.available === true,
     reason: raw.reason != null ? String(raw.reason) : null,
   };
@@ -61,6 +69,15 @@ export async function fetchAvailability(params: {
     date: String(data.date ?? params.date),
     durationMinutes: Number(data.durationMinutes ?? 0),
     timezone: String(data.timezone ?? ''),
+    configured: data.configured === true,
+    closed: data.closed === true,
+    source: data.source === 'provider' ? 'provider' : 'studio',
+    providerName: data.providerName ?? null,
+    days: Array.isArray(data.days) ? data.days.map(Number) : [],
+    start: data.start ?? null,
+    end: data.end ?? null,
+    slotMinutes: Number(data.slotMinutes ?? 60),
+    message: String(data.message ?? ''),
     slots: Array.isArray(data.slots)
       ? (data.slots as unknown as Record<string, unknown>[])
           .map(normaliseSlot)
@@ -72,7 +89,6 @@ export async function fetchAvailability(params: {
 export const SLOT_REASON_LABELS: Record<string, string> = {
   booked: 'Booked',
   past: 'Passed',
-  team_busy: 'Fully booked',
   closed: 'Closed',
 };
 

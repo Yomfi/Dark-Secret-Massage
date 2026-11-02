@@ -1,4 +1,4 @@
-import { MASSAGE_SERVICES, type MassageService } from '../data/mockData';
+import type { MassageService } from './catalogue';
 
 export type BookingStatus =
   | 'pending'
@@ -81,8 +81,11 @@ export const createEmptyDraft = (preselectedServiceId?: string): MassageBookingD
   accessibilityNeeds: '',
 });
 
-export function getServiceById(serviceId: string): MassageService | undefined {
-  return MASSAGE_SERVICES.find((s) => s.id === serviceId);
+export function getServiceById(
+  services: MassageService[],
+  serviceId: string
+): MassageService | undefined {
+  return services.find((s) => s.id === serviceId);
 }
 
 /** Price from service starting rate (treated as 60-min base) + home travel fee. */

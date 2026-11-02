@@ -5,7 +5,7 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 $admin = ds_require_admin();
 if (!ds_cms_ready()) {
-    ds_cms_migrate();
+    ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
 
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -15,9 +15,10 @@ $settingsWhitelist = [
     'site_tagline', 'contact_email', 'contact_phone', 'contact_whatsapp', 'contact_address',
     'social_facebook', 'social_instagram', 'social_x', 'social_tiktok', 'social_linkedin',
     'seo_title', 'seo_description', 'og_image', 'booking_notice',
+    'booking_days', 'booking_hours', 'booking_slot_minutes', 'booking_timezone',
 ];
 
-$payload = static function () use ($pdo): array {
+$payload = static function () use ($pdo, $settingsWhitelist): array {
     $pages = $pdo->query(
         'SELECT id, slug, title, body_html, status, seo_title, seo_description, og_image,
                 updated_by, published_at, updated_at

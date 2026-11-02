@@ -1,5 +1,5 @@
 import React from 'react';
-import { CERTIFIED_THERAPISTS } from '../../data/mockData';
+import type { MassageTherapist } from '../../lib/catalogue';
 import type { ProviderPreference, StepFieldErrors } from '../../lib/massageBooking';
 
 interface CustomerDetailsFormProps {
@@ -12,6 +12,8 @@ interface CustomerDetailsFormProps {
   tensionNotes: string;
   accessibilityNeeds: string;
   errors: StepFieldErrors;
+  providers: MassageTherapist[];
+  providersLoading?: boolean;
   onChange: (patch: Record<string, string>) => void;
   onProviderPreference: (pref: ProviderPreference) => void;
 }
@@ -29,6 +31,8 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
   tensionNotes,
   accessibilityNeeds,
   errors,
+  providers,
+  providersLoading = false,
   onChange,
   onProviderPreference,
 }) => {
@@ -113,8 +117,19 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
                 {errors.preferredTherapistId}
               </p>
             )}
+            {providersLoading && providers.length === 0 && (
+              <p className="text-sm text-zinc-400" role="status">
+                Loading published providers…
+              </p>
+            )}
+            {!providersLoading && providers.length === 0 && (
+              <p className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
+                No providers are published yet, so only &ldquo;Any available provider&rdquo; can be
+                used right now.
+              </p>
+            )}
             <div className="grid grid-cols-1 gap-2">
-              {CERTIFIED_THERAPISTS.map((t) => {
+              {providers.map((t) => {
                 const selected = preferredTherapistId === t.id;
                 return (
                   <button
@@ -131,7 +146,7 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
                       <div>
                         <p className="text-base font-semibold text-white">{t.name}</p>
                         <p className="text-sm text-zinc-400 font-normal mt-0.5">
-                          {t.specialties.slice(0, 2).join(' · ')}
+                          {t.specialties.slice(0, 2).join(' · ') || t.location || 'Massage provider'}
                         </p>
                       </div>
                       {t.verified && (
@@ -239,4 +254,4 @@ function OptionalArea({
       />
     </div>
   );
-};
+}

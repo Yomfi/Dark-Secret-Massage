@@ -4,9 +4,10 @@ declare(strict_types=1);
 /**
  * Public slot availability.
  *
- * Availability is derived from stored bookings, the published service duration
- * and the server clock. The browser never decides what is free: it renders this
- * response, and the booking endpoint re-checks it at write time.
+ * Availability is derived from the published schedule (studio settings or the
+ * provider's working days/hours), stored bookings, the service duration and the
+ * server clock. When no schedule is published the response says so instead of
+ * inventing slots. The booking endpoint re-checks all of this at write time.
  */
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
@@ -14,7 +15,7 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 ds_require_method('GET');
 
 if (!ds_cms_ready()) {
-    ds_cms_migrate();
+    ds_error(503, 'SCHEMA_NOT_MIGRATED', 'Booking is not available until the database migration has been run.');
 }
 
 $date = trim((string) ($_GET['date'] ?? ''));
@@ -37,7 +38,6 @@ if ($serviceId !== '' && ds_table_exists('services')) {
 }
 
 $providerName = null;
-$busy = [];
 if ($providerProfileId !== '') {
     if (!ds_table_exists('provider_profiles')) {
         ds_error(404, 'NOT_FOUND', 'Provider not found.');
@@ -54,14 +54,18 @@ if ($providerProfileId !== '') {
         ds_error(404, 'NOT_FOUND', 'That provider is not accepting bookings.');
     }
     $providerName = (string) $provider['display_name'];
-    $busy = ds_provider_day_bookings($providerProfileId, $date);
 }
+
+$schedule = ds_booking_schedule($providerProfileId !== '' ? $providerProfileId : null);
+$busy = $providerProfileId !== ''
+    ? ds_provider_day_bookings($providerProfileId, $date)
+    : ds_studio_day_bookings($date);
+
+$availability = ds_available_slots($date, $busy, $duration, $schedule);
 
 ds_success([
     'date' => $date,
     'durationMinutes' => $duration,
-    'timezone' => date_default_timezone_get(),
     'providerProfileId' => $providerProfileId !== '' ? $providerProfileId : null,
     'providerName' => $providerName,
-    'slots' => ds_available_slots($date, $busy, $duration),
-]);
+] + $availability);

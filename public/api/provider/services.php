@@ -7,7 +7,7 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 $user = ds_require_provider();
 if (!ds_cms_ready()) {
-    ds_cms_migrate();
+    ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
 
 $profile = ds_provider_profile_by_user($user['id']);

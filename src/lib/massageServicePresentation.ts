@@ -1,4 +1,4 @@
-import type { MassageService } from '../data/mockData';
+import type { MassageService } from './catalogue';
 
 /**
  * Display-only presentation for /massage. Every word and image comes from the

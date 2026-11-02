@@ -1,27 +1,31 @@
 import React from 'react';
 import { Check, Clock, Sparkles } from 'lucide-react';
-import { MASSAGE_SERVICES } from '../../data/mockData';
+import type { MassageService } from '../../lib/catalogue';
 import type { StepFieldErrors } from '../../lib/massageBooking';
 
 interface ServiceSelectorProps {
+  services: MassageService[];
   serviceId: string;
   durationMinutes: number;
   errors: StepFieldErrors;
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   onSelectService: (serviceId: string) => void;
   onSelectDuration: (minutes: number) => void;
 }
 
 export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
+  services,
   serviceId,
   durationMinutes,
   errors,
   loading = false,
+  error = null,
+  onRetry,
   onSelectService,
   onSelectDuration,
 }) => {
-  const services = MASSAGE_SERVICES;
-
   return (
     <div className="space-y-6">
       <div>
@@ -39,12 +43,27 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
       )}
 
       {loading && services.length === 0 && (
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center" role="status">
           <p className="text-base text-zinc-300">Loading available therapies…</p>
         </div>
       )}
 
-      {!loading && services.length === 0 && (
+      {!loading && error && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-950/30 p-5" role="alert">
+          <p className="text-sm font-medium text-rose-200">{error}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-3 rounded-lg border border-rose-400/40 px-3 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-900/40 cursor-pointer"
+            >
+              Retry treatment menu
+            </button>
+          )}
+        </div>
+      )}
+
+      {!loading && !error && services.length === 0 && (
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center">
           <Sparkles className="mx-auto h-6 w-6 text-brand-gold" aria-hidden />
           <p className="mt-3 text-lg font-semibold text-white">No therapies published yet</p>

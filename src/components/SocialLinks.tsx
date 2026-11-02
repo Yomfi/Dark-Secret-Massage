@@ -27,15 +27,21 @@ const ICONS: Record<SocialPlatform, React.FC<{ className?: string }>> = {
 
 interface SocialLinksProps {
   className?: string;
+  urls?: Partial<Record<SocialPlatform, string>>;
 }
 
-export const SocialLinks: React.FC<SocialLinksProps> = ({ className = '' }) => (
+export const SocialLinks: React.FC<SocialLinksProps> = ({ className = '', urls }) => {
+  const links = COMPANY_SOCIAL_LINKS.map((link) => ({
+    ...link,
+    href: (urls?.[link.platform] ?? '').trim() || link.href,
+  }));
+  return (
   <nav aria-label="Massager Studio on social media" className={className}>
     <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
       Follow us
     </p>
     <ul className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-      {COMPANY_SOCIAL_LINKS.map(({ platform, label, href }) => {
+      {links.map(({ platform, label, href }) => {
         const Icon = ICONS[platform];
         return (
           <li key={platform}>
@@ -54,4 +60,5 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({ className = '' }) => (
       })}
     </ul>
   </nav>
-);
+  );
+};
