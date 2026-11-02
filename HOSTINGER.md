@@ -25,26 +25,14 @@ After build, `dist/` must contain:
 - `api/` (PHP endpoints copied from `public/api`)
 - `.htaccess`
 
-**A Hostinger Git deployment replaces `public_html`.** Observed on 2026-11-02: pushing a
-commit deleted a hand-created `api/config/config.local.php` (reported as
-`config_local_exists: false` immediately afterwards), while uploads under `/profiles`
-survived. Never store live secrets inside the deployed tree.
+**Uploading `dist/` must not replace two things on the host:**
 
-**Deploy-safe secret locations, in increasing precedence:**
-
-1. `DS_*` environment variables supplied by the host. This is how `DS_DB_PASS` reaches PHP
-   today: `getenv()` and `$_SERVER['DS_DB_PASS']` are both populated with **no config file
-   present**. It is a web-server/PHP environment value, not a Node.js app setting.
-2. A config file **above** `public_html`, e.g.
-   `/home/<user>/domains/massagerstudio.com/massager-studio.config.local.php`, or
-   `/home/<user>/domains/massagerstudio.com/massager-studio/config.local.php`.
-3. `DS_CONFIG_PATH=/absolute/path/to/file.php` (highest precedence, server-set only).
-4. `api/config/config.local.php` inside the deployed tree — **legacy/local only**; the next
-   deployment deletes it. Never use it for production secrets.
-
-`api/storage/` (sessions, rate limits, identity documents, mail logs/outbox) must also be
-left alone: `npm run build` prunes it from `dist/` so local state is never shipped, and PHP
-recreates the directories with mode `0700` on the host.
+- `api/config/config.local.php` — the live DB/SMTP secrets. It is gitignored and is not in
+  `dist/`; skip it during upload (or re-add it after).
+- `api/storage/` — live sessions, rate-limit counters, provider identity files and
+  `private/logs` + `private/outbox`. `npm run build` prunes `dist/api/storage` so local
+  smoke-test databases, sessions and outbox messages are never shipped; PHP recreates the
+  directories with mode `0700` on first use. Leave the host's existing `api/storage` alone.
 
 ## Database
 
@@ -64,37 +52,29 @@ in phpMyAdmin. Do **not** drop production tables.
 
 ## PHP API config
 
-`ds_config()` resolves values in this order (later wins):
+On the server, create:
 
-1. Built-in defaults, with `DS_*` environment variables layered on top.
-2. `api/config/config.local.php` (local development only; deleted by production deploys).
-3. `<parent of DOCUMENT_ROOT>/massager-studio.config.local.php`
-4. `<parent of DOCUMENT_ROOT>/massager-studio/config.local.php`
-5. `<site directory above public_html>/massager-studio.config.local.php`
-6. `$HOME/massager-studio.config.local.php`
-7. `DS_CONFIG_PATH` (explicit, highest precedence)
+`dist/api/config/config.local.php`
 
-Environment variables are found through `getenv()`, `$_ENV` or `$_SERVER`, because Apache
-`SetEnv`/FPM expose them differently. The database password is already supplied by the host
-environment, so an out-of-tree file only needs the mail keys:
+(from `public/api/config/config.example.php`)
+
+Set at least:
 
 ```php
 <?php
 return [
-  'smtp_host' => 'smtp.hostinger.com',
-  'smtp_port' => 465,
-  'smtp_secure' => 'ssl',
-  'smtp_user' => 'info@massagerstudio.com',
-  'smtp_pass' => 'ENTER_PRIVATELY',
-  'mail_from' => 'info@massagerstudio.com',
-  'mail_from_name' => 'Massager Studio',
-  'mail_reply_to' => 'contact@massagerstudio.com',
-  'mail_transport' => 'smtp',
+  'db_host' => 'localhost',
+  'db_name' => 'u190513960_darksecret',
+  'db_user' => 'u190513960_darksecret',
+  'db_pass' => 'YOUR_PASSWORD',
+  'cookie_secure' => true,
+  'cookie_samesite' => 'Lax',
+  'app_env' => 'production',
+  'app_url' => 'https://massagerstudio.com',
 ];
 ```
 
-Never commit or paste a real `smtp_pass` or the DB password. `npm run build` now also removes
-any local `config.local.php` from `dist/` so a developer's secrets cannot be uploaded.
+Never commit `config.local.php` or the DB password.
 
 ## Auth model
 
@@ -182,31 +162,20 @@ this repository, so SMTP is **not connected** until the steps below are done on 
 1. In hPanel → Emails → `info@massagerstudio.com`, confirm the outgoing server values:
    host `smtp.hostinger.com`, port `465`, encryption `ssl`. (Port `587` + `tls` is the
    STARTTLS alternative; use one, not both.)
-2. Create the private mail config **outside** `public_html` (deploys replace `public_html`):
-   1. hPanel → **Files → File Manager**.
-   2. Open `/home/<your-user>/domains/massagerstudio.com/` — the folder that *contains*
-      `public_html`, not `public_html` itself. (If your File Manager shows a different site
-      path, use whatever folder sits directly above `public_html`.)
-   3. **New file** → `massager-studio.config.local.php`.
-   4. Paste the array below, replacing only the password value. Do **not** add `db_*` keys:
-      the database password already comes from the host environment.
-   5. Save, then set permissions to `600` (right-click → Permissions).
-
-   The file is above the web root, so it cannot be downloaded and is not touched by Git
-   deployments. Enter the password only there — never in chat, Git, the frontend or logs.
+2. On the server, edit `dist/api/config/config.local.php` **in place** and add the mail keys
+   below. Do not overwrite `db_*` values and do not touch `api/storage` or uploads. If the
+   host uses environment variables instead, add the matching `DS_*` variables in hPanel.
+   Enter `smtp_pass` privately in hPanel/the file — never in chat, Git, the frontend or logs.
    ```php
-   <?php
-   return [
-     'smtp_host' => 'smtp.hostinger.com',
-     'smtp_port' => 465,
-     'smtp_secure' => 'ssl',
-     'smtp_user' => 'info@massagerstudio.com',
-     'smtp_pass' => '…entered privately…',
-     'mail_from' => 'info@massagerstudio.com',
-     'mail_from_name' => 'Massager Studio',
-     'mail_reply_to' => 'contact@massagerstudio.com',
-     'mail_transport' => 'smtp',
-   ];
+   'smtp_host' => 'smtp.hostinger.com',
+   'smtp_port' => 465,
+   'smtp_secure' => 'ssl',
+   'smtp_user' => 'info@massagerstudio.com',
+   'smtp_pass' => '…entered privately…',
+   'mail_from' => 'info@massagerstudio.com',
+   'mail_from_name' => 'Massager Studio',
+   'mail_reply_to' => 'contact@massagerstudio.com',
+   'mail_transport' => 'smtp',
    ```
 3. DNS is already correct — verified against the authoritative nameservers on 2026-11-01;
    change nothing:
@@ -294,8 +263,7 @@ registration flow, and a provider can submit for admin review without paying any
 1. Stop / remove the Node.js web app for this domain (if still present)
 2. Deploy static/`dist` to the domain’s web root (PHP enabled)
 3. Ensure `.htaccess` is uploaded
-4. Confirm the host supplies `DS_DB_PASS` (no config file in the deployed tree), then create
-   the out-of-tree SMTP config as described in "Deploy-safe secrets"
+4. Add `api/config/config.local.php` with DB password
 5. Confirm tables exist (or run `schema_if_missing.sql`)
 6. Verify `https://massagerstudio.com/api/health`
 7. Verify `https://massagerstudio.com/` loads the React app

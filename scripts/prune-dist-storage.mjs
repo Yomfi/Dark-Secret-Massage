@@ -18,20 +18,6 @@ import path from 'node:path';
 const dist = path.resolve(process.cwd(), 'dist');
 const targets = ['api/storage'];
 
-// Never ship local secrets: a developer's config.local.php would otherwise be
-// copied from public/ into dist/ and uploaded by the Git deployment.
-const secretFiles = [
-  'api/config/config.local.php',
-  'api/config/massager-studio.config.local.php',
-];
-for (const rel of secretFiles) {
-  const file = path.join(dist, rel);
-  if (existsSync(file)) {
-    rmSync(file, { force: true });
-    console.log(`pruned ${rel} (local secret, never deploy)`);
-  }
-}
-
 let removed = 0;
 for (const rel of targets) {
   const dir = path.join(dist, rel);

@@ -1,11 +1,7 @@
 <?php
 /**
- * Template only — never commit real credentials.
- *
- * On Hostinger, a Git deployment replaces public_html, so a config file inside
- * the deployed tree is disposable. Store the real file one level ABOVE
- * public_html as massager-studio.config.local.php (or set DS_CONFIG_PATH, or
- * use DS_* environment variables). See HOSTINGER.md → "Deploy-safe secrets".
+ * Copy to config.local.php on the server (never commit config.local.php).
+ * Or set the same keys as environment variables in Hostinger.
  */
 return [
     // MySQL — password only on Hostinger, never in Git
