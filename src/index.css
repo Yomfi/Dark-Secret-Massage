@@ -17,7 +17,7 @@
 
 @layer base {
   :root {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
     color-scheme: dark;
     --ms-gold: #b08b4b;
     --ms-gold-light: #c9a56a;
@@ -25,6 +25,27 @@
     --ms-ink: #161616;
     --ms-surface: #0b0b0c;
     --ms-offwhite: #f7f4ef;
+    --ms-cream: #faf7f2;
+    --font-ms-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --font-ms-sans: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
+  }
+
+  .ms-admin {
+    color-scheme: light;
+    font-family: var(--font-ms-sans);
+    --admin-gold: #b08b4b;
+    --admin-gold-light: #c9a56a;
+    --admin-gold-dark: #8f6d35;
+    --admin-ink: #161616;
+    --admin-cream: #faf7f2;
+    --admin-offwhite: #f7f4ef;
+    --admin-border: #e8e0d2;
+    --admin-muted: #6f675c;
+    --admin-sidebar: #141414;
+  }
+
+  .ms-admin .font-display {
+    font-family: var(--font-ms-display);
   }
 
   body {

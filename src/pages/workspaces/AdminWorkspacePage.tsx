@@ -1,14 +1,37 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  Inbox,
+  Sparkles,
+  UserRound,
+  Users,
+} from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { userHasPermission } from '../../lib/workspaceHome';
 import {
-  WorkspaceShell,
-  type WorkspaceNavGroup,
-  type WorkspaceNavItem,
-} from '../../components/workspace/WorkspaceShell';
+  AdminCard,
+  AdminCardHeader,
+  AdminShell,
+  DataCell,
+  DataRow,
+  DataTable,
+  DetailPanel,
+  EmptyState,
+  FormField,
+  SearchInput,
+  StatCard,
+  StatusBadge,
+  adminBtnClass,
+  adminBtnGhostClass,
+  adminInputClass,
+  type AdminNavGroup,
+  type AdminNavItem,
+} from '../../components/admin';
 
 type Overview = {
   counts: {
@@ -86,50 +109,137 @@ type StaffInvite = {
   id: string; email: string; staffRole: string; staffRoleLabel: string; expiresAt: string | null; createdAt: string | null;
 };
 
-const card = 'rounded-2xl border border-[#e6dfd2] bg-white p-5';
-const label = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a7a52]';
-const input = 'h-12 w-full rounded-xl border border-[#d9cfba] bg-white px-3 text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f]';
-const btn = 'inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#221f19] px-4 text-[13px] font-semibold text-white hover:bg-[#3a342a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f] disabled:opacity-60';
-const btnGhost = 'inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#d9cfba] px-4 text-[13px] font-semibold hover:bg-[#f2eee4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f] disabled:opacity-60';
-const th = 'px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6b6252]';
-const td = 'px-3 py-3 align-top text-[13px]';
-
-const badgeFor = (status: string): string => {
-  const map: Record<string, string> = {
-    active: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-    verified: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-    published: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-    pending: 'border-amber-200 bg-amber-50 text-amber-800',
-    pending_review: 'border-amber-200 bg-amber-50 text-amber-800',
-    changes_requested: 'border-sky-200 bg-sky-50 text-sky-800',
-    suspended: 'border-red-200 bg-red-50 text-red-800',
-    rejected: 'border-red-200 bg-red-50 text-red-800',
-    cancelled: 'border-zinc-200 bg-zinc-100 text-zinc-700',
-    completed: 'border-zinc-200 bg-zinc-100 text-zinc-700',
-    confirmed: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-    draft: 'border-amber-200 bg-amber-50 text-amber-800',
-    deleted: 'border-zinc-200 bg-zinc-100 text-zinc-700',
-    open: 'border-sky-200 bg-sky-50 text-sky-800',
-    resolved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  };
-  return `inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize ${map[status] ?? 'border-[#d9cfba] bg-[#f2eee4] text-[#6b6252]'}`;
-};
-
-type NavDef = WorkspaceNavItem & { permission: string; group: string };
+type NavDef = AdminNavItem & { permission: string; group: string };
 
 const NAV_DEFS: NavDef[] = [
   { id: 'overview', label: 'Overview', permission: 'dashboard.read', group: 'Overview' },
   { id: 'bookings', label: 'Bookings', permission: 'bookings.read', group: 'Operations' },
+  { id: 'services', label: 'Services', permission: 'services.read', group: 'Operations' },
   { id: 'customers', label: 'Customers', permission: 'customers.read', group: 'People' },
   { id: 'providers', label: 'Providers', permission: 'providers.read', group: 'People' },
   { id: 'staff', label: 'Staff', permission: 'staff.read', group: 'People' },
   { id: 'content', label: 'Content', permission: 'content.read', group: 'Website' },
   { id: 'media', label: 'Media', permission: 'media.read', group: 'Website' },
-  { id: 'services', label: 'Services', permission: 'services.read', group: 'Website' },
   { id: 'updates', label: 'Updates', permission: 'content.read', group: 'Website' },
   { id: 'system', label: 'System', permission: 'system.read', group: 'Administration' },
   { id: 'audit', label: 'Audit', permission: 'audit.read', group: 'Administration' },
 ];
+
+const PAGE_COPY: Record<string, { title: string; subtitle: string }> = {
+  overview: {
+    title: 'Overview',
+    subtitle: 'A high-level view of your platform, providers, bookings, and operations.',
+  },
+  bookings: {
+    title: 'Bookings',
+    subtitle: 'Review requests, update statuses, and inspect booking timelines.',
+  },
+  services: {
+    title: 'Services',
+    subtitle: 'Manage the massage services shown on the public website.',
+  },
+  customers: {
+    title: 'Customers',
+    subtitle: 'Look up accounts, notes, privacy requests and booking history.',
+  },
+  providers: {
+    title: 'Providers',
+    subtitle: 'Publish, suspend and review provider profiles with care.',
+  },
+  staff: {
+    title: 'Staff',
+    subtitle: 'Invite teammates and manage workspace roles.',
+  },
+  content: {
+    title: 'Content',
+    subtitle: 'Edit pages, FAQs and website settings for Massager Studio.',
+  },
+  media: {
+    title: 'Media',
+    subtitle: 'Upload and organise images for services and pages.',
+  },
+  updates: {
+    title: 'Updates',
+    subtitle: 'Draft announcements and review recent CMS changes.',
+  },
+  system: {
+    title: 'System',
+    subtitle: 'Delivery health and booking schedule configuration.',
+  },
+  audit: {
+    title: 'Audit',
+    subtitle: 'A chronological record of staff actions in this workspace.',
+  },
+};
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'MS';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
+
+const BookingDonut: React.FC<{ data: Record<string, number> }> = ({ data }) => {
+  const keys = ['pending', 'confirmed', 'reschedule_requested', 'completed'] as const;
+  const colors = ['#C9A56A', '#B08B4B', '#8F6D35', '#161616'];
+  const values = keys.map((k) => data[k] ?? 0);
+  const total = values.reduce((a, b) => a + b, 0);
+  const size = 148;
+  const stroke = 14;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  let offset = 0;
+
+  return (
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+      <div className="relative">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#efe8dc" strokeWidth={stroke} />
+          {total > 0
+            ? values.map((value, i) => {
+                if (value <= 0) return null;
+                const len = (value / total) * c;
+                const el = (
+                  <circle
+                    key={keys[i]}
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={r}
+                    fill="none"
+                    stroke={colors[i]}
+                    strokeWidth={stroke}
+                    strokeDasharray={`${len} ${c - len}`}
+                    strokeDashoffset={-offset}
+                    strokeLinecap="butt"
+                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                  />
+                );
+                offset += len;
+                return el;
+              })
+            : null}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+          <div>
+            <p className="font-display text-[28px] font-semibold leading-none text-[#161616]">{total}</p>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a7a52]">Total</p>
+          </div>
+        </div>
+      </div>
+      <ul className="w-full space-y-2 text-[13px]">
+        {keys.map((key, i) => (
+          <li key={key} className="flex items-center justify-between gap-3">
+            <span className="inline-flex items-center gap-2 text-[#3f3a33]">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[i] }} />
+              {key.replace(/_/g, ' ')}
+            </span>
+            <span className="font-semibold tabular-nums text-[#161616]">{values[i]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 export const AdminWorkspacePage: React.FC = () => {
   const { user } = useAuth();
@@ -175,7 +285,6 @@ export const AdminWorkspacePage: React.FC = () => {
 
   const can = useCallback(
     (permission: string) => {
-      // Legacy staff without a permissions payload see the full shell; server still enforces.
       if (!user?.permissions?.length) {
         return Boolean(
           user?.isStaff || ['admin', 'moderator', 'support_admin'].includes(user?.role ?? ''),
@@ -186,15 +295,13 @@ export const AdminWorkspacePage: React.FC = () => {
     [user],
   );
 
-  const navGroups = useMemo<WorkspaceNavGroup[]>(() => {
+  const navGroups = useMemo<AdminNavGroup[]>(() => {
     const pending = overview?.counts.pendingReviews;
-    const groups: WorkspaceNavGroup[] = [];
+    const groups: AdminNavGroup[] = [];
     for (const groupLabel of ['Overview', 'Operations', 'People', 'Website', 'Administration']) {
       const items = NAV_DEFS.filter((d) => d.group === groupLabel && can(d.permission)).map((d) => {
-        const item: WorkspaceNavItem = { id: d.id, label: d.label };
-        if (d.id === 'overview' || d.id === 'providers') {
-          item.badge = pending;
-        }
+        const item: AdminNavItem = { id: d.id, label: d.label };
+        if (d.id === 'providers' || d.id === 'overview') item.badge = pending;
         return item;
       });
       if (items.length > 0) groups.push({ label: groupLabel, items });
@@ -206,18 +313,13 @@ export const AdminWorkspacePage: React.FC = () => {
 
   const activeMeta = useMemo(() => {
     const def = NAV_DEFS.find((d) => d.id === tab);
-    const item = flatNav.find((n) => n.id === tab);
-    return {
-      label: item?.label ?? def?.label ?? 'Overview',
-      group: def?.group ?? 'Overview',
-    };
-  }, [tab, flatNav]);
+    const copy = PAGE_COPY[tab] ?? { title: def?.label ?? 'Overview', subtitle: '' };
+    return { ...copy, group: def?.group ?? 'Overview' };
+  }, [tab]);
 
   useEffect(() => {
     if (flatNav.length === 0) return;
-    if (!flatNav.some((n) => n.id === tab)) {
-      setTab(flatNav[0].id);
-    }
+    if (!flatNav.some((n) => n.id === tab)) setTab(flatNav[0].id);
   }, [flatNav, tab]);
 
   const run = useCallback(async (fn: () => Promise<void>) => {
@@ -250,16 +352,13 @@ export const AdminWorkspacePage: React.FC = () => {
 
   const load = useCallback(async () => {
     if (tab === 'overview') {
-      const data = await apiRequest<Overview>('/admin/overview.php');
-      setOverview(data);
+      setOverview(await apiRequest<Overview>('/admin/overview.php'));
       return;
     }
     if (tab === 'customers') {
       const data = await apiRequest<{ customers: Customer[] }>(`/admin/customers.php?q=${encodeURIComponent(search)}`);
       setCustomers(data.customers);
-      if (selectedCustomerId) {
-        await loadCustomerDetail(selectedCustomerId);
-      }
+      if (selectedCustomerId) await loadCustomerDetail(selectedCustomerId);
       return;
     }
     if (tab === 'providers') {
@@ -268,26 +367,21 @@ export const AdminWorkspacePage: React.FC = () => {
       return;
     }
     if (tab === 'services') {
-      const data = await apiRequest<{ services: Service[] }>('/admin/services.php');
-      setServices(data.services);
+      setServices((await apiRequest<{ services: Service[] }>('/admin/services.php')).services);
       return;
     }
     if (tab === 'bookings') {
       const data = await apiRequest<{ bookings: Booking[] }>(`/admin/bookings.php?status=${status}`);
       setBookings(data.bookings);
-      if (selectedBookingId) {
-        await loadBookingDetail(selectedBookingId);
-      }
+      if (selectedBookingId) await loadBookingDetail(selectedBookingId);
       return;
     }
     if (tab === 'content') {
-      const data = await apiRequest<ContentPayload>('/admin/content.php');
-      setContent(data);
+      setContent(await apiRequest<ContentPayload>('/admin/content.php'));
       return;
     }
     if (tab === 'media') {
-      const data = await apiRequest<{ media: MediaAsset[] }>('/admin/media.php');
-      setMedia(data.media);
+      setMedia((await apiRequest<{ media: MediaAsset[] }>('/admin/media.php')).media);
       return;
     }
     if (tab === 'updates') {
@@ -308,11 +402,7 @@ export const AdminWorkspacePage: React.FC = () => {
       setStaff(data.staff);
       setInvitations(data.invitations);
       setStaffRoles(data.roles);
-      setInviteForm((f) => (
-        f.staffRole || Object.keys(data.roles).length === 0
-          ? f
-          : { ...f, staffRole: Object.keys(data.roles)[0] }
-      ));
+      setInviteForm((f) => (f.staffRole || Object.keys(data.roles).length === 0 ? f : { ...f, staffRole: Object.keys(data.roles)[0] }));
       return;
     }
     if (tab === 'system') {
@@ -332,8 +422,7 @@ export const AdminWorkspacePage: React.FC = () => {
       return;
     }
     if (tab === 'audit') {
-      const data = await apiRequest<{ entries: AuditEntry[] }>('/admin/audit.php');
-      setAudit(data.entries);
+      setAudit((await apiRequest<{ entries: AuditEntry[] }>('/admin/audit.php')).entries);
     }
   }, [tab, search, kind, status, selectedCustomerId, selectedBookingId, loadCustomerDetail, loadBookingDetail]);
 
@@ -359,14 +448,14 @@ export const AdminWorkspacePage: React.FC = () => {
   };
 
   return (
-    <WorkspaceShell
-      roleLabel="Admin workspace"
-      title={activeMeta.label}
-      subtitle={user?.email}
-      breadcrumbs={['Admin', activeMeta.group, activeMeta.label]}
-      nav={flatNav}
+    <AdminShell
+      title={activeMeta.title}
+      subtitle={activeMeta.subtitle}
+      breadcrumbs={['Admin', activeMeta.group, activeMeta.title]}
       navGroups={navGroups}
       active={tab}
+      globalSearch={search}
+      onGlobalSearchChange={setSearch}
       onNavigate={(id) => {
         setNotice(null);
         setSelectedCustomerId(null);
@@ -375,247 +464,261 @@ export const AdminWorkspacePage: React.FC = () => {
         setBookingDetail(null);
         setTab(id);
       }}
-      actions={
+      headerActions={
         can('reviews.read') ? (
-          <Link to="/admin/provider-reviews" className={btnGhost}>
-            Provider review queue
+          <Link to="/admin/provider-reviews" className={adminBtnGhostClass}>
+            Open review queue
           </Link>
         ) : null
       }
     >
-      {error ? <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">{error}</div> : null}
-      {notice ? <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">{notice}</div> : null}
-      {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded bg-[#e6dfd2]"><div className="h-full w-1/3 animate-pulse bg-[#b8862f]" /></div> : null}
+      {error ? <div role="alert" className="mb-4 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">{error}</div> : null}
+      {notice ? <div role="status" className="mb-4 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">{notice}</div> : null}
+      {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-[#e8e0d2]"><div className="h-full w-1/3 animate-pulse bg-[#B08B4B]" /></div> : null}
 
       {tab === 'overview' && overview ? (
         <div className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ['Customers', overview.counts.customers],
-              ['Individual providers', overview.counts.individualProviders],
-              ['Agencies', overview.counts.agencies],
-              ['Pending reviews', overview.counts.pendingReviews],
-              ['Published providers', overview.counts.publishedProviders],
-              ['Active services', overview.counts.activeServices],
-              ['Bookings', overview.counts.bookings],
-              ['Completed value', `GHS ${overview.counts.revenueCompleted.toLocaleString()}`],
-            ].map(([title, value]) => (
-              <div key={String(title)} className={card}>
-                <p className={label}>{title}</p>
-                <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-              </div>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            <StatCard title="Customers" value={overview.counts.customers} icon={Users} />
+            <StatCard title="Individual Providers" value={overview.counts.individualProviders} icon={UserRound} />
+            <StatCard title="Agencies" value={overview.counts.agencies} icon={Building2} />
+            <StatCard title="Bookings" value={overview.counts.bookings} icon={CalendarDays} />
+            <StatCard title="Active Services" value={overview.counts.activeServices} icon={Sparkles} />
+            <StatCard title="Completed Value" value={`GHS ${overview.counts.revenueCompleted.toLocaleString()}`} icon={ClipboardList} />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+            <AdminCard>
+              <AdminCardHeader
+                title="Provider Review Queue"
+                subtitle="Providers awaiting verification and approval."
+                action={
+                  <Link to="/admin/provider-reviews" className="text-[13px] font-semibold text-[#8F6D35] hover:underline">
+                    Open queue →
+                  </Link>
+                }
+              />
+              {overview.tasks.length === 0 ? (
+                <EmptyState
+                  icon={Inbox}
+                  title="No more providers in queue"
+                  description="New submissions will appear here after a provider requests review."
+                  className="py-10"
+                />
+              ) : (
+                <ul className="divide-y divide-[#efe8dc]">
+                  {overview.tasks.map((task) => (
+                    <li key={task.providerUserId} className="flex items-center gap-3 py-3.5">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#161616] text-[12px] font-semibold text-[#F7F4EF]">
+                        {initials(task.displayName)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] font-semibold text-[#161616]">{task.displayName}</p>
+                        <p className="text-[12.5px] text-[#6f675c]">{task.providerType} · {task.city || '—'}</p>
+                      </div>
+                      <StatusBadge status={task.status} />
+                    </li>
+                  ))}
+                  {overview.tasks.length === 1 ? (
+                    <li className="pt-4">
+                      <EmptyState
+                        icon={Inbox}
+                        title="No more providers in queue"
+                        description="This is the only submission waiting for review."
+                        className="py-6"
+                      />
+                    </li>
+                  ) : null}
+                </ul>
+              )}
+            </AdminCard>
+
+            <AdminCard>
+              <AdminCardHeader title="Booking Summary" subtitle="Live counts by status from your database." />
+              <BookingDonut data={overview.bookingsByStatus} />
+            </AdminCard>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className={card}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-[15px] font-semibold">Needs attention</h2>
-                <Link to="/admin/provider-reviews" className="text-[12.5px] font-semibold text-[#8a6a1f] hover:underline">Open queue</Link>
-              </div>
-              {overview.tasks.length === 0 ? (
-                <p className="mt-3 text-[13px] text-[#6b6252]">No provider reviews are waiting.</p>
-              ) : (
-                <ul className="mt-3 divide-y divide-[#eee7d9]">
-                  {overview.tasks.map((task) => (
-                    <li key={task.providerUserId} className="flex items-center justify-between gap-3 py-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[13.5px] font-medium">{task.displayName}</p>
-                        <p className="text-[12px] text-[#6b6252]">{task.providerType} · {task.city || '—'}</p>
-                      </div>
-                      <span className={badgeFor(task.status)}>{task.status.replace('_', ' ')}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className={card}>
-              <h2 className="text-[15px] font-semibold">Email delivery</h2>
-              <p className="mt-2 text-[13px] text-[#6b6252]">
-                Transport: <strong>{overview.mail.transport}</strong> ·{' '}
-                {overview.mail.configured ? 'configured' : 'not configured'}
-              </p>
-              {overview.mail.missing.length > 0 ? (
-                <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900">
-                  Missing keys: {overview.mail.missing.join(', ')}. Values are never shown here.
-                </p>
-              ) : (
-                <p className="mt-2 text-[12.5px] text-emerald-800">All required SMTP keys are present. Values stay server-side.</p>
-              )}
-              <h3 className="mt-5 text-[13px] font-semibold">Recent bookings</h3>
+            <AdminCard>
+              <AdminCardHeader title="Recent Activity" subtitle="Real booking events from the platform." />
               {overview.recentBookings.length === 0 ? (
-                <p className="mt-2 text-[13px] text-[#6b6252]">No bookings yet.</p>
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No recent activity yet."
+                  description="Bookings and operational events will appear here as they happen."
+                  className="py-8"
+                />
               ) : (
-                <ul className="mt-2 divide-y divide-[#eee7d9]">
+                <ul className="divide-y divide-[#efe8dc]">
                   {overview.recentBookings.map((b) => (
-                    <li key={b.id} className="flex items-center justify-between gap-3 py-2 text-[13px]">
-                      <span className="truncate">{b.serviceName}</span>
-                      <span className={badgeFor(b.status)}>{b.status.replace('_', ' ')}</span>
+                    <li key={b.id} className="flex items-center justify-between gap-3 py-3 text-[13.5px]">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-[#161616]">{b.serviceName}</p>
+                        <p className="text-[12px] text-[#6f675c]">{b.customerName || 'Customer'} · {formatScheduledDate(b.scheduledAt)}</p>
+                      </div>
+                      <StatusBadge status={b.status} />
                     </li>
                   ))}
                 </ul>
               )}
-            </section>
-          </div>
+            </AdminCard>
 
-          <section className={`${card} overflow-x-auto p-0`}>
-            <table className="w-full min-w-[560px]">
-              <thead className="bg-[#f2eee4]"><tr><th className={th}>Booking status</th><th className={th}>Count</th></tr></thead>
-              <tbody>
-                {Object.entries(overview.bookingsByStatus).map(([key, value]) => (
-                  <tr key={key} className="border-t border-[#eee7d9]"><td className={td}>{key.replace('_', ' ')}</td><td className={td}>{value}</td></tr>
+            <AdminCard>
+              <AdminCardHeader title="Insights" subtitle="Current totals calculated from live records." />
+              <ul className="space-y-3">
+                {[
+                  ['Pending reviews', overview.counts.pendingReviews],
+                  ['Published providers', overview.counts.publishedProviders],
+                  ['Active services', overview.counts.activeServices],
+                  ['Total bookings', overview.counts.bookings],
+                  ['Unverified customer emails', overview.counts.unverifiedEmails],
+                ].map(([label, value]) => (
+                  <li key={String(label)} className="flex items-center justify-between rounded-[14px] border border-[#efe8dc] bg-[#faf7f2] px-4 py-3">
+                    <span className="text-[13.5px] text-[#3f3a33]">{label}</span>
+                    <span className="font-display text-[22px] font-semibold text-[#161616]">{value}</span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </section>
+              </ul>
+              <p className="mt-4 text-[12.5px] text-[#6f675c]">
+                Email transport: <strong>{overview.mail.transport}</strong>
+                {overview.mail.configured ? ' · configured' : ' · not configured'}
+              </p>
+            </AdminCard>
+          </div>
         </div>
       ) : null}
 
       {tab === 'customers' ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_minmax(300px,420px)]">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <input className={`${input} max-w-xs`} placeholder="Search name, email or phone" value={search} onChange={(e) => setSearch(e.target.value)} />
-              <button className={btn} onClick={() => run(load)} disabled={busy}>Search</button>
+        <div className="grid gap-4 lg:grid-cols-[1fr_minmax(300px,400px)]">
+          <AdminCard padding={false}>
+            <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
+              <SearchInput className="min-w-[220px] flex-1" value={search} onChange={setSearch} placeholder="Search name, email or phone" onSubmit={() => run(load)} />
+              <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Search</button>
             </div>
-            <div className={`${card} overflow-x-auto p-0`}>
-              <table className="w-full min-w-[760px]">
-                <thead className="bg-[#f2eee4]"><tr>
-                  <th className={th}>Customer</th><th className={th}>Contact</th><th className={th}>Status</th><th className={th}>Bookings</th><th className={th}>Action</th>
-                </tr></thead>
-                <tbody>
-                  {customers.length === 0 ? (
-                    <tr><td className={`${td} text-[#6b6252]`} colSpan={5}>No customers yet.</td></tr>
-                  ) : customers.map((c) => (
-                    <tr key={c.id} className={`border-t border-[#eee7d9] ${selectedCustomerId === c.id ? 'bg-[#faf7f0]' : ''}`}>
-                      <td className={td}>
-                        <button type="button" className="text-left" onClick={() => openCustomer(c.id)}>
-                          <p className="font-medium hover:underline">{c.name || '—'}</p>
-                          <p className="text-[12px] text-[#6b6252]">{c.emailVerified ? 'Email confirmed' : 'Email unconfirmed'}</p>
-                        </button>
-                      </td>
-                      <td className={td}><p>{c.email}</p><p className="text-[12px] text-[#6b6252]">{c.phone || '—'}</p></td>
-                      <td className={td}><span className={badgeFor(c.status)}>{c.status}</span></td>
-                      <td className={td}>{c.bookings} ({c.completedBookings} completed)</td>
-                      <td className={td}>
-                        <div className="flex flex-wrap gap-2">
-                          <button className={btnGhost} onClick={() => openCustomer(c.id)}>Open</button>
-                          <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                            await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: c.id, action: c.status === 'suspended' ? 'activate' : 'suspend' }) });
-                          }, c.status === 'suspended' ? 'Customer reactivated.' : 'Customer suspended.')}>
-                            {c.status === 'suspended' ? 'Reactivate' : 'Suspend'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            <DataTable
+              headers={['Customer', 'Email', 'Phone', 'Account', 'Joined', 'Actions']}
+              empty={customers.length === 0}
+              emptyIcon={Users}
+              emptyTitle="No customers yet."
+              emptyDescription="Customer accounts will appear here after registration."
+              minWidth="880px"
+            >
+              {customers.map((c) => (
+                <DataRow key={c.id} selected={selectedCustomerId === c.id}>
+                  <DataCell>
+                    <button type="button" className="text-left" onClick={() => openCustomer(c.id)}>
+                      <p className="font-semibold hover:underline">{c.name || '—'}</p>
+                      <p className="text-[12px] text-[#6f675c]">{c.emailVerified ? 'Email confirmed' : 'Email unconfirmed'}</p>
+                    </button>
+                  </DataCell>
+                  <DataCell>{c.email}</DataCell>
+                  <DataCell>{c.phone || '—'}</DataCell>
+                  <DataCell><StatusBadge status={c.status} /></DataCell>
+                  <DataCell>{c.createdAt ? formatScheduledDate(c.createdAt) : '—'}</DataCell>
+                  <DataCell>
+                    <div className="flex flex-wrap gap-2">
+                      <button className={adminBtnGhostClass} onClick={() => openCustomer(c.id)}>Open</button>
+                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: c.id, action: c.status === 'suspended' ? 'activate' : 'suspend' }) });
+                      }, c.status === 'suspended' ? 'Customer reactivated.' : 'Customer suspended.')}>
+                        {c.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                      </button>
+                    </div>
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+          </AdminCard>
 
-          <aside className={`${card} space-y-4 self-start`}>
-            {!customerDetail ? (
-              <p className="text-[13px] text-[#6b6252]">Select a customer to view bookings, notes and privacy actions.</p>
-            ) : (
-              <>
-                <div>
-                  <p className={label}>Customer</p>
-                  <h2 className="mt-1 text-[16px] font-semibold">{customerDetail.customer.name || '—'}</h2>
-                  <p className="text-[12.5px] text-[#6b6252]">{customerDetail.customer.email}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className={badgeFor(customerDetail.customer.status)}>{customerDetail.customer.status}</span>
-                    {customerDetail.customer.emailVerified ? <span className={badgeFor('verified')}>Email verified</span> : null}
-                  </div>
+          <DetailPanel
+            open={Boolean(customerDetail)}
+            title={customerDetail?.customer.name || 'Customer'}
+            emptyIcon={Users}
+            emptyTitle="Select a customer"
+            emptyDescription="View bookings, notes and privacy actions."
+            onClose={() => { setSelectedCustomerId(null); setCustomerDetail(null); }}
+          >
+            {customerDetail ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge status={customerDetail.customer.status} />
+                  {customerDetail.customer.emailVerified ? <StatusBadge status="verified" label="Email verified" /> : null}
                 </div>
+                <p className="text-[13px] text-[#6f675c]">{customerDetail.customer.email}</p>
 
-                <form
-                  className="space-y-2 border-t border-[#eee7d9] pt-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    act(async () => {
-                      await apiRequest('/admin/customers.php', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                          userId: customerDetail.customer.id,
-                          action: 'update_profile',
-                          ...customerProfile,
-                        }),
-                      });
-                    }, 'Profile updated.');
-                  }}
-                >
+                <form className="space-y-2 border-t border-[#efe8dc] pt-4" onSubmit={(e) => {
+                  e.preventDefault();
+                  act(async () => {
+                    await apiRequest('/admin/customers.php', {
+                      method: 'POST',
+                      body: JSON.stringify({ userId: customerDetail.customer.id, action: 'update_profile', ...customerProfile }),
+                    });
+                  }, 'Profile updated.');
+                }}>
                   <p className="text-[13px] font-semibold">Profile</p>
-                  <input className={input} placeholder="First name" value={customerProfile.firstName} onChange={(e) => setCustomerProfile({ ...customerProfile, firstName: e.target.value })} required />
-                  <input className={input} placeholder="Last name" value={customerProfile.lastName} onChange={(e) => setCustomerProfile({ ...customerProfile, lastName: e.target.value })} />
-                  <input className={input} placeholder="Phone" value={customerProfile.phone} onChange={(e) => setCustomerProfile({ ...customerProfile, phone: e.target.value })} />
-                  <button className={btn} type="submit" disabled={busy}>Save profile</button>
+                  <FormField label="First name"><input className={adminInputClass} value={customerProfile.firstName} onChange={(e) => setCustomerProfile({ ...customerProfile, firstName: e.target.value })} required /></FormField>
+                  <FormField label="Last name"><input className={adminInputClass} value={customerProfile.lastName} onChange={(e) => setCustomerProfile({ ...customerProfile, lastName: e.target.value })} /></FormField>
+                  <FormField label="Phone"><input className={adminInputClass} value={customerProfile.phone} onChange={(e) => setCustomerProfile({ ...customerProfile, phone: e.target.value })} /></FormField>
+                  <button className={adminBtnClass} type="submit" disabled={busy}>Save profile</button>
                 </form>
 
-                <div className="border-t border-[#eee7d9] pt-4">
+                <div className="border-t border-[#efe8dc] pt-4">
                   <p className="text-[13px] font-semibold">Notes</p>
                   <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto">
                     {customerDetail.notes.length === 0 ? (
-                      <li className="text-[12.5px] text-[#6b6252]">No notes yet.</li>
+                      <li className="text-[12.5px] text-[#6f675c]">No notes yet.</li>
                     ) : customerDetail.notes.map((n) => (
-                      <li key={n.id} className="rounded-lg bg-[#f7f3ea] px-3 py-2 text-[12.5px]">
+                      <li key={n.id} className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px]">
                         <p>{n.body}</p>
                         <p className="mt-1 text-[11px] text-[#8a7a52]">{n.author} · {n.createdAt}</p>
                       </li>
                     ))}
                   </ul>
-                  <form
-                    className="mt-3 space-y-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (!customerNote.trim()) return;
-                      act(async () => {
-                        await apiRequest('/admin/customers.php', {
-                          method: 'POST',
-                          body: JSON.stringify({ userId: customerDetail.customer.id, action: 'add_note', body: customerNote.trim() }),
-                        });
-                        setCustomerNote('');
-                      }, 'Note added.');
-                    }}
-                  >
-                    <textarea className={`${input} h-24 py-2`} placeholder="Add an internal note" value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
-                    <button className={btnGhost} type="submit" disabled={busy || !customerNote.trim()}>Add note</button>
+                  <form className="mt-3 space-y-2" onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!customerNote.trim()) return;
+                    act(async () => {
+                      await apiRequest('/admin/customers.php', {
+                        method: 'POST',
+                        body: JSON.stringify({ userId: customerDetail.customer.id, action: 'add_note', body: customerNote.trim() }),
+                      });
+                      setCustomerNote('');
+                    }, 'Note added.');
+                  }}>
+                    <FormField label="Internal note">
+                      <textarea className={`${adminInputClass} h-24 py-2`} value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
+                    </FormField>
+                    <button className={adminBtnGhostClass} type="submit" disabled={busy || !customerNote.trim()}>Add note</button>
                   </form>
                 </div>
 
-                <div className="border-t border-[#eee7d9] pt-4">
+                <div className="border-t border-[#efe8dc] pt-4">
                   <p className="text-[13px] font-semibold">Recent bookings</p>
                   <ul className="mt-2 max-h-36 space-y-2 overflow-y-auto text-[12.5px]">
                     {customerDetail.bookings.length === 0 ? (
-                      <li className="text-[#6b6252]">No bookings.</li>
+                      <li className="text-[#6f675c]">No bookings.</li>
                     ) : customerDetail.bookings.slice(0, 8).map((b) => (
                       <li key={b.id} className="flex items-center justify-between gap-2">
                         <span className="truncate">{b.serviceName}</span>
-                        <span className={badgeFor(b.status)}>{b.status.replace('_', ' ')}</span>
+                        <StatusBadge status={b.status} />
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="flex flex-wrap gap-2 border-t border-[#eee7d9] pt-4">
-                  <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                    await apiRequest('/admin/customers.php', {
-                      method: 'POST',
-                      body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'export' }),
-                    });
+                <div className="flex flex-wrap gap-2 border-t border-[#efe8dc] pt-4">
+                  <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                    await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'export' }) });
                   }, 'Export privacy request logged.')}>Request export</button>
-                  <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                    await apiRequest('/admin/customers.php', {
-                      method: 'POST',
-                      body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'deletion' }),
-                    });
+                  <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                    await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'deletion' }) });
                   }, 'Deletion privacy request logged.')}>Request deletion</button>
                   <button
-                    className={btnGhost}
+                    className={adminBtnGhostClass}
                     disabled={busy || customerDetail.customer.status === 'deleted'}
                     onClick={() => {
-                      if (!window.confirm('Close this customer account? Type confirm will be sent as CLOSE.')) return;
+                      if (!window.confirm('Close this customer account?')) return;
                       act(async () => {
                         await apiRequest('/admin/customers.php', {
                           method: 'POST',
@@ -629,149 +732,169 @@ export const AdminWorkspacePage: React.FC = () => {
                 </div>
 
                 {customerDetail.privacyRequests.length > 0 ? (
-                  <div className="border-t border-[#eee7d9] pt-4">
+                  <div className="border-t border-[#efe8dc] pt-4">
                     <p className="text-[13px] font-semibold">Privacy requests</p>
                     <ul className="mt-2 space-y-1 text-[12.5px]">
                       {customerDetail.privacyRequests.map((p) => (
                         <li key={p.id} className="flex items-center justify-between gap-2">
                           <span>{p.type}</span>
-                          <span className={badgeFor(p.status)}>{p.status}</span>
+                          <StatusBadge status={p.status} />
                         </li>
                       ))}
                     </ul>
                   </div>
                 ) : null}
-              </>
-            )}
-          </aside>
+              </div>
+            ) : null}
+          </DetailPanel>
         </div>
       ) : null}
 
       {tab === 'providers' ? (
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <select className={`${input} max-w-[200px]`} value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="all">All providers</option><option value="individual">Individuals</option><option value="agency">Agencies</option>
+        <AdminCard padding={false}>
+          <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
+            <select className={`${adminInputClass} max-w-[200px]`} value={kind} onChange={(e) => setKind(e.target.value)}>
+              <option value="all">All providers</option>
+              <option value="individual">Individuals</option>
+              <option value="agency">Agencies</option>
             </select>
-            <input className={`${input} max-w-xs`} placeholder="Search providers" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <button className={btn} onClick={() => run(load)} disabled={busy}>Apply</button>
+            <SearchInput className="min-w-[200px] flex-1" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
+            <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
           </div>
-          <div className={`${card} overflow-x-auto p-0`}>
-            <table className="w-full min-w-[900px]">
-              <thead className="bg-[#f2eee4]"><tr>
-                <th className={th}>Provider</th><th className={th}>Verification</th><th className={th}>Public</th><th className={th}>Account</th><th className={th}>Actions</th>
-              </tr></thead>
-              <tbody>
-                {providers.length === 0 ? (
-                  <tr><td className={`${td} text-[#6b6252]`} colSpan={5}>No providers yet.</td></tr>
-                ) : providers.map((p) => (
-                  <tr key={p.userId} className="border-t border-[#eee7d9]">
-                    <td className={td}><p className="font-medium">{p.displayName}</p><p className="text-[12px] text-[#6b6252]">{p.kind} · {p.city || '—'} · {p.email}</p></td>
-                    <td className={td}><span className={badgeFor(p.verificationStatus)}>{p.verificationStatus.replace('_', ' ')}</span><p className="mt-1 text-[12px] text-[#6b6252]">ID: {p.identityStatus.replace('_', ' ')}</p></td>
-                    <td className={td}><span className={badgeFor(p.published ? 'published' : 'pending')}>{p.published ? 'Published' : 'Not published'}</span></td>
-                    <td className={td}><span className={badgeFor(p.accountStatus)}>{p.accountStatus}</span></td>
-                    <td className={td}>
-                      <div className="flex flex-wrap gap-2">
-                        {p.published ? (
-                          <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                            await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: 'unpublish' }) });
-                          }, 'Provider unpublished.')}>Unpublish</button>
-                        ) : (
-                          <button className={btn} disabled={busy} onClick={() => act(async () => {
-                            await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: 'publish' }) });
-                          }, 'Provider published.')}>Publish</button>
-                        )}
-                        <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                          await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: p.accountStatus === 'suspended' ? 'activate' : 'suspend' }) });
-                        }, 'Provider account updated.')}>{p.accountStatus === 'suspended' ? 'Reactivate' : 'Suspend'}</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-[12px] text-[#6b6252]">Publication is only possible after a verified review and a confirmed email; providers cannot publish themselves.</p>
-        </div>
+          <DataTable
+            headers={['Provider', 'Type', 'Verification', 'Public status', 'Account', 'Actions']}
+            empty={providers.length === 0}
+            emptyIcon={UserRound}
+            emptyTitle="No providers yet."
+            emptyDescription="Provider profiles will appear after registration."
+            minWidth="960px"
+          >
+            {providers.map((p) => (
+              <DataRow key={p.userId}>
+                <DataCell>
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
+                      {initials(p.displayName)}
+                    </span>
+                    <div>
+                      <p className="font-semibold">{p.displayName}</p>
+                      <p className="text-[12px] text-[#6f675c]">{p.email} · {p.city || '—'}</p>
+                    </div>
+                  </div>
+                </DataCell>
+                <DataCell className="capitalize">{p.kind}</DataCell>
+                <DataCell>
+                  <StatusBadge status={p.verificationStatus} />
+                  <p className="mt-1 text-[12px] text-[#6f675c]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
+                </DataCell>
+                <DataCell>
+                  <StatusBadge status={p.published ? 'published' : 'pending'} label={p.published ? 'Published' : 'Not Published'} />
+                </DataCell>
+                <DataCell><StatusBadge status={p.accountStatus} /></DataCell>
+                <DataCell>
+                  <div className="flex flex-wrap gap-2">
+                    {p.published ? (
+                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: 'unpublish' }) });
+                      }, 'Provider unpublished.')}>Unpublish</button>
+                    ) : (
+                      <button className={adminBtnClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: 'publish' }) });
+                      }, 'Provider published.')}>Publish</button>
+                    )}
+                    <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                      await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: p.accountStatus === 'suspended' ? 'activate' : 'suspend' }) });
+                    }, 'Provider account updated.')}>{p.accountStatus === 'suspended' ? 'Reactivate' : 'Suspend'}</button>
+                  </div>
+                </DataCell>
+              </DataRow>
+            ))}
+          </DataTable>
+          <p className="border-t border-[#efe8dc] px-4 py-3 text-[12px] text-[#6f675c]">
+            Publication is only possible after a verified review and a confirmed email; providers cannot publish themselves.
+          </p>
+        </AdminCard>
       ) : null}
 
       {tab === 'staff' ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
-            <div className={`${card} overflow-x-auto p-0`}>
-              <table className="w-full min-w-[720px]">
-                <thead className="bg-[#f2eee4]"><tr>
-                  <th className={th}>Staff</th><th className={th}>Role</th><th className={th}>Status</th><th className={th}>Actions</th>
-                </tr></thead>
-                <tbody>
-                  {staff.length === 0 ? (
-                    <tr><td className={`${td} text-[#6b6252]`} colSpan={4}>No staff accounts yet.</td></tr>
-                  ) : staff.map((s) => (
-                    <tr key={s.userId} className="border-t border-[#eee7d9]">
-                      <td className={td}><p className="font-medium">{s.name || '—'}</p><p className="text-[12px] text-[#6b6252]">{s.email}</p></td>
-                      <td className={td}>
-                        <select
-                          className="h-11 rounded-lg border border-[#d9cfba] bg-white px-2 text-[12.5px]"
-                          value={s.staffRole}
-                          disabled={busy}
-                          onChange={(e) => {
-                            const staffRole = e.target.value;
-                            act(async () => {
-                              await apiRequest('/admin/staff.php', {
-                                method: 'POST',
-                                body: JSON.stringify({ action: 'set_role', userId: s.userId, staffRole }),
-                              });
-                            }, 'Staff role updated.');
-                          }}
-                        >
-                          {Object.entries(staffRoles).map(([key, labelText]) => (
-                            <option key={key} value={key}>{labelText}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className={td}>
-                        <span className={badgeFor(s.isActive ? 'active' : 'suspended')}>{s.isActive ? 'Active' : 'Inactive'}</span>
-                      </td>
-                      <td className={td}>
-                        <button
-                          className={btnGhost}
-                          disabled={busy || s.userId === user?.id}
-                          onClick={() => act(async () => {
+            <AdminCard padding={false}>
+              <DataTable
+                headers={['Staff', 'Role', 'Status', 'Actions']}
+                empty={staff.length === 0}
+                emptyIcon={ClipboardList}
+                emptyTitle="No staff accounts yet."
+                emptyDescription="Invite a teammate to collaborate in this workspace."
+              >
+                {staff.map((s) => (
+                  <DataRow key={s.userId}>
+                    <DataCell>
+                      <p className="font-semibold">{s.name || '—'}</p>
+                      <p className="text-[12px] text-[#6f675c]">{s.email}</p>
+                    </DataCell>
+                    <DataCell>
+                      <select
+                        className="h-11 rounded-[12px] border border-[#e0d7c8] bg-white px-2 text-[12.5px]"
+                        value={s.staffRole}
+                        disabled={busy}
+                        onChange={(e) => {
+                          const staffRole = e.target.value;
+                          act(async () => {
                             await apiRequest('/admin/staff.php', {
                               method: 'POST',
-                              body: JSON.stringify({ action: s.isActive ? 'deactivate' : 'activate', userId: s.userId }),
+                              body: JSON.stringify({ action: 'set_role', userId: s.userId, staffRole }),
                             });
-                          }, s.isActive ? 'Staff deactivated.' : 'Staff reactivated.')}
-                        >
-                          {s.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          }, 'Staff role updated.');
+                        }}
+                      >
+                        {Object.entries(staffRoles).map(([key, labelText]) => (
+                          <option key={key} value={key}>{labelText}</option>
+                        ))}
+                      </select>
+                    </DataCell>
+                    <DataCell>
+                      <StatusBadge status={s.isActive ? 'active' : 'suspended'} label={s.isActive ? 'Active' : 'Inactive'} />
+                    </DataCell>
+                    <DataCell>
+                      <button
+                        className={adminBtnGhostClass}
+                        disabled={busy || s.userId === user?.id}
+                        onClick={() => act(async () => {
+                          await apiRequest('/admin/staff.php', {
+                            method: 'POST',
+                            body: JSON.stringify({ action: s.isActive ? 'deactivate' : 'activate', userId: s.userId }),
+                          });
+                        }, s.isActive ? 'Staff deactivated.' : 'Staff reactivated.')}
+                      >
+                        {s.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </DataCell>
+                  </DataRow>
+                ))}
+              </DataTable>
+            </AdminCard>
 
             {invitations.length > 0 ? (
-              <section className={card}>
-                <h2 className="text-[15px] font-semibold">Pending invitations</h2>
-                <ul className="mt-3 divide-y divide-[#eee7d9]">
+              <AdminCard>
+                <AdminCardHeader title="Pending invitations" />
+                <ul className="divide-y divide-[#efe8dc]">
                   {invitations.map((inv) => (
                     <li key={inv.id} className="flex items-center justify-between gap-3 py-3 text-[13px]">
                       <div>
-                        <p className="font-medium">{inv.email}</p>
-                        <p className="text-[12px] text-[#6b6252]">{inv.staffRoleLabel} · expires {inv.expiresAt}</p>
+                        <p className="font-semibold">{inv.email}</p>
+                        <p className="text-[12px] text-[#6f675c]">{inv.staffRoleLabel} · expires {inv.expiresAt}</p>
                       </div>
-                      <span className={badgeFor('pending')}>Pending</span>
+                      <StatusBadge status="pending" />
                     </li>
                   ))}
                 </ul>
-              </section>
+              </AdminCard>
             ) : null}
           </div>
 
           <form
-            className={`${card} space-y-3 self-start`}
+            className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3 self-start"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -783,248 +906,248 @@ export const AdminWorkspacePage: React.FC = () => {
               }, 'Invitation sent.');
             }}
           >
-            <h2 className="text-[15px] font-semibold">Invite staff</h2>
-            <p className="text-[12.5px] text-[#6b6252]">They receive an email with a 72-hour activation link.</p>
-            <input className={input} type="email" placeholder="Email" value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} required />
-            <input className={input} placeholder="First name" value={inviteForm.firstName} onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })} />
-            <input className={input} placeholder="Last name" value={inviteForm.lastName} onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })} />
-            <select className={input} value={inviteForm.staffRole} onChange={(e) => setInviteForm({ ...inviteForm, staffRole: e.target.value })}>
-              {Object.entries(staffRoles).map(([key, labelText]) => (
-                <option key={key} value={key}>{labelText}</option>
-              ))}
-            </select>
-            <button className={btn} type="submit" disabled={busy}>Send invite</button>
+            <h2 className="font-display text-[22px] font-semibold">Invite staff</h2>
+            <p className="text-[12.5px] text-[#6f675c]">They receive an email with a 72-hour activation link.</p>
+            <FormField label="Email"><input className={adminInputClass} type="email" value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} required /></FormField>
+            <FormField label="First name"><input className={adminInputClass} value={inviteForm.firstName} onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })} /></FormField>
+            <FormField label="Last name"><input className={adminInputClass} value={inviteForm.lastName} onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })} /></FormField>
+            <FormField label="Role">
+              <select className={adminInputClass} value={inviteForm.staffRole} onChange={(e) => setInviteForm({ ...inviteForm, staffRole: e.target.value })}>
+                {Object.entries(staffRoles).map(([key, labelText]) => (
+                  <option key={key} value={key}>{labelText}</option>
+                ))}
+              </select>
+            </FormField>
+            <button className={adminBtnClass} type="submit" disabled={busy}>Send invite</button>
           </form>
         </div>
       ) : null}
 
       {tab === 'services' ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-          <div className={`${card} overflow-x-auto p-0`}>
-            <table className="w-full min-w-[620px]">
-              <thead className="bg-[#f2eee4]"><tr><th className={th}>Service</th><th className={th}>Duration</th><th className={th}>Price</th><th className={th}>Status</th><th className={th}></th></tr></thead>
-              <tbody>
-                {services.length === 0 ? (
-                  <tr><td className={`${td} text-[#6b6252]`} colSpan={5}>No services yet. Add the first real service to publish it on the website.</td></tr>
-                ) : services.map((s) => (
-                  <tr key={s.id} className="border-t border-[#eee7d9]">
-                    <td className={td}><p className="font-medium">{s.name}</p><p className="max-w-md text-[12px] text-[#6b6252]">{s.description}</p></td>
-                    <td className={td}>{s.durationMinutes} min</td>
-                    <td className={td}>{s.currency} {s.price.toLocaleString()}</td>
-                    <td className={td}><span className={badgeFor(s.active ? 'active' : 'pending')}>{s.active ? 'Active' : 'Inactive'}</span></td>
-                    <td className={td}>
-                      <div className="flex gap-2">
-                        <button className={btnGhost} onClick={() => setServiceForm({ id: s.id, name: s.name, description: s.description, durationMinutes: s.durationMinutes, price: s.price, active: s.active, image: s.image ?? '' })}>Edit</button>
-                        <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                          await apiRequest('/admin/services.php', { method: 'DELETE', body: JSON.stringify({ id: s.id }) });
-                        }, 'Service deleted.')}>Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AdminCard padding={false}>
+            <DataTable
+              headers={['Service', 'Duration', 'Price', 'Status', '']}
+              empty={services.length === 0}
+              emptyIcon={Sparkles}
+              emptyTitle="No services yet."
+              emptyDescription="Add your first service to publish it on the website."
+              minWidth="680px"
+            >
+              {services.map((s) => (
+                <DataRow key={s.id}>
+                  <DataCell>
+                    <p className="font-semibold">{s.name}</p>
+                    <p className="max-w-md text-[12px] text-[#6f675c]">{s.description}</p>
+                  </DataCell>
+                  <DataCell>{s.durationMinutes} min</DataCell>
+                  <DataCell>{s.currency} {s.price.toLocaleString()}</DataCell>
+                  <DataCell><StatusBadge status={s.active ? 'active' : 'inactive'} label={s.active ? 'Active' : 'Inactive'} /></DataCell>
+                  <DataCell>
+                    <div className="flex gap-2">
+                      <button className={adminBtnGhostClass} onClick={() => setServiceForm({ id: s.id, name: s.name, description: s.description, durationMinutes: s.durationMinutes, price: s.price, active: s.active, image: s.image ?? '' })}>Edit</button>
+                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/services.php', { method: 'DELETE', body: JSON.stringify({ id: s.id }) });
+                      }, 'Service deleted.')}>Delete</button>
+                    </div>
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+          </AdminCard>
 
-          <form className={`${card} space-y-3`} onSubmit={(e) => {
+          <form className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3" onSubmit={(e) => {
             e.preventDefault();
             act(async () => {
               await apiRequest('/admin/services.php', { method: 'POST', body: JSON.stringify(serviceForm) });
               setServiceForm({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false, image: '' });
             }, 'Service saved.');
           }}>
-            <h2 className="text-[15px] font-semibold">{serviceForm.id ? 'Edit service' : 'New service'}</h2>
-            <input className={input} placeholder="Service name" value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required />
-            <textarea className={`${input} h-28 py-2`} placeholder="Description shown on the website" value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} />
+            <h2 className="font-display text-[22px] font-semibold">{serviceForm.id ? 'Edit service' : 'Create service'}</h2>
+            <FormField label="Service name"><input className={adminInputClass} value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required /></FormField>
+            <FormField label="Description"><textarea className={`${adminInputClass} h-28 py-2`} value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} /></FormField>
             <div className="grid grid-cols-2 gap-2">
-              <input className={input} type="number" min={15} max={480} value={serviceForm.durationMinutes} onChange={(e) => setServiceForm({ ...serviceForm, durationMinutes: Number(e.target.value) })} aria-label="Duration minutes" />
-              <input className={input} type="number" min={0} value={serviceForm.price} onChange={(e) => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} aria-label="Price GHS" />
+              <FormField label="Duration (minutes)"><input className={adminInputClass} type="number" min={15} max={480} value={serviceForm.durationMinutes} onChange={(e) => setServiceForm({ ...serviceForm, durationMinutes: Number(e.target.value) })} /></FormField>
+              <FormField label="Price (GHS)"><input className={adminInputClass} type="number" min={0} value={serviceForm.price} onChange={(e) => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} /></FormField>
             </div>
-            <input className={input} placeholder="Image URL (media library)" value={serviceForm.image} onChange={(e) => setServiceForm({ ...serviceForm, image: e.target.value })} />
+            <FormField label="Image / media URL" hint="Paste a URL from the Media library.">
+              <input className={adminInputClass} value={serviceForm.image} onChange={(e) => setServiceForm({ ...serviceForm, image: e.target.value })} />
+            </FormField>
             <label className="flex min-h-12 items-center gap-3 text-[13px]">
               <input type="checkbox" className="h-5 w-5 rounded border-[#d9cfba]" checked={serviceForm.active} onChange={(e) => setServiceForm({ ...serviceForm, active: e.target.checked })} />
-              Active on the public website
+              Active on public website
             </label>
-            <button className={btn} type="submit" disabled={busy}>{serviceForm.id ? 'Save changes' : 'Create service'}</button>
+            <button className={adminBtnClass} type="submit" disabled={busy}>{serviceForm.id ? 'Save changes' : 'Create service'}</button>
           </form>
         </div>
       ) : null}
 
       {tab === 'bookings' ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_minmax(280px,400px)]">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <select className={`${input} max-w-[220px]`} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <AdminCard padding={false}>
+            <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
+              <select className={`${adminInputClass} max-w-[220px]`} value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
-                {['pending', 'confirmed', 'reschedule_requested', 'completed', 'cancelled', 'no_show'].map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+                {['pending', 'confirmed', 'reschedule_requested', 'completed', 'cancelled', 'no_show'].map((s) => (
+                  <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                ))}
               </select>
-              <button className={btn} onClick={() => run(load)} disabled={busy}>Apply</button>
+              <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
             </div>
-            <div className={`${card} overflow-x-auto p-0`}>
-              <table className="w-full min-w-[860px]">
-                <thead className="bg-[#f2eee4]"><tr><th className={th}>Booking</th><th className={th}>Customer</th><th className={th}>When</th><th className={th}>Provider</th><th className={th}>Status</th><th className={th}>Action</th></tr></thead>
-                <tbody>
-                  {bookings.length === 0 ? (
-                    <tr><td className={`${td} text-[#6b6252]`} colSpan={6}>No bookings yet.</td></tr>
-                  ) : bookings.map((b) => (
-                    <tr key={b.id} className={`border-t border-[#eee7d9] ${selectedBookingId === b.id ? 'bg-[#faf7f0]' : ''}`}>
-                      <td className={td}>
-                        <button type="button" className="text-left" onClick={() => openBooking(b.id)}>
-                          <p className="font-medium hover:underline">{b.serviceName}</p>
-                          <p className="text-[12px] text-[#6b6252]">{b.reference ?? b.id}</p>
-                        </button>
-                      </td>
-                      <td className={td}>{b.customerName || '—'}<p className="text-[12px] text-[#6b6252]">{b.customerEmail}</p></td>
-                      <td className={td}>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6b6252]">{b.timeSlot ?? ''}</p></td>
-                      <td className={td}>{b.providerName ?? 'Unassigned'}{b.teamMemberName ? <p className="text-[12px] text-[#6b6252]">{b.teamMemberName}</p> : null}</td>
-                      <td className={td}><span className={badgeFor(b.status)}>{b.status.replace('_', ' ')}</span></td>
-                      <td className={td}>
-                        <div className="flex flex-wrap gap-2">
-                          <button className={btnGhost} onClick={() => openBooking(b.id)}>Detail</button>
-                          <select
-                            className="h-11 rounded-lg border border-[#d9cfba] bg-white px-2 text-[12.5px]"
-                            defaultValue=""
-                            disabled={busy}
-                            onChange={(e) => {
-                              const next = e.target.value;
-                              if (!next) return;
-                              act(async () => {
-                                await apiRequest('/admin/bookings.php', { method: 'POST', body: JSON.stringify({ bookingId: b.id, action: 'status', status: next }) });
-                              }, 'Booking status updated.');
-                            }}
-                          >
-                            <option value="">Change status…</option>
-                            {['confirmed', 'completed', 'cancelled', 'no_show', 'reschedule_requested'].map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-                          </select>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            <DataTable
+              headers={['Booking', 'Customer', 'When', 'Provider', 'Status', 'Action']}
+              empty={bookings.length === 0}
+              emptyIcon={CalendarDays}
+              emptyTitle="No bookings yet."
+              emptyDescription="Customer booking requests will appear in this table."
+              minWidth="920px"
+            >
+              {bookings.map((b) => (
+                <DataRow key={b.id} selected={selectedBookingId === b.id}>
+                  <DataCell>
+                    <button type="button" className="text-left" onClick={() => openBooking(b.id)}>
+                      <p className="font-semibold hover:underline">{b.serviceName}</p>
+                      <p className="text-[12px] text-[#6f675c]">{b.reference ?? b.id}</p>
+                    </button>
+                  </DataCell>
+                  <DataCell>{b.customerName || '—'}<p className="text-[12px] text-[#6f675c]">{b.customerEmail}</p></DataCell>
+                  <DataCell>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6f675c]">{b.timeSlot ?? ''}</p></DataCell>
+                  <DataCell>{b.providerName ?? 'Unassigned'}{b.teamMemberName ? <p className="text-[12px] text-[#6f675c]">{b.teamMemberName}</p> : null}</DataCell>
+                  <DataCell><StatusBadge status={b.status} /></DataCell>
+                  <DataCell>
+                    <div className="flex flex-wrap gap-2">
+                      <button className={adminBtnGhostClass} onClick={() => openBooking(b.id)}>Detail</button>
+                      <select
+                        className="h-11 rounded-[12px] border border-[#e0d7c8] bg-white px-2 text-[12.5px]"
+                        defaultValue=""
+                        disabled={busy}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (!next) return;
+                          act(async () => {
+                            await apiRequest('/admin/bookings.php', { method: 'POST', body: JSON.stringify({ bookingId: b.id, action: 'status', status: next }) });
+                          }, 'Booking status updated.');
+                        }}
+                      >
+                        <option value="">Change status…</option>
+                        {['confirmed', 'completed', 'cancelled', 'no_show', 'reschedule_requested'].map((s) => (
+                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+          </AdminCard>
 
-          <aside className={`${card} space-y-3 self-start`}>
-            {!bookingDetail ? (
-              <p className="text-[13px] text-[#6b6252]">Select a booking to inspect timeline details.</p>
-            ) : (
-              <>
-                <div>
-                  <p className={label}>Booking</p>
-                  <h2 className="mt-1 text-[16px] font-semibold">{bookingDetail.serviceName}</h2>
-                  <p className="text-[12.5px] text-[#6b6252]">{bookingDetail.reference ?? bookingDetail.id}</p>
-                  <div className="mt-2"><span className={badgeFor(bookingDetail.status)}>{bookingDetail.status.replace('_', ' ')}</span></div>
-                </div>
-                <dl className="space-y-2 text-[13px]">
-                  <div><dt className={label}>Customer</dt><dd className="mt-1">{bookingDetail.customerName || '—'}<br /><span className="text-[12px] text-[#6b6252]">{bookingDetail.customerEmail} · {bookingDetail.customerPhone || '—'}</span></dd></div>
-                  <div><dt className={label}>When</dt><dd className="mt-1">{formatScheduledDate(bookingDetail.scheduledAt)} · {bookingDetail.timeSlot || '—'}</dd></div>
-                  <div><dt className={label}>Location</dt><dd className="mt-1">{bookingDetail.locationType || '—'}{bookingDetail.address ? ` · ${bookingDetail.address}` : ''}</dd></div>
-                  <div><dt className={label}>Provider</dt><dd className="mt-1">{bookingDetail.providerName ?? 'Unassigned'}{bookingDetail.teamMemberName ? ` · ${bookingDetail.teamMemberName}` : ''}</dd></div>
-                  <div><dt className={label}>Price</dt><dd className="mt-1">{bookingDetail.currency} {bookingDetail.price.toLocaleString()}</dd></div>
+          <DetailPanel
+            open={Boolean(bookingDetail)}
+            title={bookingDetail?.serviceName}
+            emptyIcon={CalendarDays}
+            emptyTitle="Select a booking"
+            emptyDescription="Inspect timeline, customer and provider details."
+            onClose={() => { setSelectedBookingId(null); setBookingDetail(null); }}
+          >
+            {bookingDetail ? (
+              <div className="space-y-4">
+                <StatusBadge status={bookingDetail.status} />
+                <p className="text-[12.5px] text-[#6f675c]">{bookingDetail.reference ?? bookingDetail.id}</p>
+                <dl className="space-y-3 text-[13px]">
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Customer</dt><dd className="mt-1">{bookingDetail.customerName || '—'}<br /><span className="text-[12px] text-[#6f675c]">{bookingDetail.customerEmail} · {bookingDetail.customerPhone || '—'}</span></dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">When</dt><dd className="mt-1">{formatScheduledDate(bookingDetail.scheduledAt)} · {bookingDetail.timeSlot || '—'}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Location</dt><dd className="mt-1">{bookingDetail.locationType || '—'}{bookingDetail.address ? ` · ${bookingDetail.address}` : ''}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Provider</dt><dd className="mt-1">{bookingDetail.providerName ?? 'Unassigned'}{bookingDetail.teamMemberName ? ` · ${bookingDetail.teamMemberName}` : ''}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Price</dt><dd className="mt-1">{bookingDetail.currency} {bookingDetail.price.toLocaleString()}</dd></div>
                 </dl>
                 {bookingDetail.events && bookingDetail.events.length > 0 ? (
-                  <div className="border-t border-[#eee7d9] pt-3">
+                  <div className="border-t border-[#efe8dc] pt-3">
                     <p className="text-[13px] font-semibold">Timeline</p>
                     <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto text-[12.5px]">
                       {bookingDetail.events.map((ev, idx) => (
-                        <li key={`${ev.event}-${idx}`} className="rounded-lg bg-[#f7f3ea] px-3 py-2">
+                        <li key={`${ev.event}-${idx}`} className="rounded-[12px] bg-[#faf7f2] px-3 py-2">
                           <p className="font-medium">{ev.event}</p>
-                          <p className="text-[#6b6252]">{ev.fromStatus ?? '—'} → {ev.toStatus ?? '—'} · {ev.createdAt}</p>
+                          <p className="text-[#6f675c]">{ev.fromStatus ?? '—'} → {ev.toStatus ?? '—'} · {ev.createdAt}</p>
                           {ev.note ? <p className="mt-1">{ev.note}</p> : null}
                         </li>
                       ))}
                     </ul>
                   </div>
                 ) : null}
-              </>
-            )}
-          </aside>
+              </div>
+            ) : null}
+          </DetailPanel>
         </div>
       ) : null}
 
       {tab === 'content' && content ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
           <div className="space-y-4">
-            <section className={`${card} p-0`}>
-              <div className="flex items-center justify-between px-5 py-4">
-                <h2 className="text-[15px] font-semibold">Pages</h2>
-                <button className={btnGhost} onClick={() => setPageEditor({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' })}>New page</button>
+            <AdminCard padding={false}>
+              <div className="flex items-center justify-between border-b border-[#efe8dc] px-5 py-4">
+                <h2 className="font-display text-[22px] font-semibold">Pages</h2>
+                <button className={adminBtnGhostClass} onClick={() => setPageEditor({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' })}>New page</button>
               </div>
-              <ul className="divide-y divide-[#eee7d9]">
+              <ul className="divide-y divide-[#efe8dc]">
                 {content.pages.length === 0 ? (
-                  <li className="px-5 py-6 text-[13px] text-[#6b6252]">No pages yet. Create one, save a draft, then publish.</li>
+                  <li><EmptyState title="No pages yet." description="Create one, save a draft, then publish." className="py-10" /></li>
                 ) : content.pages.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <button type="button" className="min-w-0 text-left" onClick={() => setPageEditor({ id: p.id, slug: p.slug, title: p.title, bodyHtml: p.bodyHtml, seoTitle: p.seoTitle, seoDescription: p.seoDescription })}>
-                      <p className="truncate text-[13.5px] font-medium">{p.title}</p>
-                      <p className="text-[12px] text-[#6b6252]">/{p.slug}</p>
+                      <p className="truncate text-[13.5px] font-semibold">{p.title}</p>
+                      <p className="text-[12px] text-[#6f675c]">/{p.slug}</p>
                     </button>
                     <div className="flex items-center gap-2">
-                      <span className={badgeFor(p.status === 'published' ? 'published' : 'pending')}>{p.status}</span>
-                      <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
+                      <StatusBadge status={p.status === 'published' ? 'published' : 'pending'} label={p.status} />
+                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
                         await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: p.status === 'published' ? 'unpublish_page' : 'publish_page', id: p.id }) });
                       }, p.status === 'published' ? 'Page unpublished.' : 'Page published.')}>{p.status === 'published' ? 'Unpublish' : 'Publish'}</button>
-                      <Link className={btnGhost} to={`/api/admin/content.php?preview=${p.id}`} target="_blank" rel="noreferrer">Preview JSON</Link>
                     </div>
                   </li>
                 ))}
               </ul>
-            </section>
+            </AdminCard>
 
-            <section className={card}>
-              <h2 className="text-[15px] font-semibold">FAQs</h2>
-              <ul className="mt-3 divide-y divide-[#eee7d9]">
-                {content.faqs.length === 0 ? <li className="py-3 text-[13px] text-[#6b6252]">No FAQs yet.</li> : content.faqs.map((f) => (
+            <AdminCard>
+              <AdminCardHeader title="FAQs" />
+              <ul className="divide-y divide-[#efe8dc]">
+                {content.faqs.length === 0 ? <li className="py-3 text-[13px] text-[#6f675c]">No FAQs yet.</li> : content.faqs.map((f) => (
                   <li key={f.id} className="flex items-start justify-between gap-3 py-3">
-                    <div><p className="text-[13.5px] font-medium">{f.question}</p><p className="text-[12.5px] text-[#6b6252]">{f.answer}</p></div>
+                    <div><p className="text-[13.5px] font-semibold">{f.question}</p><p className="text-[12.5px] text-[#6f675c]">{f.answer}</p></div>
                     <div className="flex flex-col items-end gap-2">
-                      <span className={badgeFor(f.active ? 'active' : 'pending')}>{f.active ? 'Active' : 'Hidden'}</span>
-                      <button
-                        type="button"
-                        className={btnGhost}
-                        disabled={busy}
-                        onClick={() => act(async () => {
-                          await apiRequest('/admin/content.php', {
-                            method: 'POST',
-                            body: JSON.stringify({ action: 'delete_faq', id: f.id }),
-                          });
-                        }, 'FAQ deleted.')}
-                      >
-                        Delete
-                      </button>
+                      <StatusBadge status={f.active ? 'active' : 'pending'} label={f.active ? 'Active' : 'Hidden'} />
+                      <button type="button" className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'delete_faq', id: f.id }) });
+                      }, 'FAQ deleted.')}>Delete</button>
                     </div>
                   </li>
                 ))}
               </ul>
-              <form
-                className="mt-4 space-y-2 border-t border-[#eee7d9] pt-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const form = e.currentTarget;
-                  const data = new FormData(form);
-                  const question = String(data.get('question') ?? '').trim();
-                  const answer = String(data.get('answer') ?? '').trim();
-                  if (!question || !answer) return;
-                  act(async () => {
-                    await apiRequest('/admin/content.php', {
-                      method: 'POST',
-                      body: JSON.stringify({ action: 'save_faq', question, answer, active: true, sortOrder: content.faqs.length }),
-                    });
-                    form.reset();
-                  }, 'FAQ saved.');
-                }}
-              >
+              <form className="mt-4 space-y-2 border-t border-[#efe8dc] pt-4" onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const data = new FormData(form);
+                const question = String(data.get('question') ?? '').trim();
+                const answer = String(data.get('answer') ?? '').trim();
+                if (!question || !answer) return;
+                act(async () => {
+                  await apiRequest('/admin/content.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'save_faq', question, answer, active: true, sortOrder: content.faqs.length }),
+                  });
+                  form.reset();
+                }, 'FAQ saved.');
+              }}>
                 <h3 className="text-[13px] font-semibold">Add FAQ</h3>
-                <input className={input} name="question" placeholder="Question" required />
-                <textarea className={`${input} h-24 py-2`} name="answer" placeholder="Answer" required />
-                <button type="submit" className={btn} disabled={busy}>Save FAQ</button>
+                <FormField label="Question"><input className={adminInputClass} name="question" required /></FormField>
+                <FormField label="Answer"><textarea className={`${adminInputClass} h-24 py-2`} name="answer" required /></FormField>
+                <button type="submit" className={adminBtnClass} disabled={busy}>Save FAQ</button>
               </form>
-            </section>
+            </AdminCard>
 
-            <section className={card}>
-              <h2 className="text-[15px] font-semibold">Contact, social & SEO</h2>
-              <form className="mt-3 grid gap-2 sm:grid-cols-2" onSubmit={(e) => {
+            <AdminCard>
+              <AdminCardHeader title="Contact, social & SEO" />
+              <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
                 e.preventDefault();
                 const form = new FormData(e.currentTarget);
                 const settings: Record<string, string> = {};
@@ -1041,17 +1164,14 @@ export const AdminWorkspacePage: React.FC = () => {
                   ['seo_title', 'SEO title'],
                   ['seo_description', 'SEO description'],
                 ].map(([key, labelText]) => (
-                  <label key={key} className="text-[12px] font-medium text-[#6b6252]">
-                    {labelText}
-                    <input name={key} defaultValue={content.settings[key] ?? ''} className={`${input} mt-1`} />
-                  </label>
+                  <FormField key={key} label={labelText}>
+                    <input name={key} defaultValue={content.settings[key] ?? ''} className={adminInputClass} />
+                  </FormField>
                 ))}
-
-                <div className="sm:col-span-2 mt-2 border-t border-[#eee7d9] pt-4">
+                <div className="sm:col-span-2 mt-2 border-t border-[#efe8dc] pt-4">
                   <h3 className="text-[13.5px] font-semibold">Booking schedule</h3>
-                  <p className="mt-1 text-[12px] leading-relaxed text-[#6b6252]">
-                    These values generate the public time slots. Leave them empty to show an honest
-                    “not published yet” state instead of inventing times.
+                  <p className="mt-1 text-[12px] leading-relaxed text-[#6f675c]">
+                    These values generate the public time slots. Leave them empty to show an honest “not published yet” state.
                   </p>
                 </div>
                 {[
@@ -1060,41 +1180,33 @@ export const AdminWorkspacePage: React.FC = () => {
                   ['booking_slot_minutes', 'Slot length in minutes (e.g. 60)'],
                   ['booking_timezone', 'Timezone (e.g. Africa/Accra)'],
                 ].map(([key, labelText]) => (
-                  <label key={key} className="text-[12px] font-medium text-[#6b6252]">
-                    {labelText}
-                    <input name={key} defaultValue={content.settings[key] ?? ''} className={`${input} mt-1`} />
-                  </label>
+                  <FormField key={key} label={labelText}>
+                    <input name={key} defaultValue={content.settings[key] ?? ''} className={adminInputClass} />
+                  </FormField>
                 ))}
-                <label className="sm:col-span-2 text-[12px] font-medium text-[#6b6252]">
-                  Booking notice shown above the booking steps
-                  <textarea
-                    name="booking_notice"
-                    defaultValue={content.settings.booking_notice ?? ''}
-                    rows={3}
-                    className={`${input} mt-1 h-auto py-2`}
-                    placeholder="e.g. Same-day requests are reviewed by phone before confirmation."
-                  />
-                </label>
-                <div className="sm:col-span-2"><button className={btn} type="submit" disabled={busy}>Save settings</button></div>
+                <FormField className="sm:col-span-2" label="Booking notice shown above the booking steps">
+                  <textarea name="booking_notice" defaultValue={content.settings.booking_notice ?? ''} rows={3} className={`${adminInputClass} h-auto py-2`} />
+                </FormField>
+                <div className="sm:col-span-2"><button className={adminBtnClass} type="submit" disabled={busy}>Save settings</button></div>
               </form>
-            </section>
+            </AdminCard>
           </div>
 
-          <form className={`${card} space-y-3`} onSubmit={(e) => {
+          <form className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3 self-start" onSubmit={(e) => {
             e.preventDefault();
             act(async () => {
               await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'save_page', ...pageEditor }) });
             }, 'Draft saved.');
           }}>
-            <h2 className="text-[15px] font-semibold">{pageEditor.id ? 'Edit page' : 'New page'}</h2>
-            <input className={input} placeholder="Title" value={pageEditor.title} onChange={(e) => setPageEditor({ ...pageEditor, title: e.target.value })} required />
-            <input className={input} placeholder="Slug (about-us)" value={pageEditor.slug} onChange={(e) => setPageEditor({ ...pageEditor, slug: e.target.value })} required />
-            <textarea className={`${input} h-48 py-2 font-mono text-[12.5px]`} placeholder="Page HTML" value={pageEditor.bodyHtml} onChange={(e) => setPageEditor({ ...pageEditor, bodyHtml: e.target.value })} />
-            <input className={input} placeholder="SEO title" value={pageEditor.seoTitle} onChange={(e) => setPageEditor({ ...pageEditor, seoTitle: e.target.value })} />
-            <input className={input} placeholder="SEO description" value={pageEditor.seoDescription} onChange={(e) => setPageEditor({ ...pageEditor, seoDescription: e.target.value })} />
-            <button className={btn} type="submit" disabled={busy}>Save draft</button>
+            <h2 className="font-display text-[22px] font-semibold">{pageEditor.id ? 'Edit page' : 'New page'}</h2>
+            <FormField label="Title"><input className={adminInputClass} value={pageEditor.title} onChange={(e) => setPageEditor({ ...pageEditor, title: e.target.value })} required /></FormField>
+            <FormField label="Slug"><input className={adminInputClass} value={pageEditor.slug} onChange={(e) => setPageEditor({ ...pageEditor, slug: e.target.value })} required /></FormField>
+            <FormField label="Page HTML"><textarea className={`${adminInputClass} h-48 py-2 font-mono text-[12.5px]`} value={pageEditor.bodyHtml} onChange={(e) => setPageEditor({ ...pageEditor, bodyHtml: e.target.value })} /></FormField>
+            <FormField label="SEO title"><input className={adminInputClass} value={pageEditor.seoTitle} onChange={(e) => setPageEditor({ ...pageEditor, seoTitle: e.target.value })} /></FormField>
+            <FormField label="SEO description"><input className={adminInputClass} value={pageEditor.seoDescription} onChange={(e) => setPageEditor({ ...pageEditor, seoDescription: e.target.value })} /></FormField>
+            <button className={adminBtnClass} type="submit" disabled={busy}>Save draft</button>
             {pageEditor.id ? (
-              <button type="button" className={btnGhost} disabled={busy} onClick={() => act(async () => {
+              <button type="button" className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
                 await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'save_page', ...pageEditor }) });
                 await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'publish_page', id: pageEditor.id }) });
               }, 'Page saved and published.')}>Save & publish</button>
@@ -1106,7 +1218,7 @@ export const AdminWorkspacePage: React.FC = () => {
       {tab === 'media' ? (
         <div className="space-y-4">
           <form
-            className={`${card} flex flex-wrap items-end gap-3`}
+            className="rounded-[16px] border border-dashed border-[#d9cfba] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] flex flex-wrap items-end gap-3"
             onSubmit={(e) => {
               e.preventDefault();
               const fileInput = e.currentTarget.elements.namedItem('file') as HTMLInputElement | null;
@@ -1123,61 +1235,53 @@ export const AdminWorkspacePage: React.FC = () => {
               }, 'Image uploaded.');
             }}
           >
-            <label className="min-w-[220px] flex-1 text-[12px] font-medium text-[#6b6252]">
-              Upload image (JPEG, PNG or WebP · max 5MB)
-              <input name="file" type="file" accept="image/jpeg,image/png,image/webp" className={`${input} mt-1 py-2`} />
-            </label>
-            <button className={btn} type="submit" disabled={busy}>Upload</button>
+            <FormField className="min-w-[220px] flex-1" label="Upload image" hint="JPEG, PNG or WebP · max 5MB">
+              <input name="file" type="file" accept="image/jpeg,image/png,image/webp" className={`${adminInputClass} py-2`} />
+            </FormField>
+            <button className={adminBtnClass} type="submit" disabled={busy}>Upload</button>
           </form>
 
           {media.length === 0 ? (
-            <p className={`${card} text-[13px] text-[#6b6252]`}>No media yet. Upload images for services and pages.</p>
+            <AdminCard>
+              <EmptyState title="No media yet." description="Upload images for services and pages." className="py-8" />
+            </AdminCard>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {media.map((m) => (
-                <article key={m.id} className={`${card} space-y-3 p-3`}>
-                  <div className="aspect-[4/3] overflow-hidden rounded-xl bg-[#f2eee4]">
+                <article key={m.id} className="rounded-[16px] border border-[#e8e0d2] bg-white p-3 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3">
+                  <div className="aspect-[4/3] overflow-hidden rounded-[14px] bg-[#faf7f2]">
                     <img src={m.url} alt={m.altText || m.filename} className="h-full w-full object-cover" />
                   </div>
                   <div>
-                    <p className="truncate text-[13px] font-medium">{m.filename}</p>
-                    <p className="text-[11.5px] text-[#6b6252]">{Math.round(m.sizeBytes / 1024)} KB · {m.mime}</p>
+                    <p className="truncate text-[13px] font-semibold">{m.filename}</p>
+                    <p className="text-[11.5px] text-[#6f675c]">{Math.round(m.sizeBytes / 1024)} KB · {m.mime}{m.createdAt ? ` · ${formatScheduledDate(m.createdAt)}` : ''}</p>
                     <button
                       type="button"
-                      className="mt-1 text-[12px] font-semibold text-[#8a6a1f] hover:underline"
+                      className="mt-1 text-[12px] font-semibold text-[#8F6D35] hover:underline"
                       onClick={() => {
                         void navigator.clipboard?.writeText(m.url);
                         setNotice('URL copied.');
                       }}
                     >
-                      Copy URL
+                      Copy / use URL
                     </button>
                   </div>
-                  <form
-                    className="flex gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const alt = new FormData(e.currentTarget).get('altText');
-                      act(async () => {
-                        await apiRequest('/admin/media.php', {
-                          method: 'PATCH',
-                          body: JSON.stringify({ id: m.id, altText: String(alt ?? '') }),
-                        });
-                      }, 'Alt text saved.');
-                    }}
-                  >
-                    <input name="altText" defaultValue={m.altText} className={input} placeholder="Alt text" aria-label={`Alt text for ${m.filename}`} />
-                    <button className={btnGhost} type="submit" disabled={busy}>Save</button>
+                  <form className="flex gap-2" onSubmit={(e) => {
+                    e.preventDefault();
+                    const alt = new FormData(e.currentTarget).get('altText');
+                    act(async () => {
+                      await apiRequest('/admin/media.php', {
+                        method: 'PATCH',
+                        body: JSON.stringify({ id: m.id, altText: String(alt ?? '') }),
+                      });
+                    }, 'Alt text saved.');
+                  }}>
+                    <input name="altText" defaultValue={m.altText} className={adminInputClass} placeholder="Alt text" aria-label={`Alt text for ${m.filename}`} />
+                    <button className={adminBtnGhostClass} type="submit" disabled={busy}>Save</button>
                   </form>
-                  <button
-                    className={btnGhost}
-                    disabled={busy}
-                    onClick={() => act(async () => {
-                      await apiRequest('/admin/media.php', { method: 'DELETE', body: JSON.stringify({ id: m.id }) });
-                    }, 'Media deleted.')}
-                  >
-                    Delete
-                  </button>
+                  <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                    await apiRequest('/admin/media.php', { method: 'DELETE', body: JSON.stringify({ id: m.id }) });
+                  }, 'Media deleted.')}>Delete</button>
                 </article>
               ))}
             </div>
@@ -1188,63 +1292,63 @@ export const AdminWorkspacePage: React.FC = () => {
       {tab === 'updates' ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
           <div className="space-y-4">
-            <section className={`${card} overflow-x-auto p-0`}>
-              <div className="px-5 py-4"><h2 className="text-[15px] font-semibold">Announcements</h2></div>
-              <table className="w-full min-w-[640px]">
-                <thead className="bg-[#f2eee4]"><tr><th className={th}>Title</th><th className={th}>Status</th><th className={th}>Updated</th><th className={th}>Actions</th></tr></thead>
-                <tbody>
-                  {announcements.length === 0 ? (
-                    <tr><td className={`${td} text-[#6b6252]`} colSpan={4}>No announcements yet.</td></tr>
-                  ) : announcements.map((a) => (
-                    <tr key={a.id} className="border-t border-[#eee7d9]">
-                      <td className={td}>
-                        <button type="button" className="text-left font-medium hover:underline" onClick={() => setAnnouncementForm({ id: a.id, title: a.title, bodyHtml: a.bodyHtml })}>
-                          {a.title}
+            <AdminCard padding={false}>
+              <div className="px-5 py-4"><h2 className="font-display text-[22px] font-semibold">Announcements</h2></div>
+              <DataTable
+                headers={['Title', 'Status', 'Updated', 'Actions']}
+                empty={announcements.length === 0}
+                emptyTitle="No announcements yet."
+                minWidth="640px"
+              >
+                {announcements.map((a) => (
+                  <DataRow key={a.id}>
+                    <DataCell>
+                      <button type="button" className="text-left font-semibold hover:underline" onClick={() => setAnnouncementForm({ id: a.id, title: a.title, bodyHtml: a.bodyHtml })}>
+                        {a.title}
+                      </button>
+                    </DataCell>
+                    <DataCell><StatusBadge status={a.status} /></DataCell>
+                    <DataCell>{a.updatedAt ?? a.createdAt ?? '—'}</DataCell>
+                    <DataCell>
+                      <div className="flex flex-wrap gap-2">
+                        <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                          await apiRequest('/admin/announcements.php', {
+                            method: 'POST',
+                            body: JSON.stringify({ action: a.status === 'published' ? 'unpublish' : 'publish', id: a.id }),
+                          });
+                        }, a.status === 'published' ? 'Announcement unpublished.' : 'Announcement published.')}>
+                          {a.status === 'published' ? 'Unpublish' : 'Publish'}
                         </button>
-                      </td>
-                      <td className={td}><span className={badgeFor(a.status)}>{a.status}</span></td>
-                      <td className={td}>{a.updatedAt ?? a.createdAt ?? '—'}</td>
-                      <td className={td}>
-                        <div className="flex flex-wrap gap-2">
-                          <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                            await apiRequest('/admin/announcements.php', {
-                              method: 'POST',
-                              body: JSON.stringify({ action: a.status === 'published' ? 'unpublish' : 'publish', id: a.id }),
-                            });
-                          }, a.status === 'published' ? 'Announcement unpublished.' : 'Announcement published.')}>
-                            {a.status === 'published' ? 'Unpublish' : 'Publish'}
-                          </button>
-                          <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
-                            await apiRequest('/admin/announcements.php', { method: 'POST', body: JSON.stringify({ action: 'delete', id: a.id }) });
-                            if (announcementForm.id === a.id) setAnnouncementForm({ id: '', title: '', bodyHtml: '' });
-                          }, 'Announcement deleted.')}>Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
+                        <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                          await apiRequest('/admin/announcements.php', { method: 'POST', body: JSON.stringify({ action: 'delete', id: a.id }) });
+                          if (announcementForm.id === a.id) setAnnouncementForm({ id: '', title: '', bodyHtml: '' });
+                        }, 'Announcement deleted.')}>Delete</button>
+                      </div>
+                    </DataCell>
+                  </DataRow>
+                ))}
+              </DataTable>
+            </AdminCard>
 
-            <section className={card}>
-              <h2 className="text-[15px] font-semibold">Recent CMS changes</h2>
+            <AdminCard>
+              <AdminCardHeader title="Recent CMS changes" subtitle="Real content, media and service events only." />
               {recentChanges.length === 0 ? (
-                <p className="mt-2 text-[13px] text-[#6b6252]">No recent content, media or service changes.</p>
+                <EmptyState title="No recent activity yet." description="CMS changes will appear here after edits." className="py-8" />
               ) : (
-                <ul className="mt-3 divide-y divide-[#eee7d9]">
+                <ul className="divide-y divide-[#efe8dc]">
                   {recentChanges.map((c) => (
                     <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-[13px]">
                       <span className="truncate">{c.action}{c.entityType ? ` · ${c.entityType}` : ''}</span>
-                      <span className="shrink-0 text-[12px] text-[#6b6252]">{c.createdAt}</span>
+                      <span className="shrink-0 text-[12px] text-[#6f675c]">{c.createdAt}</span>
                     </li>
                   ))}
                 </ul>
               )}
-            </section>
+            </AdminCard>
           </div>
 
           <form
-            className={`${card} space-y-3 self-start`}
+            className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3 self-start"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -1256,12 +1360,12 @@ export const AdminWorkspacePage: React.FC = () => {
               }, 'Announcement saved.');
             }}
           >
-            <h2 className="text-[15px] font-semibold">{announcementForm.id ? 'Edit announcement' : 'New announcement'}</h2>
-            <input className={input} placeholder="Title" value={announcementForm.title} onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })} required />
-            <textarea className={`${input} h-40 py-2`} placeholder="Body HTML" value={announcementForm.bodyHtml} onChange={(e) => setAnnouncementForm({ ...announcementForm, bodyHtml: e.target.value })} />
-            <button className={btn} type="submit" disabled={busy}>Save draft</button>
+            <h2 className="font-display text-[22px] font-semibold">{announcementForm.id ? 'Edit announcement' : 'New announcement'}</h2>
+            <FormField label="Title"><input className={adminInputClass} value={announcementForm.title} onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })} required /></FormField>
+            <FormField label="Body HTML"><textarea className={`${adminInputClass} h-40 py-2`} value={announcementForm.bodyHtml} onChange={(e) => setAnnouncementForm({ ...announcementForm, bodyHtml: e.target.value })} /></FormField>
+            <button className={adminBtnClass} type="submit" disabled={busy}>Save draft</button>
             {announcementForm.id ? (
-              <button type="button" className={btnGhost} onClick={() => setAnnouncementForm({ id: '', title: '', bodyHtml: '' })}>Clear</button>
+              <button type="button" className={adminBtnGhostClass} onClick={() => setAnnouncementForm({ id: '', title: '', bodyHtml: '' })}>Clear</button>
             ) : null}
           </form>
         </div>
@@ -1269,23 +1373,23 @@ export const AdminWorkspacePage: React.FC = () => {
 
       {tab === 'system' && overview ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <section className={card}>
-            <h2 className="text-[15px] font-semibold">Email delivery</h2>
-            <p className="mt-2 text-[13px] text-[#6b6252]">
+          <AdminCard>
+            <AdminCardHeader title="Email delivery" />
+            <p className="text-[13px] text-[#6f675c]">
               Transport: <strong>{overview.mail.transport}</strong> ·{' '}
               {overview.mail.configured ? 'configured' : 'not configured'}
             </p>
             {overview.mail.missing.length > 0 ? (
-              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900">
+              <p className="mt-3 rounded-[12px] border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900">
                 Missing keys: {overview.mail.missing.join(', ')}. Values are never shown here.
               </p>
             ) : (
               <p className="mt-3 text-[12.5px] text-emerald-800">All required SMTP keys are present. Values stay server-side.</p>
             )}
-          </section>
+          </AdminCard>
 
           <form
-            className={`${card} space-y-3`}
+            className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -1296,8 +1400,8 @@ export const AdminWorkspacePage: React.FC = () => {
               }, 'Booking settings saved.');
             }}
           >
-            <h2 className="text-[15px] font-semibold">Booking settings</h2>
-            <p className="text-[12.5px] text-[#6b6252]">
+            <h2 className="font-display text-[22px] font-semibold">Booking settings</h2>
+            <p className="text-[12.5px] text-[#6f675c]">
               Controls public availability. Empty values keep the booking UI honest instead of inventing slots.
             </p>
             {([
@@ -1306,48 +1410,46 @@ export const AdminWorkspacePage: React.FC = () => {
               ['booking_slot_minutes', 'Slot length (minutes)'],
               ['booking_timezone', 'Timezone'],
             ] as const).map(([key, labelText]) => (
-              <label key={key} className="block text-[12px] font-medium text-[#6b6252]">
-                {labelText}
+              <FormField key={key} label={labelText}>
                 <input
-                  className={`${input} mt-1`}
+                  className={adminInputClass}
                   value={bookingSettings[key]}
                   onChange={(e) => setBookingSettings({ ...bookingSettings, [key]: e.target.value })}
                 />
-              </label>
+              </FormField>
             ))}
-            <label className="block text-[12px] font-medium text-[#6b6252]">
-              Booking notice
+            <FormField label="Booking notice">
               <textarea
-                className={`${input} mt-1 h-24 py-2`}
+                className={`${adminInputClass} h-24 py-2`}
                 value={bookingSettings.booking_notice}
                 onChange={(e) => setBookingSettings({ ...bookingSettings, booking_notice: e.target.value })}
               />
-            </label>
-            <button className={btn} type="submit" disabled={busy}>Save booking settings</button>
+            </FormField>
+            <button className={adminBtnClass} type="submit" disabled={busy}>Save booking settings</button>
           </form>
         </div>
       ) : null}
 
       {tab === 'audit' ? (
-        <div className={`${card} overflow-x-auto p-0`}>
-          <table className="w-full min-w-[720px]">
-            <thead className="bg-[#f2eee4]"><tr><th className={th}>When</th><th className={th}>Action</th><th className={th}>Entity</th><th className={th}>Actor</th></tr></thead>
-            <tbody>
-              {audit.length === 0 ? (
-                <tr><td className={`${td} text-[#6b6252]`} colSpan={4}>No admin actions recorded yet.</td></tr>
-              ) : audit.map((a) => (
-                <tr key={a.id} className="border-t border-[#eee7d9]">
-                  <td className={td}>{a.createdAt}</td>
-                  <td className={td}>{a.action}</td>
-                  <td className={td}>{a.entityType ?? '—'}{a.entityId ? <span className="block text-[11.5px] text-[#6b6252]">{a.entityId}</span> : null}</td>
-                  <td className={td}>{a.actor ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminCard padding={false}>
+          <DataTable
+            headers={['When', 'Action', 'Entity', 'Actor']}
+            empty={audit.length === 0}
+            emptyTitle="No admin actions recorded yet."
+            minWidth="720px"
+          >
+            {audit.map((a) => (
+              <DataRow key={a.id}>
+                <DataCell>{a.createdAt}</DataCell>
+                <DataCell>{a.action}</DataCell>
+                <DataCell>{a.entityType ?? '—'}{a.entityId ? <span className="block text-[11.5px] text-[#6f675c]">{a.entityId}</span> : null}</DataCell>
+                <DataCell>{a.actor ?? '—'}</DataCell>
+              </DataRow>
+            ))}
+          </DataTable>
+        </AdminCard>
       ) : null}
-    </WorkspaceShell>
+    </AdminShell>
   );
 };
 
