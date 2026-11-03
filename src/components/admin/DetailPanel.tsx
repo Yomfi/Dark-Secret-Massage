@@ -11,6 +11,7 @@ export const DetailPanel: React.FC<{
   emptyTitle?: string;
   emptyDescription?: string;
   children?: React.ReactNode;
+  className?: string;
 }> = ({
   open,
   title,
@@ -19,19 +20,28 @@ export const DetailPanel: React.FC<{
   emptyTitle = 'Nothing selected',
   emptyDescription = 'Select a row to inspect details.',
   children,
+  className = '',
 }) => (
-  <aside className="rounded-[16px] border border-[#e8e0d2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] self-start lg:sticky lg:top-24">
+  <aside
+    className={`min-w-0 max-w-full self-start overflow-hidden rounded-[16px] border border-[#e8e0d2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] xl:sticky xl:top-24 ${className}`}
+  >
     {!open ? (
       <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDescription} className="py-16" />
     ) : (
-      <div className="p-5 sm:p-6">
+      <div className="max-w-full overflow-x-hidden p-5 sm:p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
-          {title ? <h2 className="font-display text-[24px] font-semibold tracking-tight text-[#161616]">{title}</h2> : <span />}
+          {title ? (
+            <h2 className="min-w-0 flex-1 truncate font-display text-[22px] font-semibold tracking-tight text-[#161616] sm:text-[24px]">
+              {title}
+            </h2>
+          ) : (
+            <span />
+          )}
           {onClose ? (
             <button
               type="button"
               onClick={onClose}
-              className="grid h-10 w-10 place-items-center rounded-xl border border-[#e8e0d2] text-[#6f675c] hover:bg-[#faf7f2]"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#e8e0d2] text-[#6f675c] hover:bg-[#faf7f2]"
               aria-label="Close detail panel"
             >
               <X className="h-4 w-4" />

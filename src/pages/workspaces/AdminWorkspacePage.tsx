@@ -23,11 +23,13 @@ import {
   DetailPanel,
   EmptyState,
   FormField,
+  RowMenu,
   SearchInput,
   StatCard,
   StatusBadge,
   adminBtnClass,
   adminBtnGhostClass,
+  adminBtnGhostCompactClass,
   adminInputClass,
   type AdminNavGroup,
   type AdminNavItem,
@@ -487,7 +489,7 @@ export const AdminWorkspacePage: React.FC = () => {
             <StatCard title="Completed Value" value={`GHS ${overview.counts.revenueCompleted.toLocaleString()}`} icon={ClipboardList} />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <AdminCard>
               <AdminCardHeader
                 title="Provider Review Queue"
@@ -539,8 +541,8 @@ export const AdminWorkspacePage: React.FC = () => {
             </AdminCard>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <AdminCard>
+          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+            <AdminCard className="min-w-0">
               <AdminCardHeader title="Recent Activity" subtitle="Real booking events from the platform." />
               {overview.recentBookings.length === 0 ? (
                 <EmptyState
@@ -590,41 +592,55 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'customers' ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_minmax(300px,400px)]">
-          <AdminCard padding={false}>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
+          <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
             <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
-              <SearchInput className="min-w-[220px] flex-1" value={search} onChange={setSearch} placeholder="Search name, email or phone" onSubmit={() => run(load)} />
+              <SearchInput className="min-w-0 flex-1 basis-[180px]" value={search} onChange={setSearch} placeholder="Search name, email or phone" onSubmit={() => run(load)} />
               <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Search</button>
             </div>
             <DataTable
-              headers={['Customer', 'Email', 'Phone', 'Account', 'Joined', 'Actions']}
+              headers={['Customer', 'Email', 'Phone', 'Account', 'Joined', '']}
               empty={customers.length === 0}
               emptyIcon={Users}
               emptyTitle="No customers yet."
               emptyDescription="Customer accounts will appear here after registration."
-              minWidth="880px"
+              minWidth="720px"
             >
               {customers.map((c) => (
                 <DataRow key={c.id} selected={selectedCustomerId === c.id}>
-                  <DataCell>
-                    <button type="button" className="text-left" onClick={() => openCustomer(c.id)}>
-                      <p className="font-semibold hover:underline">{c.name || '—'}</p>
+                  <DataCell className="w-[22%]">
+                    <button type="button" className="min-w-0 max-w-full text-left" onClick={() => openCustomer(c.id)}>
+                      <p className="truncate font-semibold hover:underline">{c.name || '—'}</p>
                       <p className="text-[12px] text-[#6f675c]">{c.emailVerified ? 'Email confirmed' : 'Email unconfirmed'}</p>
                     </button>
                   </DataCell>
-                  <DataCell>{c.email}</DataCell>
-                  <DataCell>{c.phone || '—'}</DataCell>
+                  <DataCell truncate title={c.email}>{c.email}</DataCell>
+                  <DataCell truncate title={c.phone || undefined}>{c.phone || '—'}</DataCell>
                   <DataCell><StatusBadge status={c.status} /></DataCell>
-                  <DataCell>{c.createdAt ? formatScheduledDate(c.createdAt) : '—'}</DataCell>
-                  <DataCell>
-                    <div className="flex flex-wrap gap-2">
-                      <button className={adminBtnGhostClass} onClick={() => openCustomer(c.id)}>Open</button>
-                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
-                        await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: c.id, action: c.status === 'suspended' ? 'activate' : 'suspend' }) });
-                      }, c.status === 'suspended' ? 'Customer reactivated.' : 'Customer suspended.')}>
-                        {c.status === 'suspended' ? 'Reactivate' : 'Suspend'}
-                      </button>
-                    </div>
+                  <DataCell className="whitespace-nowrap">{c.createdAt ? formatScheduledDate(c.createdAt) : '—'}</DataCell>
+                  <DataCell className="w-[1%] whitespace-nowrap">
+                    <RowMenu
+                      primaryLabel="Open"
+                      primaryVariant="ghost"
+                      onPrimary={() => openCustomer(c.id)}
+                      items={[
+                        {
+                          label: c.status === 'suspended' ? 'Reactivate' : 'Suspend',
+                          disabled: busy,
+                          onClick: () => {
+                            void act(async () => {
+                              await apiRequest('/admin/customers.php', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                  userId: c.id,
+                                  action: c.status === 'suspended' ? 'activate' : 'suspend',
+                                }),
+                              });
+                            }, c.status === 'suspended' ? 'Customer reactivated.' : 'Customer suspended.');
+                          },
+                        },
+                      ]}
+                    />
                   </DataCell>
                 </DataRow>
               ))}
@@ -645,7 +661,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   <StatusBadge status={customerDetail.customer.status} />
                   {customerDetail.customer.emailVerified ? <StatusBadge status="verified" label="Email verified" /> : null}
                 </div>
-                <p className="text-[13px] text-[#6f675c]">{customerDetail.customer.email}</p>
+                <p className="truncate text-[13px] text-[#6f675c]" title={customerDetail.customer.email}>{customerDetail.customer.email}</p>
 
                 <form className="space-y-2 border-t border-[#efe8dc] pt-4" onSubmit={(e) => {
                   e.preventDefault();
@@ -751,61 +767,88 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'providers' ? (
-        <AdminCard padding={false}>
+        <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
           <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
-            <select className={`${adminInputClass} max-w-[200px]`} value={kind} onChange={(e) => setKind(e.target.value)}>
+            <select className={`${adminInputClass} max-w-[160px] shrink-0`} value={kind} onChange={(e) => setKind(e.target.value)}>
               <option value="all">All providers</option>
               <option value="individual">Individuals</option>
               <option value="agency">Agencies</option>
             </select>
-            <SearchInput className="min-w-[200px] flex-1" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
+            <SearchInput className="min-w-0 flex-1 basis-[160px]" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
             <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
           </div>
           <DataTable
-            headers={['Provider', 'Type', 'Verification', 'Public status', 'Account', 'Actions']}
+            headers={['Provider', 'Type', 'Verification', 'Public', 'Account', '']}
             empty={providers.length === 0}
             emptyIcon={UserRound}
             emptyTitle="No providers yet."
             emptyDescription="Provider profiles will appear after registration."
-            minWidth="960px"
+            minWidth="780px"
           >
             {providers.map((p) => (
               <DataRow key={p.userId}>
-                <DataCell>
-                  <div className="flex items-center gap-3">
+                <DataCell className="w-[28%]">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
                       {initials(p.displayName)}
                     </span>
-                    <div>
-                      <p className="font-semibold">{p.displayName}</p>
-                      <p className="text-[12px] text-[#6f675c]">{p.email} · {p.city || '—'}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{p.displayName}</p>
+                      <p className="truncate text-[12px] text-[#6f675c]" title={`${p.email} · ${p.city || '—'}`}>
+                        {p.email} · {p.city || '—'}
+                      </p>
                     </div>
                   </div>
                 </DataCell>
                 <DataCell className="capitalize">{p.kind}</DataCell>
                 <DataCell>
                   <StatusBadge status={p.verificationStatus} />
-                  <p className="mt-1 text-[12px] text-[#6f675c]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
+                  <p className="mt-1 truncate text-[12px] text-[#6f675c]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
                 </DataCell>
                 <DataCell>
-                  <StatusBadge status={p.published ? 'published' : 'pending'} label={p.published ? 'Published' : 'Not Published'} />
+                  <StatusBadge status={p.published ? 'published' : 'pending'} label={p.published ? 'Published' : 'Draft'} />
                 </DataCell>
                 <DataCell><StatusBadge status={p.accountStatus} /></DataCell>
-                <DataCell>
-                  <div className="flex flex-wrap gap-2">
-                    {p.published ? (
-                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
-                        await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: 'unpublish' }) });
-                      }, 'Provider unpublished.')}>Unpublish</button>
-                    ) : (
-                      <button className={adminBtnClass} disabled={busy} onClick={() => act(async () => {
-                        await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: 'publish' }) });
-                      }, 'Provider published.')}>Publish</button>
-                    )}
-                    <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
-                      await apiRequest('/admin/providers.php', { method: 'POST', body: JSON.stringify({ providerUserId: p.userId, action: p.accountStatus === 'suspended' ? 'activate' : 'suspend' }) });
-                    }, 'Provider account updated.')}>{p.accountStatus === 'suspended' ? 'Reactivate' : 'Suspend'}</button>
-                  </div>
+                <DataCell className="w-[1%] whitespace-nowrap">
+                  <RowMenu
+                    primaryLabel={p.published ? 'Unpublish' : 'Publish'}
+                    primaryVariant={p.published ? 'ghost' : 'solid'}
+                    primaryDisabled={busy}
+                    onPrimary={() => {
+                      void act(async () => {
+                        await apiRequest('/admin/providers.php', {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            providerUserId: p.userId,
+                            action: p.published ? 'unpublish' : 'publish',
+                          }),
+                        });
+                      }, p.published ? 'Provider unpublished.' : 'Provider published.');
+                    }}
+                    items={[
+                      {
+                        label: p.accountStatus === 'suspended' ? 'Reactivate' : 'Suspend',
+                        disabled: busy,
+                        onClick: () => {
+                          void act(async () => {
+                            await apiRequest('/admin/providers.php', {
+                              method: 'POST',
+                              body: JSON.stringify({
+                                providerUserId: p.userId,
+                                action: p.accountStatus === 'suspended' ? 'activate' : 'suspend',
+                              }),
+                            });
+                          }, 'Provider account updated.');
+                        },
+                      },
+                      {
+                        label: 'Review',
+                        onClick: () => {
+                          window.location.assign('/admin/provider-reviews');
+                        },
+                      },
+                    ]}
+                  />
                 </DataCell>
               </DataRow>
             ))}
@@ -817,21 +860,22 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'staff' ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="space-y-4">
-            <AdminCard padding={false}>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
+          <div className="min-w-0 space-y-4">
+            <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
               <DataTable
                 headers={['Staff', 'Role', 'Status', 'Actions']}
                 empty={staff.length === 0}
                 emptyIcon={ClipboardList}
                 emptyTitle="No staff accounts yet."
                 emptyDescription="Invite a teammate to collaborate in this workspace."
+                minWidth="560px"
               >
                 {staff.map((s) => (
                   <DataRow key={s.userId}>
-                    <DataCell>
-                      <p className="font-semibold">{s.name || '—'}</p>
-                      <p className="text-[12px] text-[#6f675c]">{s.email}</p>
+                    <DataCell className="min-w-0">
+                      <p className="truncate font-semibold">{s.name || '—'}</p>
+                      <p className="truncate text-[12px] text-[#6f675c]" title={s.email}>{s.email}</p>
                     </DataCell>
                     <DataCell>
                       <select
@@ -894,7 +938,7 @@ export const AdminWorkspacePage: React.FC = () => {
           </div>
 
           <form
-            className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3 self-start"
+            className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -924,15 +968,15 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'services' ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-          <AdminCard padding={false}>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
+          <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
             <DataTable
               headers={['Service', 'Duration', 'Price', 'Status', '']}
               empty={services.length === 0}
               emptyIcon={Sparkles}
               emptyTitle="No services yet."
               emptyDescription="Add your first service to publish it on the website."
-              minWidth="680px"
+              minWidth="620px"
             >
               {services.map((s) => (
                 <DataRow key={s.id}>
@@ -956,7 +1000,7 @@ export const AdminWorkspacePage: React.FC = () => {
             </DataTable>
           </AdminCard>
 
-          <form className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3" onSubmit={(e) => {
+          <form className="min-w-0 space-y-3 rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
             e.preventDefault();
             act(async () => {
               await apiRequest('/admin/services.php', { method: 'POST', body: JSON.stringify(serviceForm) });
@@ -983,10 +1027,10 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'bookings' ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_minmax(280px,400px)]">
-          <AdminCard padding={false}>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
+          <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
             <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
-              <select className={`${adminInputClass} max-w-[220px]`} value={status} onChange={(e) => setStatus(e.target.value)}>
+              <select className={`${adminInputClass} max-w-[200px] shrink-0`} value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
                 {['pending', 'confirmed', 'reschedule_requested', 'completed', 'cancelled', 'no_show'].map((s) => (
                   <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
@@ -995,32 +1039,39 @@ export const AdminWorkspacePage: React.FC = () => {
               <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
             </div>
             <DataTable
-              headers={['Booking', 'Customer', 'When', 'Provider', 'Status', 'Action']}
+              headers={['Booking', 'Customer', 'When', 'Provider', 'Status', '']}
               empty={bookings.length === 0}
               emptyIcon={CalendarDays}
               emptyTitle="No bookings yet."
               emptyDescription="Customer booking requests will appear in this table."
-              minWidth="920px"
+              minWidth="760px"
             >
               {bookings.map((b) => (
                 <DataRow key={b.id} selected={selectedBookingId === b.id}>
-                  <DataCell>
-                    <button type="button" className="text-left" onClick={() => openBooking(b.id)}>
-                      <p className="font-semibold hover:underline">{b.serviceName}</p>
-                      <p className="text-[12px] text-[#6f675c]">{b.reference ?? b.id}</p>
+                  <DataCell className="min-w-0">
+                    <button type="button" className="min-w-0 max-w-full text-left" onClick={() => openBooking(b.id)}>
+                      <p className="truncate font-semibold hover:underline">{b.serviceName}</p>
+                      <p className="truncate text-[12px] text-[#6f675c]">{b.reference ?? b.id}</p>
                     </button>
                   </DataCell>
-                  <DataCell>{b.customerName || '—'}<p className="text-[12px] text-[#6f675c]">{b.customerEmail}</p></DataCell>
-                  <DataCell>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6f675c]">{b.timeSlot ?? ''}</p></DataCell>
-                  <DataCell>{b.providerName ?? 'Unassigned'}{b.teamMemberName ? <p className="text-[12px] text-[#6f675c]">{b.teamMemberName}</p> : null}</DataCell>
+                  <DataCell className="min-w-0">
+                    <p className="truncate">{b.customerName || '—'}</p>
+                    <p className="truncate text-[12px] text-[#6f675c]" title={b.customerEmail ?? undefined}>{b.customerEmail}</p>
+                  </DataCell>
+                  <DataCell className="whitespace-nowrap">{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6f675c]">{b.timeSlot ?? ''}</p></DataCell>
+                  <DataCell className="min-w-0">
+                    <p className="truncate">{b.providerName ?? 'Unassigned'}</p>
+                    {b.teamMemberName ? <p className="truncate text-[12px] text-[#6f675c]">{b.teamMemberName}</p> : null}
+                  </DataCell>
                   <DataCell><StatusBadge status={b.status} /></DataCell>
-                  <DataCell>
-                    <div className="flex flex-wrap gap-2">
-                      <button className={adminBtnGhostClass} onClick={() => openBooking(b.id)}>Detail</button>
+                  <DataCell className="w-[1%] whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button className={adminBtnGhostCompactClass} onClick={() => openBooking(b.id)}>Detail</button>
                       <select
-                        className="h-11 rounded-[12px] border border-[#e0d7c8] bg-white px-2 text-[12.5px]"
+                        className="h-9 max-w-[120px] rounded-[10px] border border-[#e0d7c8] bg-white px-2 text-[12px]"
                         defaultValue=""
                         disabled={busy}
+                        aria-label={`Change status for ${b.reference ?? b.id}`}
                         onChange={(e) => {
                           const next = e.target.value;
                           if (!next) return;
@@ -1029,7 +1080,7 @@ export const AdminWorkspacePage: React.FC = () => {
                           }, 'Booking status updated.');
                         }}
                       >
-                        <option value="">Change status…</option>
+                        <option value="">Status…</option>
                         {['confirmed', 'completed', 'cancelled', 'no_show', 'reschedule_requested'].map((s) => (
                           <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
                         ))}
@@ -1081,8 +1132,8 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'content' && content ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-          <div className="space-y-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5">
+          <div className="min-w-0 space-y-4">
             <AdminCard padding={false}>
               <div className="flex items-center justify-between border-b border-[#efe8dc] px-5 py-4">
                 <h2 className="font-display text-[22px] font-semibold">Pages</h2>
@@ -1192,7 +1243,7 @@ export const AdminWorkspacePage: React.FC = () => {
             </AdminCard>
           </div>
 
-          <form className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3 self-start" onSubmit={(e) => {
+          <form className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
             e.preventDefault();
             act(async () => {
               await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'save_page', ...pageEditor }) });
@@ -1243,7 +1294,7 @@ export const AdminWorkspacePage: React.FC = () => {
 
           {media.length === 0 ? (
             <AdminCard>
-              <EmptyState title="No media yet." description="Upload images for services and pages." className="py-8" />
+              <EmptyState title="No media uploaded yet." description="Upload images for services and pages." className="py-8" />
             </AdminCard>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -1290,15 +1341,15 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'updates' ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-          <div className="space-y-4">
-            <AdminCard padding={false}>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
+          <div className="min-w-0 space-y-4">
+            <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
               <div className="px-5 py-4"><h2 className="font-display text-[22px] font-semibold">Announcements</h2></div>
               <DataTable
                 headers={['Title', 'Status', 'Updated', 'Actions']}
                 empty={announcements.length === 0}
                 emptyTitle="No announcements yet."
-                minWidth="640px"
+                minWidth="560px"
               >
                 {announcements.map((a) => (
                   <DataRow key={a.id}>
@@ -1348,7 +1399,7 @@ export const AdminWorkspacePage: React.FC = () => {
           </div>
 
           <form
-            className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3 self-start"
+            className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {

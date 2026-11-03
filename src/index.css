@@ -48,6 +48,21 @@
     font-family: var(--font-ms-display);
   }
 
+  .ms-admin {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .ms-admin * {
+    box-sizing: border-box;
+  }
+
+  .ms-admin table {
+    max-width: 100%;
+  }
+
   body {
     background-color: var(--ms-surface);
     color: #e8e4dc;

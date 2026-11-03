@@ -9,6 +9,12 @@ export const adminBtnClass =
 export const adminBtnGhostClass =
   'inline-flex h-12 items-center justify-center gap-2 rounded-[14px] border border-[#e0d7c8] bg-white px-4 text-[13px] font-semibold text-[#161616] transition hover:bg-[#faf7f2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08B4B] disabled:opacity-55';
 
+export const adminBtnCompactClass =
+  'inline-flex h-9 min-h-9 items-center justify-center gap-1.5 rounded-[10px] bg-[#161616] px-2.5 text-[12px] font-semibold text-[#F7F4EF] transition hover:bg-[#2a2a2a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08B4B] disabled:opacity-55';
+
+export const adminBtnGhostCompactClass =
+  'inline-flex h-9 min-h-9 items-center justify-center gap-1.5 rounded-[10px] border border-[#e0d7c8] bg-white px-2.5 text-[12px] font-semibold text-[#161616] transition hover:bg-[#faf7f2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08B4B] disabled:opacity-55';
+
 export const FormField: React.FC<{
   label: string;
   htmlFor?: string;

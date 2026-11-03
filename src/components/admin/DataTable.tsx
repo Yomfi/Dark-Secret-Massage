@@ -17,16 +17,16 @@ export const DataTable: React.FC<{
   emptyTitle = 'Nothing here yet',
   emptyDescription,
   emptyIcon,
-  minWidth = '720px',
+  minWidth = '640px',
 }) => (
-  <div className="overflow-x-auto">
-    <table className="w-full" style={{ minWidth }}>
+  <div className="max-w-full overflow-x-auto">
+    <table className="w-full table-fixed" style={{ minWidth }}>
       <thead>
         <tr className="border-b border-[#efe8dc] bg-[#faf7f2]/80">
           {headers.map((h) => (
             <th
               key={h}
-              className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]"
+              className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52] sm:px-4"
             >
               {h}
             </th>
@@ -63,7 +63,22 @@ export const DataRow: React.FC<{
   </tr>
 );
 
-export const DataCell: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <td className={`px-4 py-3.5 align-top text-[13.5px] text-[#161616] ${className}`}>{children}</td>;
+export const DataCell: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  truncate?: boolean;
+}> = ({ children, className = '', title, truncate }) => (
+  <td
+    className={`px-3 py-3.5 align-middle text-[13.5px] text-[#161616] sm:px-4 ${
+      truncate ? 'min-w-0 max-w-0 overflow-hidden' : ''
+    } ${className}`}
+    title={title}
+  >
+    {truncate ? (
+      <div className="min-w-0 truncate whitespace-nowrap">{children}</div>
+    ) : (
+      children
+    )}
+  </td>
+);
