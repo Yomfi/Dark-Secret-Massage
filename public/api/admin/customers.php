@@ -54,8 +54,8 @@ if ($method === 'GET') {
             $n = $pdo->prepare(
                 'SELECT n.id, n.body, n.created_at, u.first_name, u.last_name, u.email
                  FROM customer_notes n
-                 LEFT JOIN users u ON u.id = n.author_user_id
-                 WHERE n.customer_user_id = ?
+                 LEFT JOIN users u ON CAST(u.id AS BINARY) = CAST(n.author_user_id AS BINARY)
+                 WHERE CAST(n.customer_user_id AS BINARY) = CAST(? AS BINARY)
                  ORDER BY n.created_at DESC LIMIT 40'
             );
             $n->execute([$detailId]);
@@ -74,7 +74,9 @@ if ($method === 'GET') {
         if (ds_table_exists('privacy_requests')) {
             $p = $pdo->prepare(
                 'SELECT id, request_type, status, notes, created_at, resolved_at
-                 FROM privacy_requests WHERE customer_user_id = ? ORDER BY created_at DESC LIMIT 20'
+                 FROM privacy_requests
+                 WHERE CAST(customer_user_id AS BINARY) = CAST(? AS BINARY)
+                 ORDER BY created_at DESC LIMIT 20'
             );
             $p->execute([$detailId]);
             $privacy = array_map(static function (array $pr): array {

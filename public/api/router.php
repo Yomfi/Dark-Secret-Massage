@@ -50,7 +50,8 @@ if (isset($fileMap[$normalized . '.php'])) {
 // Only real PHP files below public endpoint directories are executable; config,
 // vendor, sql and storage stay unreachable.
 $segment = explode('/', ltrim($normalized, '/'))[0] ?? '';
-$endpointDirs = ['auth', 'admin', 'provider'];
+// `tools` is intentionally omitted — CLI scripts must stay unreachable over HTTP.
+$endpointDirs = ['auth', 'admin', 'provider', 'customer', 'public'];
 if (in_array($segment, $endpointDirs, true) && str_ends_with($normalized, '.php')) {
     $candidate = __DIR__ . $normalized;
     if (is_file($candidate) && !str_contains($normalized, '..')) {

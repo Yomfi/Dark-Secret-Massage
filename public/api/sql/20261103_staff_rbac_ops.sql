@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS staff_profiles (
   created_at DATETIME(3) NOT NULL,
   updated_at DATETIME(3) NOT NULL,
   PRIMARY KEY (user_id)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS staff_invitations (
   id VARCHAR(191) NOT NULL,

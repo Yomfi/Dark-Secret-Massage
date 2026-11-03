@@ -43,7 +43,7 @@ if ($method === 'GET') {
         "SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.account_status, u.created_at,
                 sp.staff_role, sp.is_active, sp.invited_at, sp.activated_at
          FROM users u
-         LEFT JOIN staff_profiles sp ON sp.user_id = u.id
+         LEFT JOIN staff_profiles sp ON CAST(sp.user_id AS BINARY) = CAST(u.id AS BINARY)
          WHERE u.role IN ('admin','moderator','support_admin')
             OR sp.user_id IS NOT NULL
          ORDER BY u.created_at DESC

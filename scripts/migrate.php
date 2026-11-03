@@ -4,10 +4,16 @@ declare(strict_types=1);
 /**
  * Explicit, repeatable database migration. Never invoked by an HTTP request.
  *
- *   1. Back up the database first (hPanel → Databases → Export, or
- *      `mysqldump --single-transaction ... > backup.sql`).
- *   2. Read what would run:      php scripts/migrate.php
- *   3. Apply:                    php scripts/migrate.php --apply
+ * Local / repo checkout:
+ *   1. Back up first (mysqldump or hPanel export).
+ *   2. Dry run:  php scripts/migrate.php
+ *   3. Apply:    php scripts/migrate.php --apply --backup=/path/to/dump.sql
+ *
+ * Deployed Hostinger tree (dist/ → public_html) does NOT include scripts/.
+ * Use the CLI-only twin that ships inside the API tools directory (HTTP denied):
+ *   cd ~/domains/massagerstudio.com/public_html
+ *   php api/tools/migrate.php
+ *   php api/tools/migrate.php --apply --backup=/home/USER/backups/ms-YYYYMMDD.sql --confirm-production
  *
  * The migration is additive and idempotent: tables, columns and indexes are
  * created only when missing, so a second run changes nothing.

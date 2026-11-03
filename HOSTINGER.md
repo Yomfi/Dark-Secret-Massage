@@ -293,6 +293,61 @@ registration flow, and a provider can submit for admin review without paying any
 
 `.htaccess` maps clean `/api/...` URLs to `.php` and **never** rewrites `/api` to React `index.html`.
 
+## CMS / staff schema migration (CLI only, release 4d85ba0+)
+
+Hostinger publishes `dist/` → `public_html`. The repo `scripts/` directory is **not**
+deployed. Use the CLI twin that ships as `api/tools/migrate.php` (blocked over HTTP by
+`api/.htaccess` and by a `PHP_SAPI !== 'cli'` guard).
+
+### 1. Backup (required before apply)
+
+In hPanel → Databases → **Export** the `u190513960_darksecret` database to a downloadable
+`.sql` file, **or** over SSH:
+
+```bash
+mkdir -p ~/backups
+mysqldump -u u190513960_darksecret -p \
+  --single-transaction --routines --triggers \
+  u190513960_darksecret > ~/backups/ms-$(date +%Y%m%d-%H%M%S).sql
+ls -la ~/backups/ms-*.sql   # must be non-empty
+```
+
+### 2. Dry run (no writes)
+
+```bash
+cd ~/domains/massagerstudio.com/public_html
+php api/tools/migrate.php
+```
+
+If `DS_DB_PASS` is missing from SSH, the script prompts once (TTY only).
+
+### 3. Apply (only with a verified backup file on the host)
+
+```bash
+cd ~/domains/massagerstudio.com/public_html
+php api/tools/migrate.php \
+  --apply \
+  --backup=$HOME/backups/ms-YYYYMMDD-HHMMSS.sql \
+  --confirm-production
+```
+
+Expect `MIGRATION_OK` and unchanged `preserve_before` / `preserve_after` row counts for
+`users`, `bookings`, `cms_pages`, `cms_faqs`, `services`, `media_assets`. A second run
+must also print `MIGRATION_OK` (idempotent).
+
+Do **not** run apply without `--backup=` pointing at a real non-empty dump. Do **not**
+expose `api/tools/*` over HTTP (already forbidden).
+
+### 4. After migrate
+
+- Sign in at `/admin` → Staff / Updates / customer notes / media alt text
+- `GET /api/public/content.php` includes published `announcements`
+- `GET /api/config-status.php` still shows mail configured (SMTP secrets never returned)
+- `GET /api/health.php` stays healthy
+
+Local checkout equivalent: `php scripts/migrate.php --apply --backup=...`
+(same logic; requires a repo checkout).
+
 ## Checklist
 
 1. Stop / remove the Node.js web app for this domain (if still present)
@@ -301,9 +356,10 @@ registration flow, and a provider can submit for admin review without paying any
 4. Confirm the host supplies `DS_DB_PASS` (no config file in the deployed tree), then create
    the out-of-tree SMTP config as described in "Deploy-safe secrets"
 5. Confirm tables exist (or run `schema_if_missing.sql`)
-6. Verify `https://massagerstudio.com/api/health`
-7. Verify `https://massagerstudio.com/` loads the React app
-8. Verify register / login / me / logout
+6. For staff/CMS tables (4d85ba0+): backup, then `php api/tools/migrate.php --apply ...`
+7. Verify `https://massagerstudio.com/api/health`
+8. Verify `https://massagerstudio.com/` loads the React app
+9. Verify register / login / me / logout
 
 ## Local frontend
 

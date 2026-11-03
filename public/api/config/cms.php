@@ -186,7 +186,7 @@ function ds_cms_migrate(): void
             created_at DATETIME(3) NOT NULL,
             updated_at DATETIME(3) NOT NULL,
             PRIMARY KEY (user_id)
-        )',
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
         'CREATE TABLE IF NOT EXISTS staff_invitations (
             id VARCHAR(191) NOT NULL,
             email VARCHAR(255) NOT NULL,
@@ -197,7 +197,7 @@ function ds_cms_migrate(): void
             accepted_at DATETIME(3) NULL,
             created_at DATETIME(3) NOT NULL,
             PRIMARY KEY (id)
-        )',
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
         'CREATE TABLE IF NOT EXISTS customer_notes (
             id VARCHAR(191) NOT NULL,
             customer_user_id VARCHAR(191) NOT NULL,
@@ -205,7 +205,7 @@ function ds_cms_migrate(): void
             body TEXT NOT NULL,
             created_at DATETIME(3) NOT NULL,
             PRIMARY KEY (id)
-        )',
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
         'CREATE TABLE IF NOT EXISTS privacy_requests (
             id VARCHAR(191) NOT NULL,
             customer_user_id VARCHAR(191) NOT NULL,
@@ -218,7 +218,7 @@ function ds_cms_migrate(): void
             created_at DATETIME(3) NOT NULL,
             updated_at DATETIME(3) NOT NULL,
             PRIMARY KEY (id)
-        )',
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
         'CREATE TABLE IF NOT EXISTS cms_announcements (
             id VARCHAR(191) NOT NULL,
             title VARCHAR(255) NOT NULL,
@@ -230,7 +230,7 @@ function ds_cms_migrate(): void
             created_at DATETIME(3) NOT NULL,
             updated_at DATETIME(3) NOT NULL,
             PRIMARY KEY (id)
-        )',
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
     ];
 
     foreach ($statements as $sql) {

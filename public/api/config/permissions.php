@@ -140,13 +140,15 @@ function ds_count_active_full_admins(?string $excludeUserId = null): int
     $count = 0;
 
     if (ds_table_exists('staff_profiles')) {
+        // CAST AS BINARY avoids utf8mb4_unicode_ci vs utf8mb4_0900_ai_ci clashes
+        // between legacy Prisma users rows and newly created staff tables.
         $sql = "SELECT COUNT(*) FROM staff_profiles sp
-                INNER JOIN users u ON u.id = sp.user_id
+                INNER JOIN users u ON CAST(u.id AS BINARY) = CAST(sp.user_id AS BINARY)
                 WHERE sp.staff_role = 'full_admin' AND sp.is_active = 1
                   AND COALESCE(u.account_status, 'active') = 'active'";
         $params = [];
         if ($excludeUserId) {
-            $sql .= ' AND sp.user_id <> ?';
+            $sql .= ' AND CAST(sp.user_id AS BINARY) <> CAST(? AS BINARY)';
             $params[] = $excludeUserId;
         }
         $stmt = $pdo->prepare($sql);
@@ -157,7 +159,7 @@ function ds_count_active_full_admins(?string $excludeUserId = null): int
     // Legacy admins without staff_profiles still count.
     if (ds_table_exists('staff_profiles')) {
         $sql = "SELECT COUNT(*) FROM users u
-                LEFT JOIN staff_profiles sp ON sp.user_id = u.id
+                LEFT JOIN staff_profiles sp ON CAST(sp.user_id AS BINARY) = CAST(u.id AS BINARY)
                 WHERE u.role = 'admin'
                   AND COALESCE(u.account_status, 'active') = 'active'
                   AND sp.user_id IS NULL";
