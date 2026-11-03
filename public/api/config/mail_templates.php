@@ -246,5 +246,36 @@ function ds_mail_template(string $template, array $vars): ?array
         ];
     }
 
+    if ($template === 'staff_invite') {
+        $link = (string) ($vars['link'] ?? '');
+        $roleLabel = (string) ($vars['role_label'] ?? 'staff');
+        $hours = (int) ($vars['expires_hours'] ?? 72);
+
+        $html = '<p style="margin:0 0 12px 0;">' . ds_mail_greeting($firstName) . '</p>'
+            . '<p style="margin:0 0 8px 0;">You have been invited to join the Massager Studio operations team'
+            . ' as <strong>' . ds_mail_e($roleLabel) . '</strong>.</p>'
+            . '<p style="margin:0 0 8px 0;">Use the button below to set your password and open the staff workspace.</p>'
+            . ds_mail_button($link, 'Accept invitation')
+            . ds_mail_link_fallback($link)
+            . '<p style="margin:18px 0 0 0;font-size:13px;color:#6b6778;">This invitation expires in '
+            . $hours . ' hours. If you were not expecting this email, you can ignore it.</p>';
+
+        $text = "Hi " . ($firstName !== '' ? $firstName : 'there') . ",\n\n"
+            . "You have been invited to join the Massager Studio operations team as " . $roleLabel . ".\n\n"
+            . "Accept invitation: " . $link . "\n\n"
+            . "This invitation expires in " . $hours . " hours.\n\n"
+            . "Massager Studio\n" . ds_app_url() . "\n";
+
+        return [
+            'subject' => 'You are invited to Massager Studio staff',
+            'html' => ds_mail_layout(
+                'Set your password and join the Massager Studio operations team.',
+                'Staff invitation',
+                $html
+            ),
+            'text' => $text,
+        ];
+    }
+
     return null;
 }

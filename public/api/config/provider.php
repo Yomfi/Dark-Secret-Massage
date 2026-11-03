@@ -20,8 +20,7 @@ function ds_require_provider(): array
 function ds_require_admin(): array
 {
     $user = ds_require_user();
-    $role = (string) ($user['role'] ?? '');
-    if (!in_array($role, ['admin', 'moderator', 'support_admin'], true)) {
+    if (ds_staff_role_for_user($user) === null) {
         ds_error(403, 'FORBIDDEN', 'Admin access required.');
     }
     return $user;

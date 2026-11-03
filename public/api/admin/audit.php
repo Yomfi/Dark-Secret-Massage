@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-ds_require_admin();
+ds_require_permission('audit.read');
 if (!ds_cms_ready()) {
     ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }

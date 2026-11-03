@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { Alert, Button, TextField } from '../components/ui';
+import { workspaceHomeForUser } from '../lib/workspaceHome';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -25,7 +26,13 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const user = await login(identifier.trim(), password);
-      if (!user.onboardingChoice && redirect === '/onboarding') {
+      const isStaffOrProvider =
+        Boolean(user.isStaff) ||
+        ['admin', 'moderator', 'support_admin', 'massage_provider', 'provider'].includes(user.role);
+
+      if (redirect === '/onboarding' && isStaffOrProvider) {
+        navigate(workspaceHomeForUser(user), { replace: true });
+      } else if (!user.onboardingChoice && redirect === '/onboarding') {
         navigate('/onboarding', { replace: true });
       } else {
         navigate(redirect, { replace: true });

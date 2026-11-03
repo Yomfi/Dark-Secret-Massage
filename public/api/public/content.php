@@ -18,5 +18,6 @@ ds_success([
     'settings' => ds_cms_public_settings(),
     'pages' => ds_cms_published_pages(),
     'faqs' => ds_cms_active_faqs(),
+    'announcements' => ds_cms_published_announcements(),
     'services' => ds_public_services(true),
 ]);

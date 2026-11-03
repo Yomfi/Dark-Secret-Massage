@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-$admin = ds_require_admin();
+$admin = ds_require_permission('documents.read');
 ds_require_method('GET');
 
 if (!ds_table_exists('provider_identity_documents')) {

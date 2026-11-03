@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-$admin = ds_require_admin();
+$admin = ds_require_permission('media.read');
 if (!ds_cms_ready()) {
     ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
@@ -24,12 +24,30 @@ if ($method === 'GET') {
             'filename' => (string) $r['filename'],
             'mime' => (string) ($r['mime'] ?? ''),
             'sizeBytes' => (int) $r['size_bytes'],
+            'altText' => (string) ($r['alt_text'] ?? ''),
             'createdAt' => $r['created_at'],
         ], $rows),
     ]);
 }
 
+if ($method === 'PATCH') {
+    ds_require_same_origin();
+    ds_require_permission('media.write');
+    $body = ds_json_body();
+    $id = trim((string) ($body['id'] ?? ''));
+    $alt = trim((string) ($body['altText'] ?? ''));
+    if ($id === '') {
+        ds_error(400, 'VALIDATION_ERROR', 'Media id is required.');
+    }
+    if (ds_column_exists('media_assets', 'alt_text')) {
+        ds_pdo()->prepare('UPDATE media_assets SET alt_text = ? WHERE id = ?')->execute([$alt !== '' ? $alt : null, $id]);
+    }
+    ds_audit('media.alt_updated', 'media_asset', $id, ['altText' => $alt], $admin['id']);
+    ds_success(['id' => $id, 'altText' => $alt]);
+}
+
 ds_require_same_origin();
+ds_require_permission('media.write');
 
 if ($method === 'DELETE') {
     $body = ds_json_body();

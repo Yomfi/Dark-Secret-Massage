@@ -61,7 +61,8 @@ export async function apiRequest<T>(
   const url = `${API_BASE}${normalized}`;
 
   const headers = new Headers(options.headers || {});
-  if (options.body && !headers.has('Content-Type')) {
+  // FormData must keep the browser-set multipart boundary — never force JSON.
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -170,6 +171,10 @@ export type AuthUserDto = {
   emailVerifiedAt: string | null;
   phoneVerifiedAt: string | null;
   onboardingChoice: string | null;
+  staffRole?: string | null;
+  staffRoleLabel?: string | null;
+  permissions?: string[];
+  isStaff?: boolean;
 };
 
 export type RegisterBody = {

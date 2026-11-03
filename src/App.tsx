@@ -22,6 +22,8 @@ import { ProviderDashboardPage } from './pages/ProviderDashboardPage';
 import { AdminProviderReviewsPage } from './pages/AdminProviderReviewsPage';
 import { AdminWorkspacePage } from './pages/workspaces/AdminWorkspacePage';
 import { ProviderWorkspacePage } from './pages/workspaces/ProviderWorkspacePage';
+import { StaffAcceptInvitePage } from './pages/StaffAcceptInvitePage';
+import { StaffRoute } from './components/StaffRoute';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { PublicSiteProvider } from './components/PublicSite';
 import { BookingRequest } from './lib/bookingAndMatchmaking';
@@ -152,8 +154,23 @@ function AppRoutes() {
       <Route path="/provider/register" element={<ProviderRegisterPage />} />
       <Route path="/provider/dashboard" element={<ProviderDashboardPage />} />
       <Route path="/provider/workspace" element={<ProviderWorkspacePage />} />
-      <Route path="/admin" element={<AdminWorkspacePage />} />
-      <Route path="/admin/provider-reviews" element={<AdminProviderReviewsPage />} />
+      <Route path="/staff/accept" element={<StaffAcceptInvitePage />} />
+      <Route
+        path="/admin"
+        element={
+          <StaffRoute>
+            <AdminWorkspacePage />
+          </StaffRoute>
+        }
+      />
+      <Route
+        path="/admin/provider-reviews"
+        element={
+          <StaffRoute>
+            <AdminProviderReviewsPage />
+          </StaffRoute>
+        }
+      />
       <Route
         path="/account"
         element={

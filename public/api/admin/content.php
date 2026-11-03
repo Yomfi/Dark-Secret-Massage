@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-$admin = ds_require_admin();
+$admin = ds_require_permission('content.read');
 if (!ds_cms_ready()) {
     ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
@@ -80,6 +80,7 @@ if ($method === 'GET') {
 
 ds_require_method('POST');
 ds_require_same_origin();
+ds_require_permission('content.write');
 ds_rate_limit('admin_content', 60, 15 * 60);
 
 $body = ds_json_body();

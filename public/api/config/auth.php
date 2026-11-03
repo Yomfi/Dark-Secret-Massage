@@ -185,7 +185,7 @@ function ds_user_dto(array $user): array
     };
 
     // Never expose password hashes.
-    return [
+    $dto = [
         'id' => $user['id'],
         'email' => $user['email'],
         'phone' => $user['phone'] ?? '',
@@ -197,4 +197,14 @@ function ds_user_dto(array $user): array
         'phoneVerifiedAt' => $iso($user['phone_verified_at'] ?? null),
         'onboardingChoice' => $user['onboarding_choice'] ?? null,
     ];
+
+    if (function_exists('ds_staff_permissions_payload')) {
+        $staff = ds_staff_permissions_payload($user);
+        $dto['staffRole'] = $staff['staffRole'];
+        $dto['staffRoleLabel'] = $staff['staffRoleLabel'];
+        $dto['permissions'] = $staff['permissions'];
+        $dto['isStaff'] = $staff['isStaff'];
+    }
+
+    return $dto;
 }

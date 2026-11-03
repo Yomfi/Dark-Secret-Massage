@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-$admin = ds_require_admin();
+$admin = ds_require_permission('dashboard.read');
 ds_require_method('GET');
 
 if (!ds_cms_ready()) {
@@ -129,6 +129,16 @@ ds_success([
         'configured' => ds_mail_configured(),
         'transport' => ds_mail_settings()['transport'],
         'missing' => ds_mail_missing_settings(),
+        // Secrets are never returned — only presence/absence of keys.
     ],
-    'viewer' => ['id' => $admin['id'], 'role' => $admin['role']],
+    'membership' => [
+        'feeEnabled' => ds_membership_fee_enabled(),
+        'feeAmount' => ds_membership_fee_amount(),
+        'currency' => ds_membership_currency(),
+        'free' => !ds_membership_fee_enabled(),
+    ],
+    'viewer' => array_merge(
+        ['id' => $admin['id'], 'role' => $admin['role']],
+        ds_staff_permissions_payload($admin)
+    ),
 ]);

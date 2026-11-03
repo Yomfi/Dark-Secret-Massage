@@ -9,11 +9,18 @@ export type WorkspaceNavItem = {
   badge?: number;
 };
 
+export type WorkspaceNavGroup = {
+  label: string;
+  items: WorkspaceNavItem[];
+};
+
 type Props = {
   roleLabel: string;
   title: string;
   subtitle?: string;
+  breadcrumbs?: string[];
   nav: WorkspaceNavItem[];
+  navGroups?: WorkspaceNavGroup[];
   active: string;
   onNavigate: (id: string) => void;
   children: React.ReactNode;
@@ -28,7 +35,9 @@ export const WorkspaceShell: React.FC<Props> = ({
   roleLabel,
   title,
   subtitle,
+  breadcrumbs,
   nav,
+  navGroups,
   active,
   onNavigate,
   children,
@@ -36,45 +45,71 @@ export const WorkspaceShell: React.FC<Props> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
+  const groups: WorkspaceNavGroup[] =
+    navGroups && navGroups.length > 0
+      ? navGroups
+      : [{ label: '', items: nav }];
+
+  const renderItem = (item: WorkspaceNavItem) => {
+    const isActive = item.id === active;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => {
+          onNavigate(item.id);
+          setOpen(false);
+        }}
+        aria-current={isActive ? 'page' : undefined}
+        className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 text-left text-[13.5px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a227] ${
+          isActive
+            ? 'bg-[#c9a227] text-[#16130f]'
+            : 'text-[#cfc6b4] hover:bg-white/[0.06] hover:text-white'
+        }`}
+      >
+        <span>{item.label}</span>
+        {typeof item.badge === 'number' && item.badge > 0 ? (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+              isActive ? 'bg-[#16130f] text-[#e5c17a]' : 'bg-[#c9a227]/20 text-[#e5c17a]'
+            }`}
+          >
+            {item.badge}
+          </span>
+        ) : null}
+      </button>
+    );
+  };
+
   const sidebar = (
-    <div className="flex h-full flex-col gap-6 bg-[#16130f] px-4 py-5 text-[#e9e2d3]">
-      <Link to="/" className="inline-flex min-h-11 items-center rounded-lg px-2" aria-label="Massager Studio home">
-        <BrandLogo variant="plate" withWordmark markHeight={26} />
-      </Link>
+    <div className="flex h-full flex-col gap-5 bg-[#16130f] px-4 py-5 text-[#e9e2d3]">
+      <div className="flex items-center justify-between gap-2">
+        <Link to="/" className="inline-flex min-h-11 items-center rounded-lg px-2" aria-label="Massager Studio home">
+          <BrandLogo variant="plate" withWordmark markHeight={26} />
+        </Link>
+        <button
+          type="button"
+          className="inline-grid h-10 w-10 place-items-center rounded-lg text-[#a89e8a] hover:text-white lg:hidden"
+          aria-label="Close navigation"
+          onClick={() => setOpen(false)}
+        >
+          <X className="h-5 w-5" aria-hidden />
+        </button>
+      </div>
 
       <p className="px-2 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-[#c9a227]">{roleLabel}</p>
 
-      <nav className="flex-1 space-y-1" aria-label={`${roleLabel} sections`}>
-        {nav.map((item) => {
-          const isActive = item.id === active;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                onNavigate(item.id);
-                setOpen(false);
-              }}
-              aria-current={isActive ? 'page' : undefined}
-              className={`flex min-h-12 w-full items-center justify-between gap-2 rounded-xl px-3 text-left text-[13.5px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a227] ${
-                isActive
-                  ? 'bg-[#c9a227] text-[#16130f]'
-                  : 'text-[#cfc6b4] hover:bg-white/[0.06] hover:text-white'
-              }`}
-            >
-              <span>{item.label}</span>
-              {typeof item.badge === 'number' && item.badge > 0 ? (
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                    isActive ? 'bg-[#16130f] text-[#e5c17a]' : 'bg-[#c9a227]/20 text-[#e5c17a]'
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
+      <nav className="flex-1 space-y-4 overflow-y-auto" aria-label={`${roleLabel} sections`}>
+        {groups.map((group) => (
+          <div key={group.label || 'main'}>
+            {group.label ? (
+              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7a7163]">
+                {group.label}
+              </p>
+            ) : null}
+            <div className="space-y-1">{group.items.map(renderItem)}</div>
+          </div>
+        ))}
       </nav>
 
       <Link
@@ -117,7 +152,13 @@ export const WorkspaceShell: React.FC<Props> = ({
                 <Menu className="h-5 w-5" aria-hidden />
               </button>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a7a52]">{roleLabel}</p>
+                {breadcrumbs && breadcrumbs.length > 0 ? (
+                  <p className="truncate text-[11px] text-[#8a7a52]">
+                    {breadcrumbs.join(' / ')}
+                  </p>
+                ) : (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a7a52]">{roleLabel}</p>
+                )}
                 <h1 className="truncate text-[19px] font-semibold tracking-tight">{title}</h1>
                 {subtitle ? <p className="truncate text-[12.5px] text-[#6b6252]">{subtitle}</p> : null}
               </div>

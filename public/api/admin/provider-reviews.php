@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-$admin = ds_require_admin();
+$admin = ds_require_permission('reviews.read');
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
 if (!ds_table_exists('provider_verification')) {
@@ -70,6 +70,7 @@ if ($method === 'GET') {
 }
 
 ds_require_method('POST');
+ds_require_permission('reviews.write');
 ds_rate_limit('admin_provider_review', 60, 15 * 60);
 
 $body = ds_json_body();
@@ -102,6 +103,7 @@ if ($action === 'approve') {
         )->execute([$now, $providerUserId]);
     }
 
+    ds_audit('provider.review_approved', 'provider', $providerUserId, ['notes' => $notes], $admin['id']);
     ds_success(['verificationStatus' => 'verified']);
 }
 
@@ -117,6 +119,10 @@ if ($action === 'reject') {
         $now,
         $providerUserId,
     ]);
+    ds_audit('provider.review_rejected', 'provider', $providerUserId, [
+        'reason' => $reason,
+        'notes' => $notes,
+    ], $admin['id']);
     ds_success(['verificationStatus' => 'rejected']);
 }
 
@@ -132,4 +138,8 @@ $pdo->prepare(
     $providerUserId,
 ]);
 
+ds_audit('provider.review_changes_requested', 'provider', $providerUserId, [
+    'reason' => $reason,
+    'notes' => $notes,
+], $admin['id']);
 ds_success(['verificationStatus' => 'changes_requested']);

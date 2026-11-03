@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
-$admin = ds_require_admin();
+$admin = ds_require_permission('bookings.read');
 if (!ds_cms_ready()) {
     ds_error(503, 'SCHEMA_NOT_MIGRATED', 'This area needs the database migration. Run: php scripts/migrate.php --apply');
 }
@@ -45,6 +45,11 @@ if ($method === 'GET') {
         $dto['providerName'] = $row['provider_name'] ?? null;
         $dto['teamMemberName'] = $row['team_name'] ?? null;
         $dto['events'] = $events;
+        // Completion never implies payment — surface an explicit empty payment ledger.
+        $dto['paymentRecords'] = [];
+        $dto['paymentNote'] =
+            'No booking payment ledger is recorded for this appointment. '
+            . 'Completed status is operational only and does not mean the booking was paid.';
         ds_success(['booking' => $dto]);
     }
 
@@ -102,6 +107,7 @@ if ($method === 'GET') {
 
 ds_require_method('POST');
 ds_require_same_origin();
+ds_require_permission('bookings.write');
 ds_rate_limit('admin_bookings', 120, 15 * 60);
 
 $body = ds_json_body();

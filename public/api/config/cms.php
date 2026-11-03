@@ -162,6 +162,7 @@ function ds_cms_migrate(): void
             filename VARCHAR(255) NOT NULL,
             mime VARCHAR(100) NULL,
             size_bytes INT NOT NULL DEFAULT 0,
+            alt_text VARCHAR(255) NULL,
             uploaded_by VARCHAR(191) NULL,
             created_at DATETIME(3) NOT NULL,
             PRIMARY KEY (id)
@@ -174,6 +175,61 @@ function ds_cms_migrate(): void
             note VARCHAR(255) NULL,
             created_at DATETIME(3) NOT NULL,
             PRIMARY KEY (email)
+        )',
+        'CREATE TABLE IF NOT EXISTS staff_profiles (
+            user_id VARCHAR(191) NOT NULL,
+            staff_role VARCHAR(40) NOT NULL DEFAULT \'support\',
+            is_active INT NOT NULL DEFAULT 1,
+            invited_by VARCHAR(191) NULL,
+            invited_at DATETIME(3) NULL,
+            activated_at DATETIME(3) NULL,
+            created_at DATETIME(3) NOT NULL,
+            updated_at DATETIME(3) NOT NULL,
+            PRIMARY KEY (user_id)
+        )',
+        'CREATE TABLE IF NOT EXISTS staff_invitations (
+            id VARCHAR(191) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            staff_role VARCHAR(40) NOT NULL,
+            token_hash VARCHAR(64) NOT NULL,
+            invited_by VARCHAR(191) NULL,
+            expires_at DATETIME(3) NOT NULL,
+            accepted_at DATETIME(3) NULL,
+            created_at DATETIME(3) NOT NULL,
+            PRIMARY KEY (id)
+        )',
+        'CREATE TABLE IF NOT EXISTS customer_notes (
+            id VARCHAR(191) NOT NULL,
+            customer_user_id VARCHAR(191) NOT NULL,
+            author_user_id VARCHAR(191) NULL,
+            body TEXT NOT NULL,
+            created_at DATETIME(3) NOT NULL,
+            PRIMARY KEY (id)
+        )',
+        'CREATE TABLE IF NOT EXISTS privacy_requests (
+            id VARCHAR(191) NOT NULL,
+            customer_user_id VARCHAR(191) NOT NULL,
+            request_type VARCHAR(20) NOT NULL,
+            status VARCHAR(24) NOT NULL DEFAULT \'open\',
+            notes TEXT NULL,
+            created_by VARCHAR(191) NULL,
+            resolved_by VARCHAR(191) NULL,
+            resolved_at DATETIME(3) NULL,
+            created_at DATETIME(3) NOT NULL,
+            updated_at DATETIME(3) NOT NULL,
+            PRIMARY KEY (id)
+        )',
+        'CREATE TABLE IF NOT EXISTS cms_announcements (
+            id VARCHAR(191) NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            body_html TEXT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT \'draft\',
+            published_at DATETIME(3) NULL,
+            created_by VARCHAR(191) NULL,
+            updated_by VARCHAR(191) NULL,
+            created_at DATETIME(3) NOT NULL,
+            updated_at DATETIME(3) NOT NULL,
+            PRIMARY KEY (id)
         )',
     ];
 
@@ -205,6 +261,15 @@ function ds_cms_migrate(): void
                 // Already registered.
             }
         }
+    }
+
+    if (ds_table_exists('media_assets') && !ds_column_exists('media_assets', 'alt_text')) {
+        try {
+            $pdo->exec('ALTER TABLE media_assets ADD COLUMN alt_text VARCHAR(255) NULL');
+        } catch (Throwable $e) {
+            // Concurrent alter.
+        }
+        ds_flush_table_columns('media_assets');
     }
 
     // Booking overlap protection: one active booking per provider/team/customer
@@ -358,6 +423,26 @@ function ds_cms_active_faqs(): array
             'id' => (string) $row['id'],
             'question' => (string) $row['question'],
             'answer' => (string) $row['answer'],
+        ];
+    }, $rows ?: []);
+}
+
+/** @return list<array<string, mixed>> */
+function ds_cms_published_announcements(): array
+{
+    if (!ds_table_exists('cms_announcements')) {
+        return [];
+    }
+    $rows = ds_pdo()->query(
+        "SELECT id, title, body_html, published_at FROM cms_announcements
+         WHERE status = 'published' ORDER BY published_at DESC LIMIT 20"
+    )->fetchAll();
+    return array_map(static function (array $row): array {
+        return [
+            'id' => (string) $row['id'],
+            'title' => (string) $row['title'],
+            'bodyHtml' => (string) ($row['body_html'] ?? ''),
+            'publishedAt' => $row['published_at'] ?? null,
         ];
     }, $rows ?: []);
 }

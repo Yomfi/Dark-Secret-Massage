@@ -71,6 +71,14 @@ if (ds_table_exists('qa_accounts')) {
     $problems[] = 'qa_accounts is missing';
 }
 
+foreach (['staff_profiles', 'staff_invitations', 'customer_notes', 'privacy_requests', 'cms_announcements'] as $table) {
+    if (!ds_table_exists($table)) {
+        $problems[] = "{$table} is missing";
+    } else {
+        echo "{$table}: ok\n";
+    }
+}
+
 $indexes = [];
 try {
     $stmt = $driver === 'sqlite'
