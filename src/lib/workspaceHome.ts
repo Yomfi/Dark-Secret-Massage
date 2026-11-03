@@ -1,9 +1,27 @@
 import type { AuthUserDto } from './api';
 
+/** Staff/CMS roles — customers and providers are never treated as staff here. */
+export function isStaffUser(user: AuthUserDto | null | undefined): boolean {
+  if (!user) return false;
+  return (
+    Boolean(user.isStaff) ||
+    ['admin', 'moderator', 'support_admin'].includes(user.role)
+  );
+}
+
+/** Safe post-login path for `/admin/login` only (admin routes, no open redirect). */
+export function safeAdminRedirect(raw: string | null | undefined): string {
+  const value = (raw || '').trim();
+  if (value.startsWith('/admin') && !value.startsWith('//') && !value.includes('\\')) {
+    return value;
+  }
+  return '/admin';
+}
+
 /** Post-login home path for the signed-in account. */
 export function workspaceHomeForUser(user: AuthUserDto | null | undefined): string {
   if (!user) return '/login';
-  if (user.isStaff || ['admin', 'moderator', 'support_admin'].includes(user.role)) {
+  if (isStaffUser(user)) {
     return '/admin';
   }
   if (user.role === 'massage_provider' || user.role === 'provider') {

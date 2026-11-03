@@ -23,6 +23,7 @@ import { AdminProviderReviewsPage } from './pages/AdminProviderReviewsPage';
 import { AdminWorkspacePage } from './pages/workspaces/AdminWorkspacePage';
 import { ProviderWorkspacePage } from './pages/workspaces/ProviderWorkspacePage';
 import { StaffAcceptInvitePage } from './pages/StaffAcceptInvitePage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
 import { StaffRoute } from './components/StaffRoute';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { PublicSiteProvider } from './components/PublicSite';
@@ -155,6 +156,8 @@ function AppRoutes() {
       <Route path="/provider/dashboard" element={<ProviderDashboardPage />} />
       <Route path="/provider/workspace" element={<ProviderWorkspacePage />} />
       <Route path="/staff/accept" element={<StaffAcceptInvitePage />} />
+      {/* Staff login must be public — do not wrap in StaffRoute or the catch-all will send it home. */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
         path="/admin"
         element={

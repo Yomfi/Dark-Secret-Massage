@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { workspaceHomeForUser } from '../lib/workspaceHome';
+import { isStaffUser, workspaceHomeForUser } from '../lib/workspaceHome';
 
-/** Guards admin/staff CMS routes. Session required; staff role required. */
+/** Guards admin/staff CMS routes. Unauthenticated → /admin/login; non-staff → their workspace. */
 export const StaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
@@ -18,14 +18,13 @@ export const StaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (!isAuthenticated) {
     const redirect = `${location.pathname}${location.search}`;
-    return <Navigate to={`/login?redirect=${encodeURIComponent(redirect)}`} replace />;
+    return (
+      <Navigate to={`/admin/login?redirect=${encodeURIComponent(redirect)}`} replace />
+    );
   }
 
-  const isStaff =
-    Boolean(user?.isStaff) ||
-    ['admin', 'moderator', 'support_admin'].includes(user?.role ?? '');
-
-  if (!isStaff) {
+  if (!isStaffUser(user)) {
+    // Deny CMS access without promoting the account.
     return <Navigate to={workspaceHomeForUser(user)} replace />;
   }
 
