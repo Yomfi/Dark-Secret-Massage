@@ -43,6 +43,7 @@ if ($providerProfileId !== '') {
         ds_error(404, 'NOT_FOUND', 'Provider not found.');
     }
     $publishedClause = ds_column_exists('provider_profiles', 'is_published') ? ' AND p.is_published = 1' : '';
+    $publishedClause .= ds_column_exists('provider_profiles', 'removed_at') ? ' AND p.removed_at IS NULL' : '';
     $stmt = ds_pdo()->prepare(
         "SELECT p.id, p.display_name FROM provider_profiles p
          INNER JOIN users u ON u.id = p.user_id

@@ -31,6 +31,7 @@ if ($method === 'GET') {
 }
 
 ds_require_same_origin();
+ds_assert_provider_can_operate($user);
 
 if ($method === 'DELETE') {
     $body = ds_json_body();

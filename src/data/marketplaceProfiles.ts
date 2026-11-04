@@ -134,7 +134,12 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
   const offerings = Array.isArray(raw.serviceOfferings)
     ? (raw.serviceOfferings as Array<Record<string, unknown>>)
     : [];
-  const gallery = Array.isArray(raw.gallery) ? (raw.gallery as string[]) : [];
+  const primaryImage = raw.primaryImage ? String(raw.primaryImage) : undefined;
+  const coverImage = raw.coverImage ? String(raw.coverImage) : undefined;
+  const rawGallery = Array.isArray(raw.gallery) ? (raw.gallery as string[]) : [];
+  const gallery = Array.from(
+    new Set([primaryImage, coverImage, ...rawGallery].filter((src): src is string => Boolean(src))),
+  );
   const settings = Array.isArray(raw.serviceSetting) ? (raw.serviceSetting as string[]) : [];
   const team = Array.isArray(raw.teamMembers)
     ? (raw.teamMembers as Array<Record<string, unknown>>).map((member) => ({
@@ -142,8 +147,16 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
         displayName: String(member.display_name ?? member.displayName ?? 'Team member'),
         gender: String(member.gender ?? 'women') as MarketplaceGender,
         bio: member.bio ? String(member.bio) : undefined,
-        profileImage: member.profile_image ? String(member.profile_image) : undefined,
-        services: Array.isArray(member.services_json) ? (member.services_json as string[]) : [],
+        profileImage: member.profile_image
+          ? String(member.profile_image)
+          : member.profileImage
+            ? String(member.profileImage)
+            : undefined,
+        services: Array.isArray(member.services_json)
+          ? (member.services_json as string[])
+          : Array.isArray(member.services)
+            ? (member.services as string[])
+            : [],
         status: (member.status === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
       }))
     : [];
@@ -175,7 +188,7 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
     availableDays: raw.availableDays ? String(raw.availableDays) : null,
     serviceSetting: settings.length > 0 ? settings : ['studio'],
     serviceArea: raw.serviceArea ? String(raw.serviceArea) : null,
-    primaryImage: raw.primaryImage ? String(raw.primaryImage) : undefined,
+    primaryImage,
     gallery,
     publicContactEnabled: Boolean(raw.publicContactEnabled),
     verified: Boolean(raw.verified),

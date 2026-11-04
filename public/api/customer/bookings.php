@@ -109,11 +109,13 @@ if ($action === 'create') {
 
     if ($providerProfileId !== '') {
         $publishedClause = ds_column_exists('provider_profiles', 'is_published') ? ' AND p.is_published = 1' : '';
+        $removedClause = ds_column_exists('provider_profiles', 'removed_at') ? ' AND p.removed_at IS NULL' : '';
         $stmt = $pdo->prepare(
             "SELECT p.id, p.user_id FROM provider_profiles p
              INNER JOIN users u ON u.id = p.user_id
              INNER JOIN provider_verification v ON v.provider_user_id = p.user_id
-             WHERE p.id = ? AND v.verification_status = 'verified' AND u.account_status = 'active'" . $publishedClause . ' LIMIT 1'
+             WHERE p.id = ? AND v.verification_status = 'verified' AND u.account_status = 'active'"
+            . $publishedClause . $removedClause . ' LIMIT 1'
         );
         $stmt->execute([$providerProfileId]);
         if (!$stmt->fetch()) {

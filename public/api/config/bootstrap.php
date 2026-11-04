@@ -17,6 +17,7 @@ require_once __DIR__ . '/mail_templates.php';
 // endpoint that calls ds_cms_ready()/ds_cms_migrate() from fataling.
 require_once __DIR__ . '/cms.php';
 require_once __DIR__ . '/permissions.php';
+require_once __DIR__ . '/gallery.php';
 
 /**
  * Read a configuration variable from whichever source this host injects

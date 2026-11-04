@@ -43,6 +43,7 @@ if ($method === 'GET') {
 
 ds_require_method('POST');
 ds_require_same_origin();
+ds_assert_provider_can_accept_bookings($user);
 ds_rate_limit('provider_bookings', 60, 15 * 60);
 
 $body = ds_json_body();

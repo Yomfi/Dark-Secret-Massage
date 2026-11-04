@@ -334,6 +334,10 @@ function ds_cms_migrate(): void
             ds_flush_table_columns('provider_profiles');
         }
     }
+
+    if (function_exists('ds_ensure_provider_moderation_schema')) {
+        ds_ensure_provider_moderation_schema();
+    }
 }
 
 /** Read one CMS setting. Values are stored as plain strings. */
@@ -544,11 +548,18 @@ function ds_require_same_origin(): void
     }
 }
 
-/** A listing is public only when the provider is admin-approved and published. */
+/** A listing is public only when the provider is admin-approved, published, and not removed. */
 function ds_provider_publicly_eligible(string $providerUserId): bool
 {
+    $user = ds_find_user_by_id($providerUserId);
+    if (!$user || (string) ($user['account_status'] ?? '') !== 'active') {
+        return false;
+    }
     $profile = ds_provider_profile_by_user($providerUserId);
     if (!$profile) {
+        return false;
+    }
+    if (!empty($profile['removed_at'])) {
         return false;
     }
     if ((int) ($profile['is_published'] ?? 0) !== 1) {

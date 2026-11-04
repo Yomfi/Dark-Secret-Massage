@@ -142,12 +142,18 @@ if (ds_table_exists('qa_accounts')) {
     $problems[] = 'qa_accounts is missing';
 }
 
-foreach (['staff_profiles', 'staff_invitations', 'customer_notes', 'privacy_requests', 'cms_announcements'] as $table) {
+foreach (['staff_profiles', 'staff_invitations', 'customer_notes', 'privacy_requests', 'cms_announcements', 'provider_gallery_images', 'provider_moderation_events'] as $table) {
     if (!ds_table_exists($table)) {
         $problems[] = "{$table} is missing";
     } else {
         echo "{$table}: ok\n";
     }
+}
+if (ds_table_exists('users') && !ds_column_exists('users', 'auth_epoch')) {
+    $problems[] = 'users.auth_epoch is missing';
+}
+if (ds_table_exists('provider_profiles') && !ds_column_exists('provider_profiles', 'removed_at')) {
+    $problems[] = 'provider_profiles.removed_at is missing';
 }
 
 if (ds_table_exists('media_assets') && !ds_column_exists('media_assets', 'alt_text')) {

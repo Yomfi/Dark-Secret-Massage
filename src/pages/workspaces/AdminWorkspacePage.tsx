@@ -16,6 +16,7 @@ import { userHasPermission } from '../../lib/workspaceHome';
 import {
   AdminCard,
   AdminCardHeader,
+  AdminProviderDetail,
   AdminShell,
   DataCell,
   DataRow,
@@ -69,7 +70,7 @@ type Provider = {
   userId: string; profileId: string | null; displayName: string; email: string; phone: string;
   kind: string; city: string; slug: string | null; accountStatus: string; emailVerified: boolean;
   verificationStatus: string; identityStatus: string; rejectionReason: string | null;
-  published: boolean; submittedAt: string | null;
+  published: boolean; submittedAt: string | null; removed?: boolean; listingStatus?: string;
 };
 
 type Service = {
@@ -257,6 +258,7 @@ export const AdminWorkspacePage: React.FC = () => {
   const [customerNote, setCustomerNote] = useState('');
   const [customerProfile, setCustomerProfile] = useState({ firstName: '', lastName: '', phone: '' });
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingDetail, setBookingDetail] = useState<Booking | null>(null);
@@ -462,6 +464,7 @@ export const AdminWorkspacePage: React.FC = () => {
         setNotice(null);
         setSelectedCustomerId(null);
         setCustomerDetail(null);
+        setSelectedProviderId(null);
         setSelectedBookingId(null);
         setBookingDetail(null);
         setTab(id);
@@ -767,96 +770,113 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'providers' ? (
-        <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
-          <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
-            <select className={`${adminInputClass} max-w-[160px] shrink-0`} value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="all">All providers</option>
-              <option value="individual">Individuals</option>
-              <option value="agency">Agencies</option>
-            </select>
-            <SearchInput className="min-w-0 flex-1 basis-[160px]" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
-            <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
-          </div>
-          <DataTable
-            headers={['Provider', 'Type', 'Verification', 'Public', 'Account', '']}
-            empty={providers.length === 0}
-            emptyIcon={UserRound}
-            emptyTitle="No providers yet."
-            emptyDescription="Provider profiles will appear after registration."
-            minWidth="780px"
-          >
-            {providers.map((p) => (
-              <DataRow key={p.userId}>
-                <DataCell className="w-[28%]">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
-                      {initials(p.displayName)}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{p.displayName}</p>
-                      <p className="truncate text-[12px] text-[#6f675c]" title={`${p.email} · ${p.city || '—'}`}>
-                        {p.email} · {p.city || '—'}
-                      </p>
-                    </div>
-                  </div>
-                </DataCell>
-                <DataCell className="capitalize">{p.kind}</DataCell>
-                <DataCell>
-                  <StatusBadge status={p.verificationStatus} />
-                  <p className="mt-1 truncate text-[12px] text-[#6f675c]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
-                </DataCell>
-                <DataCell>
-                  <StatusBadge status={p.published ? 'published' : 'pending'} label={p.published ? 'Published' : 'Draft'} />
-                </DataCell>
-                <DataCell><StatusBadge status={p.accountStatus} /></DataCell>
-                <DataCell className="w-[1%] whitespace-nowrap">
-                  <RowMenu
-                    primaryLabel={p.published ? 'Unpublish' : 'Publish'}
-                    primaryVariant={p.published ? 'ghost' : 'solid'}
-                    primaryDisabled={busy}
-                    onPrimary={() => {
-                      void act(async () => {
-                        await apiRequest('/admin/providers.php', {
-                          method: 'POST',
-                          body: JSON.stringify({
-                            providerUserId: p.userId,
-                            action: p.published ? 'unpublish' : 'publish',
-                          }),
-                        });
-                      }, p.published ? 'Provider unpublished.' : 'Provider published.');
-                    }}
-                    items={[
-                      {
-                        label: p.accountStatus === 'suspended' ? 'Reactivate' : 'Suspend',
-                        disabled: busy,
-                        onClick: () => {
-                          void act(async () => {
-                            await apiRequest('/admin/providers.php', {
-                              method: 'POST',
-                              body: JSON.stringify({
-                                providerUserId: p.userId,
-                                action: p.accountStatus === 'suspended' ? 'activate' : 'suspend',
-                              }),
-                            });
-                          }, 'Provider account updated.');
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-5">
+          <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
+            <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
+              <select className={`${adminInputClass} max-w-[160px] shrink-0`} value={kind} onChange={(e) => setKind(e.target.value)}>
+                <option value="all">All providers</option>
+                <option value="individual">Individuals</option>
+                <option value="agency">Agencies</option>
+              </select>
+              <SearchInput className="min-w-0 flex-1 basis-[160px]" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
+              <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
+            </div>
+            <DataTable
+              headers={['Provider', 'Type', 'Verification', 'Public', 'Account', '']}
+              empty={providers.length === 0}
+              emptyIcon={UserRound}
+              emptyTitle="No providers yet."
+              emptyDescription="Provider profiles will appear after registration."
+              minWidth="780px"
+            >
+              {providers.map((p) => (
+                <DataRow key={p.userId} selected={selectedProviderId === p.userId}>
+                  <DataCell className="w-[28%]">
+                    <button type="button" className="flex min-w-0 items-center gap-3 text-left" onClick={() => setSelectedProviderId(p.userId)}>
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
+                        {initials(p.displayName)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold hover:underline">{p.displayName}</p>
+                        <p className="truncate text-[12px] text-[#6f675c]" title={`${p.email} · ${p.city || '—'}`}>
+                          {p.email} · {p.city || '—'}
+                        </p>
+                      </div>
+                    </button>
+                  </DataCell>
+                  <DataCell className="capitalize">{p.kind}</DataCell>
+                  <DataCell>
+                    <StatusBadge status={p.verificationStatus} />
+                    <p className="mt-1 truncate text-[12px] text-[#6f675c]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
+                  </DataCell>
+                  <DataCell>
+                    <StatusBadge
+                      status={p.removed ? 'removed' : (p.published ? 'published' : 'unpublished')}
+                      label={p.removed ? 'Removed' : (p.published ? 'Published' : 'Unpublished')}
+                    />
+                  </DataCell>
+                  <DataCell>
+                    <StatusBadge
+                      status={p.accountStatus === 'banned' ? 'blocked' : p.accountStatus}
+                      label={p.accountStatus === 'banned' ? 'Blocked' : p.accountStatus}
+                    />
+                  </DataCell>
+                  <DataCell className="w-[1%] whitespace-nowrap">
+                    <RowMenu
+                      primaryLabel="Open"
+                      primaryVariant="ghost"
+                      onPrimary={() => setSelectedProviderId(p.userId)}
+                      items={[
+                        {
+                          label: p.published ? 'Unpublish' : 'Publish',
+                          disabled: busy || Boolean(p.removed),
+                          onClick: () => {
+                            void act(async () => {
+                              await apiRequest('/admin/providers.php', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                  providerUserId: p.userId,
+                                  action: p.published ? 'unpublish' : 'publish',
+                                }),
+                              });
+                            }, p.published ? 'Provider unpublished.' : 'Provider published.');
+                          },
                         },
-                      },
-                      {
-                        label: 'Review',
-                        onClick: () => {
-                          window.location.assign('/admin/provider-reviews');
+                        {
+                          label: 'Review',
+                          onClick: () => {
+                            window.location.assign('/admin/provider-reviews');
+                          },
                         },
-                      },
-                    ]}
-                  />
-                </DataCell>
-              </DataRow>
-            ))}
-          </DataTable>
-          <p className="border-t border-[#efe8dc] px-4 py-3 text-[12px] text-[#6f675c]">
-            Publication is only possible after a verified review and a confirmed email; providers cannot publish themselves.
-          </p>
-        </AdminCard>
+                      ]}
+                    />
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+            <p className="border-t border-[#efe8dc] px-4 py-3 text-[12px] text-[#6f675c]">
+              Open a provider for remove, suspend, block, gallery moderation and permanent deletion. Publication never grants verification.
+            </p>
+          </AdminCard>
+
+          {selectedProviderId ? (
+            <AdminProviderDetail
+              userId={selectedProviderId}
+              canDelete={can('providers.delete')}
+              busy={busy}
+              onClose={() => setSelectedProviderId(null)}
+              onChanged={() => void run(load)}
+              act={act}
+            />
+          ) : (
+            <DetailPanel
+              open={false}
+              emptyIcon={UserRound}
+              emptyTitle="Select a provider"
+              emptyDescription="Inspect profile, gallery, verification and moderation actions."
+            />
+          )}
+        </div>
       ) : null}
 
       {tab === 'staff' ? (

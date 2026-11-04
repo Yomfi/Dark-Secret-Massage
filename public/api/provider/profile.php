@@ -71,6 +71,7 @@ if ($method === 'GET') {
 }
 
 ds_require_method('POST');
+ds_assert_provider_can_operate($user);
 ds_rate_limit('provider_profile', 30, 15 * 60);
 
 if (!ds_table_exists('provider_profiles')) {

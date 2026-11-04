@@ -4,6 +4,7 @@ import { apiRequest } from '../../lib/api';
 import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { WorkspaceShell, type WorkspaceNavItem } from '../../components/workspace/WorkspaceShell';
+import { ProviderGalleryManager } from '../../components/provider/ProviderGalleryManager';
 
 type ProfilePayload = {
   profile: {
@@ -94,6 +95,7 @@ export const ProviderWorkspacePage: React.FC = () => {
   const nav = useMemo<WorkspaceNavItem[]>(() => [
     { id: 'overview', label: 'Overview' },
     { id: 'profile', label: 'Public profile' },
+    { id: 'gallery', label: isAgency ? 'Branding & Gallery' : 'Profile & Gallery' },
     { id: 'services', label: 'Services & rates' },
     { id: 'bookings', label: 'Bookings' },
     ...(isAgency ? [{ id: 'team', label: 'Team' }] : []),
@@ -201,6 +203,10 @@ export const ProviderWorkspacePage: React.FC = () => {
             <Link to={`/profile/${profileData.profile.slug}`} className="ml-2 inline-flex h-12 items-center text-[13px] font-semibold text-[#8a6a1f] hover:underline">View public page</Link>
           ) : null}
         </form>
+      ) : null}
+
+      {tab === 'gallery' ? (
+        <ProviderGalleryManager mode={isAgency ? 'agency' : 'individual'} onChanged={() => void run(load)} />
       ) : null}
 
       {tab === 'services' ? (

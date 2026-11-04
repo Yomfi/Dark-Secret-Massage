@@ -54,6 +54,7 @@ function ds_login_user(array $user): void
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['authenticated_at'] = time();
+    $_SESSION['auth_epoch'] = (int) ($user['auth_epoch'] ?? 0);
 }
 
 function ds_logout_user(): void
@@ -94,6 +95,7 @@ function ds_require_user(): array
         ds_error(401, 'UNAUTHENTICATED', 'Please sign in to continue.');
     }
 
+    ds_assert_session_epoch($user);
     ds_assert_account_can_auth($user);
     return $user;
 }
@@ -149,14 +151,27 @@ function ds_find_user_by_identifier(string $identifier): ?array
 function ds_assert_account_can_auth(array $user): void
 {
     $status = (string) ($user['account_status'] ?? '');
-    if ($status === 'suspended') {
-        ds_error(403, 'ACCOUNT_SUSPENDED', 'This account has been suspended.');
-    }
+    // Suspended providers may sign in to view status / contact support.
+    // Protected provider mutations still call ds_assert_provider_can_operate().
     if ($status === 'banned') {
-        ds_error(403, 'ACCOUNT_BANNED', 'This account has been banned.');
+        ds_error(403, 'ACCOUNT_BLOCKED', 'This account has been blocked. Contact support if you believe this is a mistake.');
     }
     if ($status === 'deleted') {
         ds_error(403, 'ACCOUNT_DELETED', 'This account is no longer available.');
+    }
+}
+
+/** Reject sessions issued before an admin block / password rotate (auth_epoch bump). */
+function ds_assert_session_epoch(array $user): void
+{
+    if (!isset($_SESSION['auth_epoch'])) {
+        return;
+    }
+    $current = (int) ($user['auth_epoch'] ?? 0);
+    $sessionEpoch = (int) $_SESSION['auth_epoch'];
+    if ($sessionEpoch !== $current) {
+        ds_logout_user();
+        ds_error(401, 'SESSION_REVOKED', 'Your session was ended. Please sign in again.');
     }
 }
 

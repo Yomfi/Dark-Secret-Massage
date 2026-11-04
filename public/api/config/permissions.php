@@ -27,7 +27,7 @@ function ds_permission_catalog(): array
         'media.read', 'media.write',
         'services.read', 'services.write',
         'customers.read', 'customers.write',
-        'providers.read', 'providers.write',
+        'providers.read', 'providers.write', 'providers.delete',
         'reviews.read', 'reviews.write',
         'documents.read',
         'bookings.read', 'bookings.write',
@@ -65,6 +65,7 @@ function ds_staff_role_permissions(string $staffRole): array
             'documents.read',
             'customers.read',
         ],
+        // providers.delete is full_admin-only (via $all).
         'support' => [
             'dashboard.read',
             'customers.read', 'customers.write',

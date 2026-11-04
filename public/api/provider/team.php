@@ -35,6 +35,7 @@ if ($method === 'GET') {
 
 if ($method === 'DELETE') {
     ds_require_method('DELETE');
+    ds_assert_provider_can_operate($user);
     $body = ds_json_body();
     $memberId = trim((string) ($body['id'] ?? ''));
     if ($memberId === '') {
@@ -48,6 +49,7 @@ if ($method === 'DELETE') {
 }
 
 ds_require_method('POST');
+ds_assert_provider_can_operate($user);
 ds_rate_limit('provider_team', 40, 15 * 60);
 
 $body = ds_json_body();

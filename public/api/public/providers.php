@@ -29,7 +29,11 @@ $sql = "SELECT p.*, u.email_verified_at, u.account_status, v.verification_status
         INNER JOIN provider_verification v ON v.provider_user_id = p.user_id
         WHERE v.verification_status = 'verified'
           AND u.account_status = 'active'
-          AND u.email_verified_at IS NOT NULL";
+          AND u.email_verified_at IS NOT NULL
+          AND p.is_published = 1";
+if (ds_column_exists('provider_profiles', 'removed_at')) {
+    $sql .= ' AND p.removed_at IS NULL';
+}
 if (ds_table_exists('qa_accounts')) {
     // Defence in depth: a registered test identity is never listed publicly.
     $sql .= ' AND ' . ds_qa_sql_exclusion('u.email');
@@ -38,8 +42,6 @@ $params = [];
 if ($slug !== '') {
     $sql .= ' AND p.slug = ?';
     $params[] = $slug;
-} else {
-    $sql .= ' AND p.is_published = 1';
 }
 $sql .= ' ORDER BY COALESCE(p.published_at, p.created_at) DESC LIMIT 200';
 
@@ -115,7 +117,8 @@ $providers = array_map(static function (array $row) use ($servicesByProfile, $te
         'serviceSetting' => is_array($settings) ? $settings : [],
         'serviceArea' => $row['service_area'] !== null ? (string) $row['service_area'] : null,
         'primaryImage' => $row['primary_image'] !== null ? (string) $row['primary_image'] : null,
-        'gallery' => is_array($gallery) ? $gallery : [],
+        'coverImage' => $row['cover_image'] !== null ? (string) $row['cover_image'] : null,
+        'gallery' => is_array($gallery) ? array_values(array_filter(array_map('strval', $gallery))) : [],
         'publicContactEnabled' => (bool) ($row['public_phone'] ?? false),
         'languages' => is_array($languages) ? $languages : [],
         'yearsExperience' => isset($row['years_experience']) ? (int) $row['years_experience'] : null,
