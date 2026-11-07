@@ -42,7 +42,7 @@ export const UndoBar: React.FC<{
     <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-900">
       <div className="min-w-0">
         <p>{message}</p>
-        {action ? <p className="mt-0.5 truncate text-[11.5px] text-emerald-800/80">{action.label}</p> : null}
+        {action && action.label !== message ? <p className="mt-0.5 truncate text-[11.5px] text-emerald-800/80">{action.label}</p> : null}
         {error ? <p className="mt-0.5 text-[11.5px] text-red-700">{error}</p> : null}
       </div>
       {action?.canUndo ? (

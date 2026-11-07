@@ -275,6 +275,7 @@ export const AdminWorkspacePage: React.FC = () => {
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<ReversibleAction | null>(null);
   const [assignCustomerId, setAssignCustomerId] = useState<string | null>(null);
+  const [assignmentsRefresh, setAssignmentsRefresh] = useState(0);
   const [customerAssignments, setCustomerAssignments] = useState<AssignmentRow[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -532,6 +533,7 @@ export const AdminWorkspacePage: React.FC = () => {
           onReversed={(message, action) => {
             setNotice(message);
             setLastAction(action);
+            setAssignmentsRefresh((n) => n + 1);
             void run(load);
           }}
         />
@@ -1028,6 +1030,14 @@ export const AdminWorkspacePage: React.FC = () => {
           canWrite={can('assignments.write')}
           initialCustomerId={assignCustomerId}
           onClearedInitialCustomer={() => setAssignCustomerId(null)}
+          refreshKey={assignmentsRefresh}
+          onReversible={(message, undoActionId) => {
+            setNotice(message);
+            setLastAction(undoActionId
+              ? { id: undoActionId, label: message, canUndo: true, canRedo: false, undoneAt: null }
+              : null);
+            void load();
+          }}
         />
       ) : null}
 

@@ -62,7 +62,9 @@ export const AdminAssignmentsPanel: React.FC<{
   canWrite: boolean;
   initialCustomerId?: string | null;
   onClearedInitialCustomer?: () => void;
-}> = ({ canWrite, initialCustomerId, onClearedInitialCustomer }) => {
+  onReversible?: (message: string, undoActionId: string | null) => void;
+  refreshKey?: number;
+}> = ({ canWrite, initialCustomerId, onClearedInitialCustomer, onReversible, refreshKey = 0 }) => {
   const [rows, setRows] = useState<AssignmentRow[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [statuses, setStatuses] = useState<Record<string, string>>({});
@@ -93,6 +95,11 @@ export const AdminAssignmentsPanel: React.FC<{
   });
   const [formError, setFormError] = useState<string | null>(null);
 
+  const announce = (message: string, undoActionId?: string | null) => {
+    if (onReversible) onReversible(message, undoActionId ?? null);
+    else setNotice(message);
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -113,7 +120,7 @@ export const AdminAssignmentsPanel: React.FC<{
     }
   }, [status, query]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(); }, [load, refreshKey]);
 
   useEffect(() => {
     if (!canWrite) return;
@@ -194,7 +201,7 @@ export const AdminAssignmentsPanel: React.FC<{
     setBusy(true);
     setFormError(null);
     try {
-      await apiRequest('/admin/assignments.php', {
+      const created = await apiRequest<{ undoActionId?: string | null }>('/admin/assignments.php', {
         method: 'POST',
         body: JSON.stringify({
           action: 'create',
@@ -208,7 +215,7 @@ export const AdminAssignmentsPanel: React.FC<{
           status: form.initialStatus,
         }),
       });
-      setNotice('Assignment created. It is not a booking and has no payment.');
+      announce('Assignment created. It is not a booking and has no payment.', created.undoActionId);
       setModal(null);
       await load();
     } catch (err) {
@@ -227,7 +234,7 @@ export const AdminAssignmentsPanel: React.FC<{
     setBusy(true);
     setFormError(null);
     try {
-      await apiRequest('/admin/assignments.php', {
+      const updated = await apiRequest<{ undoActionId?: string | null }>('/admin/assignments.php', {
         method: 'POST',
         body: JSON.stringify({
           action: 'reassign',
@@ -237,7 +244,7 @@ export const AdminAssignmentsPanel: React.FC<{
           note: form.notes,
         }),
       });
-      setNotice('Assignment reassigned.');
+      announce('Assignment reassigned.', updated.undoActionId);
       setModal(null);
       await load();
     } catch (err) {
@@ -253,11 +260,11 @@ export const AdminAssignmentsPanel: React.FC<{
     if (needsReason && note.trim().length < 3) return;
     setBusy(true);
     try {
-      await apiRequest('/admin/assignments.php', {
+      const changed = await apiRequest<{ undoActionId?: string | null }>('/admin/assignments.php', {
         method: 'POST',
         body: JSON.stringify({ action: 'update_status', assignmentId: assignment.id, status: to, note }),
       });
-      setNotice(`Assignment marked ${to.replace(/_/g, ' ')}.`);
+      announce(`Assignment marked ${to.replace(/_/g, ' ')}.`, changed.undoActionId);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update assignment.');

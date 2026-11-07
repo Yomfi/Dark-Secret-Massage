@@ -292,7 +292,7 @@ if ($action === 'create') {
         'teamMemberId' => $teamMemberId,
         'status' => $initialStatus,
     ], $admin['id']);
-    ds_reversible_record(
+    $undoId = ds_reversible_record(
         'assignment.create',
         'Assignment created for ' . (string) ($row['customer_name'] ?? 'customer'),
         'provider_assignments',
@@ -316,7 +316,7 @@ if ($action === 'create') {
     } catch (Throwable $e) {
         $notified = false;
     }
-    ds_success(['assignment' => ds_assignment_dto($row), 'notified' => $notified, 'undoable' => true]);
+    ds_success(['assignment' => ds_assignment_dto($row), 'notified' => $notified, 'undoable' => true, 'undoActionId' => $undoId]);
 }
 
 if ($assignmentId === '') {
@@ -363,7 +363,7 @@ if ($action === 'update_status' || $action === 'cancel') {
 
     ds_audit('assignment.status_changed', 'provider_assignment', $assignmentId, ['from' => $from, 'to' => $to, 'note' => $note], $admin['id']);
     $after = ds_assignment_fetch($assignmentId);
-    ds_reversible_record(
+    $undoId = ds_reversible_record(
         'assignment.status',
         'Assignment ' . $from . ' → ' . $to,
         'provider_assignments',
@@ -381,7 +381,7 @@ if ($action === 'update_status' || $action === 'cancel') {
     } catch (Throwable $e) {
         $notified = false;
     }
-    ds_success(['assignment' => ds_assignment_dto($after), 'notified' => $notified, 'undoable' => true]);
+    ds_success(['assignment' => ds_assignment_dto($after), 'notified' => $notified, 'undoable' => true, 'undoActionId' => $undoId]);
 }
 
 if ($action === 'reassign') {
@@ -433,7 +433,7 @@ if ($action === 'reassign') {
         'teamMemberId' => $teamMemberId,
     ], $admin['id']);
     $after = ds_assignment_fetch($assignmentId);
-    ds_reversible_record(
+    $undoId = ds_reversible_record(
         'assignment.reassign',
         'Assignment reassigned',
         'provider_assignments',
@@ -443,7 +443,7 @@ if ($action === 'reassign') {
         [],
         $admin['id']
     );
-    ds_success(['assignment' => ds_assignment_dto($after), 'undoable' => true]);
+    ds_success(['assignment' => ds_assignment_dto($after), 'undoable' => true, 'undoActionId' => $undoId]);
 }
 
 if ($action === 'note') {

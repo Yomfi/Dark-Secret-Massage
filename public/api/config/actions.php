@@ -140,7 +140,14 @@ function ds_reversible_apply(string $id, string $mode, array $admin): array
         $currentNorm = $currentValue === null ? null : (string) $currentValue;
         $expectedNorm = $value === null ? null : (string) $value;
         if ($currentNorm !== $expectedNorm) {
-            ds_error(409, 'CONFLICT', 'This record changed after the action, so it cannot be reversed safely.');
+            // DATETIME columns drop sub-second precision, so compare timestamps
+            // at second resolution instead of treating them as stale.
+            $isTimestamp = str_ends_with($column, '_at');
+            $currentTs = $isTimestamp && $currentNorm !== null ? strtotime($currentNorm) : false;
+            $expectedTs = $isTimestamp && $expectedNorm !== null ? strtotime($expectedNorm) : false;
+            if ($currentTs === false || $expectedTs === false || $currentTs !== $expectedTs) {
+                ds_error(409, 'CONFLICT', 'This record changed after the action, so it cannot be reversed safely.');
+            }
         }
     }
 
@@ -192,12 +199,13 @@ function ds_reversible_apply(string $id, string $mode, array $admin): array
         $assignment->execute([(string) $row['entity_id']]);
         $a = $assignment->fetch();
         if ($a && ds_table_exists('provider_assignment_events')) {
+            $previousStatus = $mode === 'undo' ? ($after['status'] ?? null) : ($before['status'] ?? null);
             ds_pdo()->prepare(
                 'INSERT INTO provider_assignment_events (id, assignment_id, actor_user_id, event, from_status, to_status, note, created_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
             )->execute([
                 ds_new_id(), (string) $a['id'], $admin['id'], $mode === 'undo' ? 'undone' : 'redone',
-                $mode === 'undo' ? (string) $row['after_json'] : (string) $row['before_json'],
+                $previousStatus !== null ? (string) $previousStatus : null,
                 (string) $a['status'], 'Admin ' . $mode, ds_now_sql(),
             ]);
         }
