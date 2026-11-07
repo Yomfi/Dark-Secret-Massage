@@ -10,6 +10,8 @@ export const DataTable: React.FC<{
   emptyDescription?: string;
   emptyIcon?: LucideIcon;
   minWidth?: string;
+  /** Fixed widths per column; keeps cells from overlapping on narrow screens. */
+  columnWidths?: string[];
 }> = ({
   headers,
   children,
@@ -18,9 +20,17 @@ export const DataTable: React.FC<{
   emptyDescription,
   emptyIcon,
   minWidth = '640px',
+  columnWidths,
 }) => (
   <div className="max-w-full overflow-x-auto">
     <table className="w-full table-fixed" style={{ minWidth }}>
+      {columnWidths?.length === headers.length ? (
+        <colgroup>
+          {columnWidths.map((width, index) => (
+            <col key={`${width}-${index}`} style={{ width }} />
+          ))}
+        </colgroup>
+      ) : null}
       <thead>
         <tr className="border-b border-[#efe8dc] bg-[#faf7f2]/80">
           {headers.map((h) => (

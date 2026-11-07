@@ -294,6 +294,26 @@ if ($action === 'close_account') {
     ds_success(['userId' => $userId, 'status' => 'deleted']);
 }
 
+if ($action === 'block' || $action === 'unblock') {
+    if ($userId === '') {
+        ds_error(400, 'VALIDATION_ERROR', 'userId is required.');
+    }
+    $reason = trim((string) ($body['reason'] ?? ''));
+    if ($action === 'block' && $reason === '') {
+        ds_error(400, 'REASON_REQUIRED', 'A block reason is required.');
+    }
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ? AND role = 'user' LIMIT 1");
+    $stmt->execute([$userId]);
+    if (!$stmt->fetch()) {
+        ds_error(404, 'NOT_FOUND', 'Customer not found.');
+    }
+    $status = $action === 'block' ? 'banned' : 'active';
+    $pdo->prepare('UPDATE users SET account_status = ?, block_reason = ?, updated_at = ? WHERE id = ?')
+        ->execute([$status, $action === 'block' ? $reason : null, ds_now_sql(), $userId]);
+    ds_audit('customer.' . $action, 'user', $userId, ['reason' => $reason], $admin['id']);
+    ds_success(['userId' => $userId, 'status' => $status]);
+}
+
 if ($userId === '' || !in_array($action, ['suspend', 'activate'], true)) {
     ds_error(400, 'VALIDATION_ERROR', 'Invalid customer action.');
 }

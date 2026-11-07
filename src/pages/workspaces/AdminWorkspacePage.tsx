@@ -283,6 +283,9 @@ export const AdminWorkspacePage: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState('all');
+  const [providerVerification, setProviderVerification] = useState('all');
+  const [providerPublication, setProviderPublication] = useState('all');
+  const [providerAccount, setProviderAccount] = useState('all');
   const [status, setStatus] = useState('');
   const [pageEditor, setPageEditor] = useState({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' });
   const [serviceForm, setServiceForm] = useState({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false, image: '' });
@@ -451,11 +454,24 @@ export const AdminWorkspacePage: React.FC = () => {
     setSelectedBookingId(id);
   };
 
+  const visibleProviders = providers.filter((p) => {
+    if (providerVerification !== 'all' && p.verificationStatus !== providerVerification) return false;
+    if (providerPublication === 'published' && !p.published) return false;
+    if (providerPublication === 'unpublished' && p.published) return false;
+    if (providerPublication === 'removed' && !p.removed) return false;
+    if (providerAccount !== 'all' && p.accountStatus !== providerAccount) return false;
+    return true;
+  });
+
   return (
     <AdminShell
       title={activeMeta.title}
       subtitle={activeMeta.subtitle}
-      breadcrumbs={['Admin', activeMeta.group, activeMeta.title]}
+      breadcrumbs={
+        activeMeta.group === activeMeta.title
+          ? ['Admin', activeMeta.title]
+          : ['Admin', activeMeta.group, activeMeta.title]
+      }
       navGroups={navGroups}
       active={tab}
       globalSearch={search}
@@ -642,6 +658,25 @@ export const AdminWorkspacePage: React.FC = () => {
                             }, c.status === 'suspended' ? 'Customer reactivated.' : 'Customer suspended.');
                           },
                         },
+                        {
+                          label: c.status === 'banned' ? 'Unblock account' : 'Block account',
+                          disabled: busy || c.status === 'deleted',
+                          onClick: () => {
+                            if (c.status !== 'banned' && !window.confirm('Block this customer account?')) return;
+                            const reason = window.prompt(c.status === 'banned' ? 'Unblock note (optional)' : 'Block reason (required)') ?? '';
+                            if (c.status !== 'banned' && reason.trim() === '') return;
+                            void act(async () => {
+                              await apiRequest('/admin/customers.php', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                  userId: c.id,
+                                  action: c.status === 'banned' ? 'unblock' : 'block',
+                                  reason: reason.trim(),
+                                }),
+                              });
+                            }, c.status === 'banned' ? 'Customer unblocked.' : 'Customer blocked.');
+                          },
+                        },
                       ]}
                     />
                   </DataCell>
@@ -770,29 +805,50 @@ export const AdminWorkspacePage: React.FC = () => {
       ) : null}
 
       {tab === 'providers' ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-5">
+        <div className="space-y-4">
           <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
-            <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
-              <select className={`${adminInputClass} max-w-[160px] shrink-0`} value={kind} onChange={(e) => setKind(e.target.value)}>
-                <option value="all">All providers</option>
+            <div className="flex flex-wrap items-end gap-2 border-b border-[#efe8dc] p-4">
+              <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Provider type" value={kind} onChange={(e) => setKind(e.target.value)}>
+                <option value="all">All types</option>
                 <option value="individual">Individuals</option>
                 <option value="agency">Agencies</option>
               </select>
-              <SearchInput className="min-w-0 flex-1 basis-[160px]" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
+              <select className={`${adminInputClass} w-[160px] shrink-0`} aria-label="Verification status" value={providerVerification} onChange={(e) => setProviderVerification(e.target.value)}>
+                <option value="all">Any verification</option>
+                <option value="verified">Verified</option>
+                <option value="pending_review">Pending review</option>
+                <option value="changes_requested">Changes requested</option>
+                <option value="rejected">Rejected</option>
+                <option value="unverified">Unverified</option>
+              </select>
+              <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Publication status" value={providerPublication} onChange={(e) => setProviderPublication(e.target.value)}>
+                <option value="all">Any visibility</option>
+                <option value="published">Published</option>
+                <option value="unpublished">Unpublished</option>
+                <option value="removed">Removed</option>
+              </select>
+              <select className={`${adminInputClass} w-[145px] shrink-0`} aria-label="Account status" value={providerAccount} onChange={(e) => setProviderAccount(e.target.value)}>
+                <option value="all">Any account</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="banned">Blocked</option>
+              </select>
+              <SearchInput className="min-w-0 flex-1 basis-[180px]" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
               <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
             </div>
             <DataTable
-              headers={['Provider', 'Type', 'Verification', 'Public', 'Account', '']}
-              empty={providers.length === 0}
+              headers={['Provider', 'Type', 'Verification', 'Visibility', 'Account', 'Actions']}
+              columnWidths={['34%', '11%', '20%', '14%', '13%', '8%']}
+              empty={visibleProviders.length === 0}
               emptyIcon={UserRound}
-              emptyTitle="No providers yet."
-              emptyDescription="Provider profiles will appear after registration."
-              minWidth="780px"
+              emptyTitle={providers.length === 0 ? 'No providers yet.' : 'No providers match these filters.'}
+              emptyDescription={providers.length === 0 ? 'Provider profiles will appear after registration.' : 'Adjust the filters or clear the search.'}
+              minWidth="860px"
             >
-              {providers.map((p) => (
+              {visibleProviders.map((p) => (
                 <DataRow key={p.userId} selected={selectedProviderId === p.userId}>
-                  <DataCell className="w-[28%]">
-                    <button type="button" className="flex min-w-0 items-center gap-3 text-left" onClick={() => setSelectedProviderId(p.userId)}>
+                  <DataCell>
+                    <button type="button" className="flex w-full min-w-0 items-center gap-3 text-left" onClick={() => setSelectedProviderId(p.userId)}>
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
                         {initials(p.displayName)}
                       </span>
@@ -821,7 +877,7 @@ export const AdminWorkspacePage: React.FC = () => {
                       label={p.accountStatus === 'banned' ? 'Blocked' : p.accountStatus}
                     />
                   </DataCell>
-                  <DataCell className="w-[1%] whitespace-nowrap">
+                  <DataCell className="whitespace-nowrap">
                     <RowMenu
                       primaryLabel="Open"
                       primaryVariant="ghost"
@@ -860,22 +916,27 @@ export const AdminWorkspacePage: React.FC = () => {
           </AdminCard>
 
           {selectedProviderId ? (
-            <AdminProviderDetail
-              userId={selectedProviderId}
-              canDelete={can('providers.delete')}
-              busy={busy}
-              onClose={() => setSelectedProviderId(null)}
-              onChanged={() => void run(load)}
-              act={act}
-            />
-          ) : (
-            <DetailPanel
-              open={false}
-              emptyIcon={UserRound}
-              emptyTitle="Select a provider"
-              emptyDescription="Inspect profile, gallery, verification and moderation actions."
-            />
-          )}
+            <div
+              className="fixed inset-0 z-50 flex justify-end bg-black/45 sm:p-4"
+              role="presentation"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setSelectedProviderId(null);
+              }}
+            >
+              <div className="h-full w-full max-w-[560px] overflow-y-auto bg-[#FAF7F2] shadow-2xl sm:rounded-[18px]">
+                <div className="min-h-full p-3 sm:p-4">
+                  <AdminProviderDetail
+                    userId={selectedProviderId}
+                    canDelete={can('providers.delete')}
+                    busy={busy}
+                    onClose={() => setSelectedProviderId(null)}
+                    onChanged={() => void run(load)}
+                    act={act}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

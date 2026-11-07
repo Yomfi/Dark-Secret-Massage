@@ -1,10 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Bell,
   CalendarDays,
   ChevronDown,
-  CircleHelp,
   ClipboardList,
   FileText,
   Image as ImageIcon,
@@ -197,18 +195,11 @@ export const AdminShell: React.FC<Props> = ({
               className="hidden min-w-0 max-w-md flex-1 md:block"
               value={globalSearch}
               onChange={(v) => onGlobalSearchChange?.(v)}
-              placeholder="Search anything…"
+              placeholder="Search this section…"
               shortcut="⌘ K"
             />
 
             <div className="ml-auto flex min-w-0 shrink items-center gap-1.5 sm:gap-2">
-              <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] border border-[#e0d7c8] bg-white text-[#6f675c] hover:text-[#161616]" aria-label="Notifications">
-                <Bell className="h-4 w-4" />
-              </button>
-              <button type="button" className="hidden h-11 w-11 shrink-0 place-items-center rounded-[14px] border border-[#e0d7c8] bg-white text-[#6f675c] hover:text-[#161616] sm:grid" aria-label="Help">
-                <CircleHelp className="h-4 w-4" />
-              </button>
-
               <div className="relative min-w-0">
                 <button
                   type="button"
