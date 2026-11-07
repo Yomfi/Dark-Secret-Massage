@@ -14,9 +14,13 @@ import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { userHasPermission } from '../../lib/workspaceHome';
 import {
+  AdminAssignmentsPanel,
   AdminCard,
   AdminCardHeader,
   AdminProviderDetail,
+  UndoBar,
+  type AssignmentRow,
+  type ReversibleAction,
   AdminShell,
   DataCell,
   DataRow,
@@ -120,6 +124,8 @@ const NAV_DEFS: NavDef[] = [
   { id: 'services', label: 'Services', permission: 'services.read', group: 'Operations' },
   { id: 'customers', label: 'Customers', permission: 'customers.read', group: 'People' },
   { id: 'providers', label: 'Providers', permission: 'providers.read', group: 'People' },
+  { id: 'agencies', label: 'Agencies', permission: 'providers.read', group: 'People' },
+  { id: 'assignments', label: 'Assignments', permission: 'assignments.read', group: 'Operations' },
   { id: 'staff', label: 'Staff', permission: 'staff.read', group: 'People' },
   { id: 'content', label: 'Content', permission: 'content.read', group: 'Website' },
   { id: 'media', label: 'Media', permission: 'media.read', group: 'Website' },
@@ -148,6 +154,14 @@ const PAGE_COPY: Record<string, { title: string; subtitle: string }> = {
   providers: {
     title: 'Providers',
     subtitle: 'Publish, suspend and review provider profiles with care.',
+  },
+  agencies: {
+    title: 'Agencies',
+    subtitle: 'Manage agency profiles, publication, verification and their professional teams.',
+  },
+  assignments: {
+    title: 'Assignments',
+    subtitle: 'Assign customers to verified providers. Assignments are operational, never paid bookings.',
   },
   staff: {
     title: 'Staff',
@@ -259,6 +273,9 @@ export const AdminWorkspacePage: React.FC = () => {
   const [customerProfile, setCustomerProfile] = useState({ firstName: '', lastName: '', phone: '' });
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<ReversibleAction | null>(null);
+  const [assignCustomerId, setAssignCustomerId] = useState<string | null>(null);
+  const [customerAssignments, setCustomerAssignments] = useState<AssignmentRow[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingDetail, setBookingDetail] = useState<Booking | null>(null);
@@ -342,8 +359,12 @@ export const AdminWorkspacePage: React.FC = () => {
   }, []);
 
   const loadCustomerDetail = useCallback(async (id: string) => {
-    const data = await apiRequest<CustomerDetail>(`/admin/customers.php?id=${encodeURIComponent(id)}`);
+    const [data, assignments] = await Promise.all([
+      apiRequest<CustomerDetail>(`/admin/customers.php?id=${encodeURIComponent(id)}`),
+      apiRequest<{ assignments: AssignmentRow[] }>(`/admin/assignments.php?customerId=${encodeURIComponent(id)}`).catch(() => ({ assignments: [] })),
+    ]);
     setCustomerDetail(data);
+    setCustomerAssignments(assignments.assignments);
     setCustomerProfile({
       firstName: data.customer.firstName,
       lastName: data.customer.lastName,
@@ -368,8 +389,9 @@ export const AdminWorkspacePage: React.FC = () => {
       if (selectedCustomerId) await loadCustomerDetail(selectedCustomerId);
       return;
     }
-    if (tab === 'providers') {
-      const data = await apiRequest<{ providers: Provider[] }>(`/admin/providers.php?kind=${kind}&q=${encodeURIComponent(search)}`);
+    if (tab === 'providers' || tab === 'agencies') {
+      const effectiveKind = tab === 'agencies' ? 'agency' : kind;
+      const data = await apiRequest<{ providers: Provider[] }>(`/admin/providers.php?kind=${effectiveKind}&q=${encodeURIComponent(search)}`);
       setProviders(data.providers);
       return;
     }
@@ -442,6 +464,12 @@ export const AdminWorkspacePage: React.FC = () => {
       await fn();
       setNotice(message);
       await load();
+      try {
+        const latest = await apiRequest<{ actions: ReversibleAction[] }>('/admin/actions.php?limit=1');
+        setLastAction(latest.actions[0] ?? null);
+      } catch {
+        setLastAction(null);
+      }
     });
 
   const openCustomer = (id: string) => {
@@ -477,7 +505,10 @@ export const AdminWorkspacePage: React.FC = () => {
       globalSearch={search}
       onGlobalSearchChange={setSearch}
       onNavigate={(id) => {
+        if (id === 'agencies') setKind('agency');
+        if (id === 'providers') setKind('all');
         setNotice(null);
+        setLastAction(null);
         setSelectedCustomerId(null);
         setCustomerDetail(null);
         setSelectedProviderId(null);
@@ -494,7 +525,17 @@ export const AdminWorkspacePage: React.FC = () => {
       }
     >
       {error ? <div role="alert" className="mb-4 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">{error}</div> : null}
-      {notice ? <div role="status" className="mb-4 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">{notice}</div> : null}
+      {notice ? (
+        <UndoBar
+          message={notice}
+          action={lastAction}
+          onReversed={(message, action) => {
+            setNotice(message);
+            setLastAction(action);
+            void run(load);
+          }}
+        />
+      ) : null}
       {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-[#e8e0d2]"><div className="h-full w-1/3 animate-pulse bg-[#B08B4B]" /></div> : null}
 
       {tab === 'overview' && overview ? (
@@ -701,6 +742,46 @@ export const AdminWorkspacePage: React.FC = () => {
                 </div>
                 <p className="truncate text-[13px] text-[#6f675c]" title={customerDetail.customer.email}>{customerDetail.customer.email}</p>
 
+                <div className="flex flex-wrap gap-2 border-t border-[#efe8dc] pt-4">
+                  <button
+                    type="button"
+                    className={adminBtnClass}
+                    disabled={busy || customerDetail.customer.status !== 'active'}
+                    onClick={() => {
+                      setAssignCustomerId(customerDetail.customer.id);
+                      setSelectedCustomerId(null);
+                      setCustomerDetail(null);
+                      setTab('assignments');
+                    }}
+                  >
+                    Assign provider
+                  </button>
+                  <span className="self-center text-[12px] text-[#6f675c]">Assignments never create a booking or payment.</span>
+                </div>
+
+                <div className="border-t border-[#efe8dc] pt-4">
+                  <p className="text-[13px] font-semibold">Assigned providers</p>
+                  {customerAssignments.length === 0 ? (
+                    <p className="mt-2 text-[12.5px] text-[#6f675c]">No assignments yet.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-2">
+                      {customerAssignments.slice(0, 6).map((a) => (
+                        <li key={a.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12.5px]">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate font-medium">{a.providerName || 'Provider'}</span>
+                            <StatusBadge status={a.status} label={a.statusLabel} />
+                          </div>
+                          <p className="truncate text-[11.5px] text-[#6f675c]">
+                            {a.providerType === 'agency' ? 'Agency' : 'Individual'}
+                            {a.teamMemberName ? ` · ${a.teamMemberName}` : ''}
+                            {a.serviceName ? ` · ${a.serviceName}` : ''}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <form className="space-y-2 border-t border-[#efe8dc] pt-4" onSubmit={(e) => {
                   e.preventDefault();
                   act(async () => {
@@ -804,15 +885,17 @@ export const AdminWorkspacePage: React.FC = () => {
         </div>
       ) : null}
 
-      {tab === 'providers' ? (
+      {tab === 'providers' || tab === 'agencies' ? (
         <div className="space-y-4">
           <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
             <div className="flex flex-wrap items-end gap-2 border-b border-[#efe8dc] p-4">
-              <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Provider type" value={kind} onChange={(e) => setKind(e.target.value)}>
-                <option value="all">All types</option>
-                <option value="individual">Individuals</option>
-                <option value="agency">Agencies</option>
-              </select>
+              {tab === 'providers' ? (
+                <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Provider type" value={kind} onChange={(e) => setKind(e.target.value)}>
+                  <option value="all">All types</option>
+                  <option value="individual">Individuals</option>
+                  <option value="agency">Agencies</option>
+                </select>
+              ) : null}
               <select className={`${adminInputClass} w-[160px] shrink-0`} aria-label="Verification status" value={providerVerification} onChange={(e) => setProviderVerification(e.target.value)}>
                 <option value="all">Any verification</option>
                 <option value="verified">Verified</option>
@@ -938,6 +1021,14 @@ export const AdminWorkspacePage: React.FC = () => {
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {tab === 'assignments' ? (
+        <AdminAssignmentsPanel
+          canWrite={can('assignments.write')}
+          initialCustomerId={assignCustomerId}
+          onClearedInitialCustomer={() => setAssignCustomerId(null)}
+        />
       ) : null}
 
       {tab === 'staff' ? (

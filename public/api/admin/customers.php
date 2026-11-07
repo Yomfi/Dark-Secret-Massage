@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
+require_once dirname(__DIR__) . '/config/actions.php';
 
 $admin = ds_require_permission('customers.read');
 if (!ds_cms_ready()) {
@@ -308,26 +309,47 @@ if ($action === 'block' || $action === 'unblock') {
         ds_error(404, 'NOT_FOUND', 'Customer not found.');
     }
     $status = $action === 'block' ? 'banned' : 'active';
+    $before = $pdo->prepare('SELECT account_status, block_reason FROM users WHERE id = ? LIMIT 1');
+    $before->execute([$userId]);
+    $beforeRow = $before->fetch() ?: ['account_status' => 'active', 'block_reason' => null];
     $pdo->prepare('UPDATE users SET account_status = ?, block_reason = ?, updated_at = ? WHERE id = ?')
         ->execute([$status, $action === 'block' ? $reason : null, ds_now_sql(), $userId]);
     ds_audit('customer.' . $action, 'user', $userId, ['reason' => $reason], $admin['id']);
-    ds_success(['userId' => $userId, 'status' => $status]);
+    $undoId = ds_reversible_record(
+        'customer.' . $action,
+        ($action === 'block' ? 'Blocked ' : 'Unblocked ') . (string) ($body['email'] ?? 'customer'),
+        'users',
+        $userId,
+        ['account_status' => (string) $beforeRow['account_status'], 'block_reason' => $beforeRow['block_reason']],
+        ['account_status' => $status, 'block_reason' => $action === 'block' ? $reason : null],
+        [],
+        $admin['id']
+    );
+    ds_success(['userId' => $userId, 'status' => $status, 'undoActionId' => $undoId]);
 }
 
 if ($userId === '' || !in_array($action, ['suspend', 'activate'], true)) {
     ds_error(400, 'VALIDATION_ERROR', 'Invalid customer action.');
-}
+}    $stmt = $pdo->prepare("SELECT id, role, account_status, email FROM users WHERE id = ? AND role = 'user' LIMIT 1");
+    $stmt->execute([$userId]);
+    $target = $stmt->fetch();
+    if (!$target) {
+        ds_error(404, 'NOT_FOUND', 'Customer not found.');
+    }
 
-$stmt = $pdo->prepare("SELECT id, role FROM users WHERE id = ? AND role = 'user' LIMIT 1");
-$stmt->execute([$userId]);
-$target = $stmt->fetch();
-if (!$target) {
-    ds_error(404, 'NOT_FOUND', 'Customer not found.');
-}
+    $status = $action === 'suspend' ? 'suspended' : 'active';
+    $pdo->prepare('UPDATE users SET account_status = ?, updated_at = ? WHERE id = ?')
+        ->execute([$status, ds_now_sql(), $userId]);
 
-$status = $action === 'suspend' ? 'suspended' : 'active';
-$pdo->prepare('UPDATE users SET account_status = ?, updated_at = ? WHERE id = ?')
-    ->execute([$status, ds_now_sql(), $userId]);
-
-ds_audit('customer.' . $action, 'user', $userId, [], $admin['id']);
-ds_success(['userId' => $userId, 'status' => $status]);
+    ds_audit('customer.' . $action, 'user', $userId, [], $admin['id']);
+    $undoId = ds_reversible_record(
+        'customer.' . $action,
+        ($action === 'suspend' ? 'Suspended ' : 'Reactivated ') . (string) $target['email'],
+        'users',
+        $userId,
+        ['account_status' => (string) $target['account_status']],
+        ['account_status' => $status],
+        [],
+        $admin['id']
+    );
+    ds_success(['userId' => $userId, 'status' => $status, 'undoActionId' => $undoId]);

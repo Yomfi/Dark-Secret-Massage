@@ -82,8 +82,9 @@ const initials = (name: string) => {
 const Inner: React.FC = () => {
   const { user } = useAuth();
   const [pending, setPending] = useState<Row[]>([]);
+  const [changes, setChanges] = useState<Row[]>([]);
   const [history, setHistory] = useState<Row[]>([]);
-  const [scope, setScope] = useState<'pending' | 'history'>('pending');
+  const [scope, setScope] = useState<'pending' | 'changes' | 'history'>('pending');
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -103,8 +104,9 @@ const Inner: React.FC = () => {
   const load = async (quiet = false) => {
     if (!quiet) setLoading(true);
     try {
-      const data = await apiRequest<{ pending: Row[]; history: Row[] }>('/admin/provider-reviews.php?scope=all');
+      const data = await apiRequest<{ pending: Row[]; changes: Row[]; history: Row[] }>('/admin/provider-reviews.php?scope=all');
       setPending(data.pending);
+      setChanges(data.changes ?? []);
       setHistory(data.history);
       setError(null);
     } catch (err) {
@@ -172,7 +174,7 @@ const Inner: React.FC = () => {
     }
   };
 
-  const source = scope === 'pending' ? pending : history;
+  const source = scope === 'pending' ? pending : scope === 'changes' ? changes : history;
   const filtered = source.filter((row) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -207,7 +209,7 @@ const Inner: React.FC = () => {
 
       <AdminCard className="mb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-full bg-[#f3efe6] p-1" role="tablist" aria-label="Review queue views">
+          <div className="inline-flex flex-wrap gap-1 rounded-[18px] bg-[#f3efe6] p-1" role="tablist" aria-label="Review queue views">
             <button
               type="button"
               role="tab"
@@ -220,6 +222,20 @@ const Inner: React.FC = () => {
               <Inbox className="h-3.5 w-3.5" aria-hidden /> Pending
               <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] ${scope === 'pending' ? 'bg-white/15' : 'bg-white'}`}>
                 {pending.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scope === 'changes'}
+              onClick={() => setScope('changes')}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-semibold transition ${
+                scope === 'changes' ? 'bg-[#161616] text-[#F7F4EF]' : 'text-[#6f675c] hover:text-[#161616]'
+              }`}
+            >
+              Awaiting changes
+              <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] ${scope === 'changes' ? 'bg-white/15' : 'bg-white'}`}>
+                {changes.length}
               </span>
             </button>
             <button
@@ -253,20 +269,26 @@ const Inner: React.FC = () => {
       ) : filtered.length === 0 ? (
         <AdminCard>
           <EmptyState
-            icon={scope === 'pending' ? CheckCircle2 : History}
+            icon={scope === 'history' ? History : CheckCircle2}
             title={
               scope === 'pending'
                 ? pending.length === 0
                   ? 'No applications awaiting a decision'
                   : 'No pending applications match this search'
-                : history.length === 0
-                  ? 'No decisions recorded yet'
-                  : 'No decisions match this search'
+                : scope === 'changes'
+                  ? changes.length === 0
+                    ? 'No applications awaiting provider changes'
+                    : 'No applications match this search'
+                  : history.length === 0
+                    ? 'No decisions recorded yet'
+                    : 'No decisions match this search'
             }
             description={
               scope === 'pending'
                 ? 'New submissions appear here when a provider requests review.'
-                : 'Approved, rejected and reopened applications are recorded here.'
+                : scope === 'changes'
+                  ? 'Providers update these applications before they return to the pending queue.'
+                  : 'Approved and rejected applications are recorded here with their decision history.'
             }
           />
         </AdminCard>

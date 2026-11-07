@@ -9,6 +9,8 @@ export { DataTable, DataRow, DataCell } from './DataTable';
 export { DetailPanel } from './DetailPanel';
 export { RowMenu, type RowMenuItem } from './RowMenu';
 export { AdminProviderDetail } from './AdminProviderDetail';
+export { AdminAssignmentsPanel, type AssignmentRow } from './AdminAssignmentsPanel';
+export { UndoBar, type ReversibleAction } from './UndoBar';
 export {
   FormField,
   adminInputClass,

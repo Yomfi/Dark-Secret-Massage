@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
+require_once dirname(__DIR__) . '/config/actions.php';
 
 $admin = ds_require_permission('providers.read');
 if (!ds_cms_ready()) {
@@ -186,7 +187,27 @@ if ($action === 'suspend' || $action === 'activate') {
     }
     ds_moderation_log($userId, $action, $admin['id'], $reason !== '' ? $reason : null, $notes !== '' ? $notes : null, $untilSql);
     ds_audit('provider.' . $action, 'user', $userId, ['reason' => $reason, 'until' => $untilSql], $admin['id']);
-    ds_success(['userId' => $userId, 'accountStatus' => $status]);
+    $undoId = ds_reversible_record(
+        'provider.account.' . $action,
+        ($action === 'suspend' ? 'Suspended ' : 'Reactivated ') . (string) ($target['email'] ?? 'provider'),
+        'users',
+        $userId,
+        [
+            'account_status' => (string) ($target['account_status'] ?? 'active'),
+            'suspend_reason' => $target['suspend_reason'] ?? null,
+            'suspended_until' => $target['suspended_until'] ?? null,
+            'suspend_notes' => $target['suspend_notes'] ?? null,
+        ],
+        [
+            'account_status' => $status,
+            'suspend_reason' => $action === 'suspend' ? $reason : null,
+            'suspended_until' => $action === 'suspend' ? $untilSql : null,
+            'suspend_notes' => $action === 'suspend' && $notes !== '' ? $notes : null,
+        ],
+        [],
+        $admin['id']
+    );
+    ds_success(['userId' => $userId, 'accountStatus' => $status, 'undoActionId' => $undoId]);
 }
 
 if ($action === 'block' || $action === 'unblock') {
@@ -219,7 +240,17 @@ if ($action === 'block' || $action === 'unblock') {
     }
     ds_moderation_log($userId, $action, $admin['id'], $reason !== '' ? $reason : null, $notes !== '' ? $notes : null);
     ds_audit('provider.' . $action, 'user', $userId, ['reason' => $reason], $admin['id']);
-    ds_success(['userId' => $userId, 'accountStatus' => $status]);
+    $undoId = ds_reversible_record(
+        'provider.account.' . $action,
+        ($action === 'block' ? 'Blocked ' : 'Unblocked ') . (string) ($target['email'] ?? 'provider'),
+        'users',
+        $userId,
+        ['account_status' => (string) ($target['account_status'] ?? 'active'), 'block_reason' => $target['block_reason'] ?? null],
+        ['account_status' => $status, 'block_reason' => $action === 'block' ? $reason : null],
+        [],
+        $admin['id']
+    );
+    ds_success(['userId' => $userId, 'accountStatus' => $status, 'undoActionId' => $undoId]);
 }
 
 if ($action === 'remove' || $action === 'restore') {
@@ -284,13 +315,15 @@ if ($action === 'publish' || $action === 'unpublish') {
             ->execute([$now, $now, $userId]);
         ds_moderation_log($userId, 'publish', $admin['id']);
         ds_audit('provider.publish', 'provider_profile', (string) $profile['id'], [], $admin['id']);
-        ds_success(['userId' => $userId, 'published' => true]);
+        $undoId = ds_reversible_record('provider.publish', 'Published ' . (string) ($profile['display_name'] ?? 'provider'), 'provider_profiles', (string) $profile['id'], ['is_published' => (int) ($profile['is_published'] ?? 0)], ['is_published' => 1], [], $admin['id']);
+        ds_success(['userId' => $userId, 'published' => true, 'undoActionId' => $undoId]);
     }
     ds_pdo()->prepare('UPDATE provider_profiles SET is_published = 0, updated_at = ? WHERE user_id = ?')
         ->execute([$now, $userId]);
     ds_moderation_log($userId, 'unpublish', $admin['id']);
     ds_audit('provider.unpublish', 'provider_profile', (string) $profile['id'], [], $admin['id']);
-    ds_success(['userId' => $userId, 'published' => false]);
+    $undoId = ds_reversible_record('provider.unpublish', 'Unpublished ' . (string) ($profile['display_name'] ?? 'provider'), 'provider_profiles', (string) $profile['id'], ['is_published' => (int) ($profile['is_published'] ?? 1)], ['is_published' => 0], [], $admin['id']);
+    ds_success(['userId' => $userId, 'published' => false, 'undoActionId' => $undoId]);
 }
 
 if ($action === 'permanently_delete') {

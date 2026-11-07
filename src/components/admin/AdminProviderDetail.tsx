@@ -42,6 +42,7 @@ type ProviderDetail = {
   services: Array<{ id: string; name: string; durationMinutes: number; price: number; currency: string; active: boolean }>;
   bookings: Array<{ id: string; reference: string | null; status: string; serviceName: string; customerName: string | null; scheduledAt: string | null }>;
   moderationHistory: Array<{ id: string; action: string; reason: string | null; notes: string | null; createdAt: string | null }>;
+  teamMembers: Array<{ id: string; displayName: string; status: string; gender?: string; bio?: string | null; yearsExperience?: number | null }>;
   badges: string[];
 };
 
@@ -61,6 +62,7 @@ const TABS = [
   'Services & Pricing',
   'Verification',
   'Bookings',
+  'Team',
   'Account Status',
   'Moderation History',
 ] as const;
@@ -311,6 +313,28 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
                 {detail.profile?.removeReason ? <p>Remove: {detail.profile.removeReason}</p> : null}
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {tab === 'Team' ? (
+          <div className="space-y-2">
+            {detail.teamMembers.length === 0 ? (
+              <p className="text-[13px] text-[#6f675c]">
+                {p.kind === 'agency' ? 'No agency team members have been added.' : 'Team members apply to agency profiles only.'}
+              </p>
+            ) : detail.teamMembers.map((m) => (
+              <article key={m.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[13px]">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate font-semibold">{m.displayName}</p>
+                  <StatusBadge status={m.status} />
+                </div>
+                <p className="mt-0.5 text-[12px] text-[#6f675c]">
+                  {m.gender ? `${m.gender} · ` : ''}{m.yearsExperience ? `${m.yearsExperience} years · ` : ''}{m.status}
+                </p>
+                {m.bio ? <p className="mt-1 text-[12px] text-[#6f675c]">{m.bio}</p> : null}
+              </article>
+            ))}
+            <p className="pt-2 text-[12px] text-[#6f675c]">Suspending or blocking the agency affects new bookability; existing appointments are not silently removed.</p>
           </div>
         ) : null}
 

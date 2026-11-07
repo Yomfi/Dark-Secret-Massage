@@ -21,7 +21,7 @@ if ($method === 'GET') {
     ds_require_method('GET');
 
     $scope = strtolower(trim((string) ($_GET['scope'] ?? 'all')));
-    if (!in_array($scope, ['all', 'pending', 'history'], true)) {
+    if (!in_array($scope, ['all', 'pending', 'changes', 'history'], true)) {
         $scope = 'all';
     }
     $search = trim((string) ($_GET['q'] ?? ''));
@@ -29,7 +29,9 @@ if ($method === 'GET') {
     $where = [];
     $params = [];
     if ($scope === 'pending') {
-        $where[] = "v.verification_status IN ('pending_review','changes_requested')";
+        $where[] = "v.verification_status = 'pending_review'";
+    } elseif ($scope === 'changes') {
+        $where[] = "v.verification_status = 'changes_requested'";
     } elseif ($scope === 'history') {
         $where[] = "v.verification_status IN ('verified','rejected')";
     } else {
@@ -90,7 +92,7 @@ if ($method === 'GET') {
             'membershipFeeEnabled' => ds_membership_fee_enabled(),
             'membershipFree' => !ds_membership_fee_enabled(),
             'verificationStatus' => $status,
-            'canDecide' => in_array($status, DS_REVIEW_PENDING, true),
+            'canDecide' => $status === 'pending_review',
             'canReopen' => in_array($status, DS_REVIEW_DECIDED, true),
             'submittedAt' => $row['submitted_for_review_at'] ?? $row['created_at'],
             'decidedAt' => $row['verified_at'] ?? null,
@@ -109,14 +111,21 @@ if ($method === 'GET') {
         ];
     }, $rows);
 
-    $pending = array_values(array_filter($list, static fn (array $r): bool => $r['canDecide']));
-    $history = array_values(array_filter($list, static fn (array $r): bool => !$r['canDecide']));
+    $pending = array_values(array_filter($list, static fn (array $r): bool => $r['verificationStatus'] === 'pending_review'));
+    $changes = array_values(array_filter($list, static fn (array $r): bool => $r['verificationStatus'] === 'changes_requested'));
+    $history = array_values(array_filter($list, static fn (array $r): bool => in_array($r['verificationStatus'], ['verified', 'rejected'], true)));
 
     ds_success([
-        'providers' => $scope === 'history' ? $history : ($scope === 'pending' ? $pending : $list),
+        'providers' => match ($scope) {
+            'pending' => $pending,
+            'changes' => $changes,
+            'history' => $history,
+            default => $list,
+        },
         'pending' => $pending,
+        'changes' => $changes,
         'history' => $history,
-        'counts' => ['pending' => count($pending), 'history' => count($history)],
+        'counts' => ['pending' => count($pending), 'changes' => count($changes), 'history' => count($history)],
     ]);
 }
 
