@@ -202,15 +202,15 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     () => (
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium text-zinc-400">
         <span className="inline-flex items-center gap-1.5">
-          <UserCheck className="h-4 w-4 text-brand-gold" aria-hidden />
+          <UserCheck className="h-4 w-4 text-brand-purple" aria-hidden />
           Reviewed providers
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <Lock className="h-4 w-4 text-brand-gold" aria-hidden />
+          <Lock className="h-4 w-4 text-brand-purple" aria-hidden />
           Private booking details
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="h-4 w-4 text-brand-gold" aria-hidden />
+          <ShieldCheck className="h-4 w-4 text-brand-purple" aria-hidden />
           Secure payment ready
         </span>
       </div>
@@ -257,7 +257,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
         {bookingNotice ? (
           <div
             role="status"
-            className="mb-8 rounded-2xl border border-brand-gold/35 bg-brand-gold/[0.07] px-4 py-3.5 text-[13.5px] leading-relaxed text-zinc-200"
+            className="mb-8 rounded-2xl border border-brand-purple/35 bg-brand-purple/[0.07] px-4 py-3.5 text-[13.5px] leading-relaxed text-zinc-200"
           >
             {bookingNotice}
           </div>
@@ -275,7 +275,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
           <div className="lg:col-span-7 xl:col-span-8">
             <div className="mb-6">{trustStrip}</div>
 
-            <div className={surfaceClass('bg-[#0B0B0C]/80 p-5 sm:p-7')}>
+            <div className={surfaceClass('bg-[#060608]/80 p-5 sm:p-7')}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}

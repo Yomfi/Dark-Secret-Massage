@@ -51,7 +51,7 @@ export const LoginPage: React.FC = () => {
       footer={
         <>
           New here?{' '}
-          <Link to="/register" className="font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/register" className="font-semibold text-brand-purple-light hover:text-brand-purple">
             Create account
           </Link>
         </>
@@ -82,7 +82,7 @@ export const LoginPage: React.FC = () => {
         <div className="flex justify-end">
           <Link
             to="/forgot-password"
-            className="inline-flex min-h-11 items-center text-[13px] font-medium text-brand-gold-light hover:text-brand-gold"
+            className="inline-flex min-h-11 items-center text-[13px] font-medium text-brand-purple-light hover:text-brand-purple"
           >
             Forgot password?
           </Link>

@@ -235,14 +235,14 @@ const Inner: React.FC = () => {
 
       <AdminCard className="mb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex flex-wrap gap-1 rounded-[18px] bg-[#f3efe6] p-1" role="tablist" aria-label="Review queue views">
+          <div className="inline-flex flex-wrap gap-1 rounded-[18px] bg-[#f1e9fb] p-1" role="tablist" aria-label="Review queue views">
             <button
               type="button"
               role="tab"
               aria-selected={scope === 'pending'}
               onClick={() => setScope('pending')}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-semibold transition ${
-                scope === 'pending' ? 'bg-[#161616] text-[#F7F4EF]' : 'text-[#6f675c] hover:text-[#161616]'
+                scope === 'pending' ? 'bg-[#161616] text-[#F5F2FA]' : 'text-[#6b6275] hover:text-[#161616]'
               }`}
             >
               <Inbox className="h-3.5 w-3.5" aria-hidden /> Pending
@@ -256,7 +256,7 @@ const Inner: React.FC = () => {
               aria-selected={scope === 'changes'}
               onClick={() => setScope('changes')}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-semibold transition ${
-                scope === 'changes' ? 'bg-[#161616] text-[#F7F4EF]' : 'text-[#6f675c] hover:text-[#161616]'
+                scope === 'changes' ? 'bg-[#161616] text-[#F5F2FA]' : 'text-[#6b6275] hover:text-[#161616]'
               }`}
             >
               Awaiting changes
@@ -270,7 +270,7 @@ const Inner: React.FC = () => {
               aria-selected={scope === 'history'}
               onClick={() => setScope('history')}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-semibold transition ${
-                scope === 'history' ? 'bg-[#161616] text-[#F7F4EF]' : 'text-[#6f675c] hover:text-[#161616]'
+                scope === 'history' ? 'bg-[#161616] text-[#F5F2FA]' : 'text-[#6b6275] hover:text-[#161616]'
               }`}
             >
               <History className="h-3.5 w-3.5" aria-hidden /> Review History
@@ -290,7 +290,7 @@ const Inner: React.FC = () => {
 
       {loading ? (
         <AdminCard>
-          <p className="py-10 text-center text-[13px] text-[#6f675c]">Loading review queue…</p>
+          <p className="py-10 text-center text-[13px] text-[#6b6275]">Loading review queue…</p>
         </AdminCard>
       ) : filtered.length === 0 ? (
         <AdminCard>
@@ -324,12 +324,12 @@ const Inner: React.FC = () => {
             <AdminCard key={row.providerUserId}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#161616] text-[12px] font-semibold text-[#F7F4EF]">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#161616] text-[12px] font-semibold text-[#F5F2FA]">
                     {initials(row.displayName)}
                   </span>
                   <div className="min-w-0">
                     <h2 className="truncate font-display text-[22px] font-semibold text-[#161616]">{row.displayName}</h2>
-                    <p className="mt-0.5 break-words text-[12.5px] text-[#6f675c]">
+                    <p className="mt-0.5 break-words text-[12.5px] text-[#6b6275]">
                       <span className="capitalize">{row.providerType ?? 'individual'}</span>
                       {row.city ? ` · ${row.city}` : ''} · {row.email}
                       {row.phone ? ` · ${row.phone}` : ''}
@@ -339,39 +339,39 @@ const Inner: React.FC = () => {
                 <StatusBadge status={row.verificationStatus} />
               </div>
 
-              <dl className="mt-4 grid gap-2 text-[12.5px] text-[#6f675c] sm:grid-cols-2 lg:grid-cols-4">
+              <dl className="mt-4 grid gap-2 text-[12.5px] text-[#6b6275] sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Email</dt>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Email</dt>
                   <dd>{row.emailVerified ? 'Verified' : 'Not verified'}</dd>
                 </div>
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Phone</dt>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Phone</dt>
                   <dd>{row.phoneVerified ? 'Verified' : 'Not verified'}</dd>
                 </div>
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Identity</dt>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Identity</dt>
                   <dd className="capitalize">{row.identityStatus.replace(/_/g, ' ')}</dd>
                 </div>
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">
                     {row.canDecide ? 'Submitted' : 'Decided'}
                   </dt>
                   <dd>{formatScheduledDate(row.canDecide ? row.submittedAt : row.decidedAt) || '—'}</dd>
                 </div>
               </dl>
 
-              <dl className="mt-3 grid gap-2 rounded-[12px] border border-[#efe8dc] bg-[#faf7f2] p-3 text-[12.5px] text-[#6f675c] sm:grid-cols-2 lg:grid-cols-4">
+              <dl className="mt-3 grid gap-2 rounded-[12px] border border-[#ede4f7] bg-[#faf7ff] p-3 text-[12.5px] text-[#6b6275] sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Verification choice</dt>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Verification choice</dt>
                   <dd>{choiceLabel(row.verificationChoice)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Government ID</dt>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Government ID</dt>
                   <dd>
                     {row.hasIdDocument ? 'Uploaded' : 'Not uploaded'}
                     {row.hasIdDocument && row.latestDocumentId ? (
                       <a
-                        className="ml-2 font-semibold text-[#8F6D35] hover:underline"
+                        className="ml-2 font-semibold text-[#6d28d9] hover:underline"
                         href={`/api/admin/documents.php?id=${encodeURIComponent(row.latestDocumentId)}&side=id`}
                         target="_blank"
                         rel="noreferrer"
@@ -382,12 +382,12 @@ const Inner: React.FC = () => {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Selfie</dt>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Selfie</dt>
                   <dd>
                     {row.hasSelfie ? 'Uploaded' : 'Not uploaded'}
                     {row.hasSelfie && row.latestDocumentId ? (
                       <a
-                        className="ml-2 font-semibold text-[#8F6D35] hover:underline"
+                        className="ml-2 font-semibold text-[#6d28d9] hover:underline"
                         href={`/api/admin/documents.php?id=${encodeURIComponent(row.latestDocumentId)}&side=selfie`}
                         target="_blank"
                         rel="noreferrer"
@@ -398,7 +398,7 @@ const Inner: React.FC = () => {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">
                     {row.providerType === 'agency' ? 'Business verification' : 'Identity status'}
                   </dt>
                   <dd className="capitalize">
@@ -410,7 +410,7 @@ const Inner: React.FC = () => {
               </dl>
 
               {!row.canDecide ? (
-                <div className="mt-4 rounded-[12px] border border-[#efe8dc] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
+                <div className="mt-4 rounded-[12px] border border-[#ede4f7] bg-[#faf7ff] px-3 py-2 text-[12.5px] text-[#6b6275]">
                   <p>
                     {row.verificationStatus === 'verified'
                       ? 'Approved'
@@ -420,18 +420,18 @@ const Inner: React.FC = () => {
                     {row.decidedBy ? ` by ${row.decidedBy}` : ''}
                     {row.decidedAt ? ` on ${formatScheduledDate(row.decidedAt)}` : ''}.
                   </p>
-                  {row.rejectionReason ? <p className="mt-1 text-[#3f3a33]">Reason: {row.rejectionReason}</p> : null}
+                  {row.rejectionReason ? <p className="mt-1 text-[#3f3548]">Reason: {row.rejectionReason}</p> : null}
                   {row.adminNotes ? <p className="mt-1">Notes: {row.adminNotes}</p> : null}
                 </div>
               ) : null}
 
               {row.reviewHistory && row.reviewHistory.length > 0 ? (
-                <details className="mt-3 rounded-[12px] border border-[#efe8dc] bg-white px-3 py-2 text-[12.5px] text-[#6f675c]">
-                  <summary className="cursor-pointer font-semibold text-[#3f3a33]">Verification history</summary>
+                <details className="mt-3 rounded-[12px] border border-[#ede4f7] bg-white px-3 py-2 text-[12.5px] text-[#6b6275]">
+                  <summary className="cursor-pointer font-semibold text-[#3f3548]">Verification history</summary>
                   <ul className="mt-2 space-y-1.5">
                     {row.reviewHistory.map((entry, index) => (
                       <li key={`${entry.action}-${entry.createdAt}-${index}`}>
-                        <span className="font-medium text-[#3f3a33]">{entry.action.replace(/^provider\./, '').replace(/_/g, ' ')}</span>
+                        <span className="font-medium text-[#3f3548]">{entry.action.replace(/^provider\./, '').replace(/_/g, ' ')}</span>
                         {entry.from || entry.to ? ` · ${statusLabel(entry.from)} → ${statusLabel(entry.to)}` : ''}
                         {entry.choice ? ` · ${choiceLabel(entry.choice)}` : ''}
                         {entry.createdAt ? ` · ${formatScheduledDate(entry.createdAt)}` : ''}
@@ -483,7 +483,7 @@ const Inner: React.FC = () => {
                   </button>
                 ) : null}
                 {!canWrite ? (
-                  <p className="text-[12.5px] text-[#6f675c]">Your role can view reviews but not decide them.</p>
+                  <p className="text-[12.5px] text-[#6b6275]">Your role can view reviews but not decide them.</p>
                 ) : null}
               </div>
             </AdminCard>
@@ -508,10 +508,10 @@ const Inner: React.FC = () => {
             <h2 id="review-decision-title" className="font-display text-[24px] font-semibold">
               {DECISION_COPY[decision.action].title}
             </h2>
-            <p className="mt-1 text-[13px] text-[#6f675c]">
+            <p className="mt-1 text-[13px] text-[#6b6275]">
               {decision.row.displayName} · {decision.row.email}
             </p>
-            <p className="mt-3 rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
+            <p className="mt-3 rounded-[12px] bg-[#faf7ff] px-3 py-2 text-[12.5px] text-[#6b6275]">
               {DECISION_COPY[decision.action].help}
             </p>
 
@@ -552,13 +552,13 @@ const Inner: React.FC = () => {
 };
 
 export const AdminProviderReviewsPage: React.FC = () => (
-  <div className="ms-admin min-h-screen bg-[#FAF7F2] text-[#161616]">
-    <header className="border-b border-[#e8e0d2] bg-[#FAF7F2]/95 backdrop-blur">
+  <div className="ms-admin min-h-screen bg-[#faf7ff] text-[#161616]">
+    <header className="border-b border-[#e5d9f2] bg-[#faf7ff]/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link to="/admin" className="inline-flex min-w-0 items-center gap-2.5" aria-label="Admin workspace">
-          <BrandLogo variant="default" withWordmark markHeight={24} />
+          <BrandLogo variant="default" withWordmark onLight markHeight={24} />
         </Link>
-        <Link to="/admin" className="text-[13px] font-semibold text-[#8F6D35] hover:underline">
+        <Link to="/admin" className="text-[13px] font-semibold text-[#6d28d9] hover:underline">
           Admin workspace
         </Link>
       </div>

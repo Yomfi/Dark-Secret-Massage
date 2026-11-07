@@ -13,7 +13,7 @@ interface FooterProps {
 }
 
 const linkClass =
-  'inline-flex min-h-11 items-center text-[13.5px] text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80 rounded';
+  'inline-flex min-h-11 items-center text-[13.5px] text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80 rounded';
 
 const columnTitle = 'mb-3 text-[12px] font-semibold text-zinc-300';
 
@@ -38,12 +38,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBooking, onOpenDashboard }
             </p>
             <div className="mt-4 space-y-2 text-[13px] text-zinc-500">
               <p className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
                 <span>{contactAddress || 'Accra · Tema · Kumasi & across Ghana'}</span>
               </p>
               {contactPhone && (
                 <p className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+                  <Phone className="h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
                   <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="hover:text-white">
                     {contactPhone}
                   </a>
@@ -51,7 +51,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBooking, onOpenDashboard }
               )}
               {contactEmail && (
                 <p className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+                  <Mail className="h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
                   <a href={`mailto:${contactEmail}`} className="hover:text-white">
                     {contactEmail}
                   </a>

@@ -46,7 +46,7 @@ export const UnverifiedContactModal: React.FC<Props> = ({ open, onCancel, onCont
           <button
             type="button"
             onClick={onContinue}
-            className="flex-1 min-h-[44px] rounded-full bg-brand-gold hover:bg-brand-gold-light text-xs uppercase tracking-widest text-brand-ink transition-colors"
+            className="flex-1 min-h-[44px] rounded-full bg-brand-purple hover:bg-brand-purple-light text-xs uppercase tracking-widest text-white transition-colors"
           >
             Continue to contact
           </button>

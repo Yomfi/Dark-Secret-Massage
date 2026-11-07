@@ -12,7 +12,7 @@ export const MassageHowItWorks: React.FC = () => (
     <Container className="py-12 sm:py-14">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
         <div className="lg:w-56 lg:shrink-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
             How booking works
           </p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.01em] text-white">
@@ -23,7 +23,7 @@ export const MassageHowItWorks: React.FC = () => (
         <ol className="grid flex-1 grid-cols-1 gap-y-5 sm:grid-cols-3 sm:gap-x-6">
           {STEPS.map((step, index) => (
             <li key={step.title} className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand-gold/35 bg-brand-gold/10 text-[12px] font-semibold text-brand-gold-light">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand-purple/35 bg-brand-purple/10 text-[12px] font-semibold text-brand-purple-light">
                 {index + 1}
               </span>
               <div className="min-w-0">

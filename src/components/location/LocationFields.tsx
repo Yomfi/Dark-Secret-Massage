@@ -38,13 +38,13 @@ type Props = {
 };
 
 const labelClass = (theme: 'light' | 'dark') =>
-  theme === 'dark' ? 'text-[12px] font-medium text-zinc-400' : 'text-[12px] font-medium text-[#6b6252]';
+  theme === 'dark' ? 'text-[12px] font-medium text-zinc-400' : 'text-[12px] font-medium text-[#675f73]';
 const inputClass = (theme: 'light' | 'dark') =>
   theme === 'dark'
-    ? 'min-h-12 w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 text-[14px] text-white outline-none focus:border-brand-gold/60 focus:ring-2 focus:ring-brand-gold/30'
-    : 'min-h-12 w-full rounded-xl border border-[#d9cfba] bg-white px-3 text-[14px] text-[#221f19] outline-none focus:border-[#b8862f] focus:ring-2 focus:ring-[#b8862f]/25';
+    ? 'min-h-12 w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 text-[14px] text-white outline-none focus:border-brand-purple/60 focus:ring-2 focus:ring-brand-purple/30'
+    : 'min-h-12 w-full rounded-xl border border-[#d8c7ea] bg-white px-3 text-[14px] text-[#1a1424] outline-none focus:border-[#9333ea] focus:ring-2 focus:ring-[#9333ea]/25';
 const hintClass = (theme: 'light' | 'dark') =>
-  theme === 'dark' ? 'mt-1 text-[11.5px] leading-relaxed text-zinc-500' : 'mt-1 text-[11.5px] leading-relaxed text-[#8a7a52]';
+  theme === 'dark' ? 'mt-1 text-[11.5px] leading-relaxed text-zinc-500' : 'mt-1 text-[11.5px] leading-relaxed text-[#7e22ce]';
 
 export const LocationFields: React.FC<Props> = ({
   value,
@@ -194,13 +194,13 @@ export const LocationFields: React.FC<Props> = ({
           className={
             theme === 'dark'
               ? 'rounded-xl border border-white/10 bg-white/[0.03] p-3'
-              : 'rounded-xl border border-[#eee7d9] bg-[#fbf8f1] p-3'
+              : 'rounded-xl border border-[#ece3f6] bg-[#faf5ff] p-3'
           }
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className={`inline-flex items-center gap-1.5 text-[12.5px] font-semibold ${theme === 'dark' ? 'text-zinc-200' : 'text-[#221f19]'}`}>
-                <MapPin className="h-3.5 w-3.5 text-[#b8862f]" aria-hidden />
+              <p className={`inline-flex items-center gap-1.5 text-[12.5px] font-semibold ${theme === 'dark' ? 'text-zinc-200' : 'text-[#1a1424]'}`}>
+                <MapPin className="h-3.5 w-3.5 text-[#9333ea]" aria-hidden />
                 {value.latitude != null && value.longitude != null ? 'Exact pin saved' : 'Exact pin (optional)'}
               </p>
               <p className={hintClass(theme)}>
@@ -217,7 +217,7 @@ export const LocationFields: React.FC<Props> = ({
                 className={
                   theme === 'dark'
                     ? 'inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-white/12 px-3 text-[12px] font-semibold text-zinc-200 hover:bg-white/[0.06] disabled:opacity-60'
-                    : 'inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[#d9cfba] bg-white px-3 text-[12px] font-semibold text-[#221f19] hover:bg-[#f2eee4] disabled:opacity-60'
+                    : 'inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[#d8c7ea] bg-white px-3 text-[12px] font-semibold text-[#1a1424] hover:bg-[#f3edfa] disabled:opacity-60'
                 }
               >
                 <LocateFixed className="h-3.5 w-3.5" aria-hidden />
@@ -231,7 +231,7 @@ export const LocationFields: React.FC<Props> = ({
                   className={
                     theme === 'dark'
                       ? 'inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-[12px] font-semibold text-zinc-400 hover:text-white'
-                      : 'inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-[12px] font-semibold text-[#6b6252] hover:text-[#221f19]'
+                      : 'inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-[12px] font-semibold text-[#675f73] hover:text-[#1a1424]'
                   }
                 >
                   <X className="h-3.5 w-3.5" aria-hidden /> Remove
@@ -240,7 +240,7 @@ export const LocationFields: React.FC<Props> = ({
             </div>
           </div>
           {geoMessage ? (
-            <p role="status" className={`mt-2 text-[11.5px] ${theme === 'dark' ? 'text-brand-gold-light' : 'text-[#8a6a1f]'}`}>
+            <p role="status" className={`mt-2 text-[11.5px] ${theme === 'dark' ? 'text-brand-purple-light' : 'text-[#6d28d9]'}`}>
               {geoMessage}
             </p>
           ) : null}

@@ -27,7 +27,7 @@ export const SearchInput: React.FC<{
 
   return (
     <div className={`relative ${className}`}>
-      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a9184]" aria-hidden />
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a99bbd]" aria-hidden />
       <input
         ref={inputRef}
         className={`${adminInputClass} pl-10 ${shortcut ? 'pr-16' : ''}`}
@@ -40,7 +40,7 @@ export const SearchInput: React.FC<{
         aria-label={placeholder}
       />
       {shortcut ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-[#e8e0d2] bg-[#faf7f2] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[#8a7a52]">
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-[#e5d9f2] bg-[#faf7ff] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[#7e22ce]">
           {shortcut}
         </span>
       ) : null}

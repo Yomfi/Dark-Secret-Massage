@@ -117,7 +117,7 @@ function ContactPanel({
   if (stickyMobile) {
     return (
       <>
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0B0B0C]/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#060608]/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-lg gap-2">
             {canCall && (
               <Button
@@ -162,7 +162,7 @@ function ContactPanel({
             {price ? 'From' : 'Contact'}
           </p>
           {price ? (
-            <p className="mt-1 text-2xl font-semibold text-brand-gold-light tracking-tight">{price}</p>
+            <p className="mt-1 text-2xl font-semibold text-brand-purple-light tracking-tight">{price}</p>
           ) : (
             <p className="mt-1 text-lg font-semibold text-white">Get in touch</p>
           )}
@@ -299,7 +299,7 @@ function ProfileGallery({
                 type="button"
                 onClick={() => setIndex(i)}
                 className={`shrink-0 w-[4.75rem] h-[5.75rem] rounded-xl overflow-hidden border bg-[#0a0a0f] transition-opacity ${
-                  i === index ? 'border-brand-gold opacity-100' : 'border-white/10 opacity-75 hover:opacity-100'
+                  i === index ? 'border-brand-purple opacity-100' : 'border-white/10 opacity-75 hover:opacity-100'
                 }`}
               >
                 <PortraitMedia src={src} alt="" aspectClassName="w-full h-full" />
@@ -435,7 +435,7 @@ export const MarketplaceProfilePage: React.FC = () => {
         <main className="flex-1 flex items-center justify-center px-4 pt-24">
           <div className="text-center">
             <h1 className="text-2xl font-semibold">Profile not found</h1>
-            <Link to="/explore/accra" className="mt-4 inline-block text-brand-gold-light hover:text-brand-gold-light text-sm">
+            <Link to="/explore/accra" className="mt-4 inline-block text-brand-purple-light hover:text-brand-purple-light text-sm">
               Back to explore
             </Link>
           </div>
@@ -496,7 +496,7 @@ export const MarketplaceProfilePage: React.FC = () => {
 
           <div className="space-y-5">
             <header>
-              <p className="text-[12px] font-semibold text-brand-gold-light">
+              <p className="text-[12px] font-semibold text-brand-purple-light">
                 {profile.providerKind === 'agency' ? 'Agency' : 'Individual'}
                 {profile.providerKind !== 'agency' && genderLabel(profile.gender)
                   ? ` · ${genderLabel(profile.gender)}`
@@ -514,11 +514,11 @@ export const MarketplaceProfilePage: React.FC = () => {
                 <VerifiedBadge verified={profile.verified} />
               </div>
               <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-400">
-                <MapPin className="w-4 h-4 text-brand-gold-light shrink-0" />
+                <MapPin className="w-4 h-4 text-brand-purple-light shrink-0" />
                 {[profile.area, profile.city, profile.region].filter(Boolean).join(', ') || profile.country}
               </p>
               {profile.distanceKm != null ? (
-                <p className="mt-1 text-xs text-brand-gold-light/90">
+                <p className="mt-1 text-xs text-brand-purple-light/90">
                   ~{profile.distanceKm} km straight-line from your saved location · approximate, not travel distance
                 </p>
               ) : null}
@@ -526,7 +526,7 @@ export const MarketplaceProfilePage: React.FC = () => {
                 {profile.services.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-brand-gold/25 bg-brand-gold/10 text-brand-cream"
+                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-brand-purple/25 bg-brand-purple/10 text-brand-lavender-soft"
                   >
                     {tag}
                   </span>
@@ -542,7 +542,7 @@ export const MarketplaceProfilePage: React.FC = () => {
             {/* Mobile contact teaser (full sticky bar below) */}
             <div className="lg:hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               {formatPrice(profile.startingPrice, profile.currency) ? (
-                <p className="text-lg font-semibold text-brand-gold-light">
+                <p className="text-lg font-semibold text-brand-purple-light">
                   From {formatPrice(profile.startingPrice, profile.currency)}
                 </p>
               ) : (
@@ -642,7 +642,7 @@ export const MarketplaceProfilePage: React.FC = () => {
                             {member.services.slice(0, 3).map((s) => (
                               <span
                                 key={s}
-                                className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-brand-gold/25 text-brand-cream"
+                                className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-brand-purple/25 text-brand-lavender-soft"
                               >
                                 {s}
                               </span>
@@ -674,7 +674,7 @@ export const MarketplaceProfilePage: React.FC = () => {
                       )}
                     </div>
                     {offering.priceFrom != null && (
-                      <p className="text-sm text-brand-gold-light font-medium">
+                      <p className="text-sm text-brand-purple-light font-medium">
                         From {formatPrice(offering.priceFrom, profile.currency)}
                       </p>
                     )}

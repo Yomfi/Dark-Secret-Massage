@@ -1,47 +1,72 @@
 @import "tailwindcss";
 
 /*
- * Massager Studio theme tokens — colours sampled from the official logo JPEG.
- * Gold #B08B4B · Ink #161616 · Off-white #F7F4EF
+ * Massager Studio theme — restored Purple & Black identity.
+ *
+ * Recovered from the pre-gold branding (commit 9842c25^), not re-invented:
+ *   primary        #9333ea   (purple-600 buttons, links, active nav)
+ *   hover / light  #a855f7   (purple-500)
+ *   deep / link    #6d28d9   (purple-700)
+ *   premium accent #3b0764   (purple-950)
+ *   lavender       #f3e8ff   (purple-100 subtle backgrounds)
+ *   lavender edge  #e9d5ff   (purple-200 borders)
+ *   surfaces       #060608 / #0c0c12
+ *   ink            #161616
+ *   text           #e4e4e9
  */
 @theme {
-  --color-brand-gold: #b08b4b;
-  --color-brand-gold-light: #c9a56a;
-  --color-brand-gold-dark: #8f6d35;
+  --color-brand-purple: #9333ea;
+  --color-brand-purple-light: #a855f7;
+  --color-brand-purple-dark: #6d28d9;
+  --color-brand-purple-deep: #3b0764;
+  --color-brand-lavender: #f3e8ff;
+  --color-brand-lavender-soft: #faf5ff;
+  --color-brand-lavender-border: #e9d5ff;
   --color-brand-ink: #161616;
-  --color-brand-surface: #0b0b0c;
-  --color-brand-surface-elevated: #121214;
-  --color-brand-offwhite: #f7f4ef;
-  --color-brand-cream: #faf7f2;
+  --color-brand-surface: #060608;
+  --color-brand-surface-elevated: #0c0c12;
+  --color-brand-offwhite: #f5f2fa;
 }
 
 @layer base {
   :root {
     font-family: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
     color-scheme: dark;
-    --ms-gold: #b08b4b;
-    --ms-gold-light: #c9a56a;
-    --ms-gold-dark: #8f6d35;
+
+    /* Purple & Black palette */
+    --ms-purple: #9333ea;
+    --ms-purple-light: #a855f7;
+    --ms-purple-dark: #6d28d9;
+    --ms-purple-deep: #3b0764;
+    --ms-lavender: #f3e8ff;
+    --ms-lavender-soft: #faf5ff;
+    --ms-lavender-border: #e9d5ff;
+
     --ms-ink: #161616;
-    --ms-surface: #0b0b0c;
-    --ms-offwhite: #f7f4ef;
-    --ms-cream: #faf7f2;
+    --ms-surface: #060608;
+    --ms-surface-elevated: #0c0c12;
+    --ms-text: #e4e4e9;
+    --ms-offwhite: #f5f2fa;
+
     --font-ms-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     --font-ms-sans: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
   }
 
+  /* Light lavender admin surface, still driven by the same purple identity. */
   .ms-admin {
     color-scheme: light;
     font-family: var(--font-ms-sans);
-    --admin-gold: #b08b4b;
-    --admin-gold-light: #c9a56a;
-    --admin-gold-dark: #8f6d35;
+    --admin-purple: #9333ea;
+    --admin-purple-light: #a855f7;
+    --admin-purple-dark: #6d28d9;
+    --admin-purple-deep: #3b0764;
+    --admin-lavender: #f3e8ff;
+    --admin-lavender-soft: #faf5ff;
+    --admin-border: #e9d5ff;
     --admin-ink: #161616;
-    --admin-cream: #faf7f2;
-    --admin-offwhite: #f7f4ef;
-    --admin-border: #e8e0d2;
-    --admin-muted: #6f675c;
-    --admin-sidebar: #141414;
+    --admin-muted: #6b6478;
+    --admin-offwhite: #f5f2fa;
+    --admin-sidebar: #0c0c12;
   }
 
   .ms-admin .font-display {
@@ -65,13 +90,13 @@
 
   body {
     background-color: var(--ms-surface);
-    color: #e8e4dc;
+    color: var(--ms-text);
     overflow-x: hidden;
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--ms-gold) 35%, transparent);
-    color: var(--ms-offwhite);
+    background-color: color-mix(in srgb, var(--ms-purple-dark) 55%, transparent);
+    color: var(--ms-lavender);
   }
 }
 
@@ -81,12 +106,12 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b0b0c;
+  background: #060608;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2c;
+  background: #23232d;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--ms-gold) 45%, #2a2a2c);
+  background: color-mix(in srgb, var(--ms-purple) 45%, #23232d);
 }

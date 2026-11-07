@@ -42,7 +42,7 @@ export const AdminLoginPage: React.FC = () => {
         footer={
           <Link
             to={workspaceHomeForUser(user)}
-            className="font-semibold text-brand-gold-light hover:text-brand-gold"
+            className="font-semibold text-brand-purple-light hover:text-brand-purple"
           >
             Go to your account
           </Link>
@@ -86,7 +86,7 @@ export const AdminLoginPage: React.FC = () => {
       footer={
         <>
           Looking for a customer or provider account?{' '}
-          <Link to="/login" className="font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/login" className="font-semibold text-brand-purple-light hover:text-brand-purple">
             Use the public sign-in
           </Link>
         </>

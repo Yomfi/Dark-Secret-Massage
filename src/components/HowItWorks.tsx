@@ -22,7 +22,7 @@ export const HowItWorks: React.FC = () => {
   return (
     <section id="how-it-works" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/[0.08]">
       <div className="max-w-3xl mb-12 sm:mb-16">
-        <span className="text-xs uppercase tracking-[0.3em] text-brand-gold font-semibold block mb-3">
+        <span className="text-xs uppercase tracking-[0.3em] text-brand-purple font-semibold block mb-3">
           THE JOURNEY
         </span>
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-sans leading-[1.08]">
@@ -37,10 +37,10 @@ export const HowItWorks: React.FC = () => {
         {steps.map((step) => (
           <div
             key={step.number}
-            className="p-8 sm:p-9 rounded-3xl bg-white/[0.02] border border-white/[0.08] flex flex-col justify-between hover:border-brand-gold/30 transition-colors"
+            className="p-8 sm:p-9 rounded-3xl bg-white/[0.02] border border-white/[0.08] flex flex-col justify-between hover:border-brand-purple/30 transition-colors"
           >
             <div>
-              <div className="text-4xl sm:text-5xl font-bold text-brand-gold/80 font-mono mb-6">
+              <div className="text-4xl sm:text-5xl font-bold text-brand-purple/80 font-mono mb-6">
                 {step.number}
               </div>
               <h3 className="text-lg sm:text-xl font-bold tracking-wide uppercase text-white mb-3">

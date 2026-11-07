@@ -54,7 +54,7 @@ export const ProgressBar: React.FC<{
       {label || showValue ? (
         <div className="mb-1.5 flex items-center justify-between gap-3 text-[12px] font-medium text-zinc-400">
           {label ? <span>{label}</span> : <span />}
-          {showValue ? <span className="tabular-nums text-brand-gold-light">{pct}%</span> : null}
+          {showValue ? <span className="tabular-nums text-brand-purple-light">{pct}%</span> : null}
         </div>
       ) : null}
       <div
@@ -66,7 +66,7 @@ export const ProgressBar: React.FC<{
         aria-label={label ?? 'Progress'}
       >
         <div
-          className="h-full rounded-full bg-brand-gold transition-[width] duration-500"
+          className="h-full rounded-full bg-brand-purple transition-[width] duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -76,11 +76,11 @@ export const ProgressBar: React.FC<{
 
 export const Badge: React.FC<{
   children: React.ReactNode;
-  tone?: 'gold' | 'neutral' | 'success';
+  tone?: 'purple' | 'neutral' | 'success';
   className?: string;
 }> = ({ children, tone = 'neutral', className = '' }) => {
   const tones = {
-    gold: 'border-brand-gold/30 bg-brand-gold/12 text-brand-gold-light',
+    purple: 'border-brand-purple/30 bg-brand-purple/12 text-brand-purple-light',
     neutral: 'border-white/12 bg-white/[0.04] text-zinc-300',
     success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
   } as const;
@@ -111,9 +111,9 @@ export const SelectableCard: React.FC<{
     disabled={disabled}
     onClick={onClick}
     className={[
-      'group relative w-full rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface disabled:cursor-not-allowed disabled:opacity-60',
+      'group relative w-full rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface disabled:cursor-not-allowed disabled:opacity-60',
       selected
-        ? 'border-brand-gold/60 bg-brand-gold/[0.08]'
+        ? 'border-brand-purple/60 bg-brand-purple/[0.08]'
         : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]',
       layout === 'row' ? 'flex items-start gap-3.5' : '',
       className,
@@ -125,7 +125,7 @@ export const SelectableCard: React.FC<{
       <span
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
           selected
-            ? 'border-brand-gold/40 bg-brand-gold/15 text-brand-gold-light'
+            ? 'border-brand-purple/40 bg-brand-purple/15 text-brand-purple-light'
             : 'border-white/10 bg-white/[0.04] text-zinc-400'
         }`}
       >
@@ -136,7 +136,7 @@ export const SelectableCard: React.FC<{
       <span className="flex items-center gap-2">
         <span className="text-[15px] font-semibold text-white">{title}</span>
         {selected ? (
-          <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden />
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-purple" aria-hidden />
         ) : null}
       </span>
       {description ? (

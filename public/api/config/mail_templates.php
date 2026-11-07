@@ -51,9 +51,9 @@ function ds_mail_button(string $href, string $label): string
 {
     $safeHref = ds_mail_e($href);
     return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 8px 0;">'
-        . '<tr><td style="background:#B08B4B;border-radius:999px;">'
+        . '<tr><td style="background:#6d28d9;border-radius:999px;">'
         . '<a href="' . $safeHref . '" style="display:inline-block;padding:13px 26px;font-size:14px;'
-        . 'font-weight:600;color:#161616;text-decoration:none;border-radius:999px;">'
+        . 'font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;">'
         . ds_mail_e($label) . '</a>'
         . '</td></tr></table>';
 }
@@ -62,7 +62,7 @@ function ds_mail_link_fallback(string $href): string
 {
     return '<p style="margin:14px 0 0 0;font-size:13px;line-height:1.6;color:#6b6778;">'
         . 'If the button does not work, paste this link into your browser:<br>'
-        . '<a href="' . ds_mail_e($href) . '" style="color:#8F6D35;word-break:break-all;">'
+        . '<a href="' . ds_mail_e($href) . '" style="color:#5b21b6;word-break:break-all;">'
         . ds_mail_e($href) . '</a></p>';
 }
 
@@ -72,10 +72,10 @@ function ds_mail_default_footer(): string
     $contact = ds_mail_e((string) (ds_config()['contact_email'] ?? 'contact@massagerstudio.com'));
     return '<hr style="border:0;border-top:1px solid #eceaf2;margin:8px 0 16px 0;">'
         . '<p style="margin:0;font-size:12px;line-height:1.6;color:#6b6778;">'
-        . 'Massager Studio · <a href="' . $site . '" style="color:#8F6D35;text-decoration:none;">'
+        . 'Massager Studio · <a href="' . $site . '" style="color:#6d28d9;text-decoration:none;">'
         . $site . '</a><br>'
         . 'Questions? Reply to this email or write to <a href="mailto:' . $contact
-        . '" style="color:#8F6D35;text-decoration:none;">' . $contact . '</a>.'
+        . '" style="color:#6d28d9;text-decoration:none;">' . $contact . '</a>.'
         . '</p>';
 }
 

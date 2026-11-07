@@ -233,7 +233,7 @@ function initials(name: string): string {
 
 const BookingDonut: React.FC<{ data: Record<string, number> }> = ({ data }) => {
   const keys = ['pending', 'confirmed', 'reschedule_requested', 'completed'] as const;
-  const colors = ['#C9A56A', '#B08B4B', '#8F6D35', '#161616'];
+  const colors = ['#a855f7', '#9333ea', '#6d28d9', '#161616'];
   const values = keys.map((k) => data[k] ?? 0);
   const total = values.reduce((a, b) => a + b, 0);
   const size = 148;
@@ -246,7 +246,7 @@ const BookingDonut: React.FC<{ data: Record<string, number> }> = ({ data }) => {
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
       <div className="relative">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#efe8dc" strokeWidth={stroke} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#ede4f7" strokeWidth={stroke} />
           {total > 0
             ? values.map((value, i) => {
                 if (value <= 0) return null;
@@ -274,14 +274,14 @@ const BookingDonut: React.FC<{ data: Record<string, number> }> = ({ data }) => {
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
             <p className="font-display text-[28px] font-semibold leading-none text-[#161616]">{total}</p>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a7a52]">Total</p>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7e22ce]">Total</p>
           </div>
         </div>
       </div>
       <ul className="w-full space-y-2 text-[13px]">
         {keys.map((key, i) => (
           <li key={key} className="flex items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2 text-[#3f3a33]">
+            <span className="inline-flex items-center gap-2 text-[#3f3548]">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[i] }} />
               {key.replace(/_/g, ' ')}
             </span>
@@ -626,7 +626,7 @@ export const AdminWorkspacePage: React.FC = () => {
           }}
         />
       ) : null}
-      {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-[#e8e0d2]"><div className="h-full w-1/3 animate-pulse bg-[#B08B4B]" /></div> : null}
+      {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-[#e5d9f2]"><div className="h-full w-1/3 animate-pulse bg-[#9333ea]" /></div> : null}
 
       {tab === 'overview' && overview ? (
         <div className="space-y-5">
@@ -645,7 +645,7 @@ export const AdminWorkspacePage: React.FC = () => {
                 title="Provider Review Queue"
                 subtitle="Providers awaiting verification and approval."
                 action={
-                  <Link to="/admin/provider-reviews" className="text-[13px] font-semibold text-[#8F6D35] hover:underline">
+                  <Link to="/admin/provider-reviews" className="text-[13px] font-semibold text-[#6d28d9] hover:underline">
                     Open queue →
                   </Link>
                 }
@@ -658,15 +658,15 @@ export const AdminWorkspacePage: React.FC = () => {
                   className="py-10"
                 />
               ) : (
-                <ul className="divide-y divide-[#efe8dc]">
+                <ul className="divide-y divide-[#ede4f7]">
                   {overview.tasks.map((task) => (
                     <li key={task.providerUserId} className="flex items-center gap-3 py-3.5">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#161616] text-[12px] font-semibold text-[#F7F4EF]">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#161616] text-[12px] font-semibold text-[#F5F2FA]">
                         {initials(task.displayName)}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[14px] font-semibold text-[#161616]">{task.displayName}</p>
-                        <p className="text-[12.5px] text-[#6f675c]">{task.providerType} · {task.city || '—'}</p>
+                        <p className="text-[12.5px] text-[#6b6275]">{task.providerType} · {task.city || '—'}</p>
                       </div>
                       <StatusBadge status={task.status} />
                     </li>
@@ -702,12 +702,12 @@ export const AdminWorkspacePage: React.FC = () => {
                   className="py-8"
                 />
               ) : (
-                <ul className="divide-y divide-[#efe8dc]">
+                <ul className="divide-y divide-[#ede4f7]">
                   {overview.recentBookings.map((b) => (
                     <li key={b.id} className="flex items-center justify-between gap-3 py-3 text-[13.5px]">
                       <div className="min-w-0">
                         <p className="truncate font-medium text-[#161616]">{b.serviceName}</p>
-                        <p className="text-[12px] text-[#6f675c]">{b.customerName || 'Customer'} · {formatScheduledDate(b.scheduledAt)}</p>
+                        <p className="text-[12px] text-[#6b6275]">{b.customerName || 'Customer'} · {formatScheduledDate(b.scheduledAt)}</p>
                       </div>
                       <StatusBadge status={b.status} />
                     </li>
@@ -726,13 +726,13 @@ export const AdminWorkspacePage: React.FC = () => {
                   ['Total bookings', overview.counts.bookings],
                   ['Unverified customer emails', overview.counts.unverifiedEmails],
                 ].map(([label, value]) => (
-                  <li key={String(label)} className="flex items-center justify-between rounded-[14px] border border-[#efe8dc] bg-[#faf7f2] px-4 py-3">
-                    <span className="text-[13.5px] text-[#3f3a33]">{label}</span>
+                  <li key={String(label)} className="flex items-center justify-between rounded-[14px] border border-[#ede4f7] bg-[#faf7ff] px-4 py-3">
+                    <span className="text-[13.5px] text-[#3f3548]">{label}</span>
                     <span className="font-display text-[22px] font-semibold text-[#161616]">{value}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-[12.5px] text-[#6f675c]">
+              <p className="mt-4 text-[12.5px] text-[#6b6275]">
                 Email transport: <strong>{overview.mail.transport}</strong>
                 {overview.mail.configured ? ' · configured' : ' · not configured'}
               </p>
@@ -744,7 +744,7 @@ export const AdminWorkspacePage: React.FC = () => {
       {tab === 'customers' ? (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
           <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
-            <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
+            <div className="flex flex-wrap gap-2 border-b border-[#ede4f7] p-4">
               <SearchInput className="min-w-0 flex-1 basis-[180px]" value={search} onChange={setSearch} placeholder="Search name, email or phone" onSubmit={() => run(load)} />
               <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Customer region" value={locationRegion} onChange={(e) => setLocationRegion(e.target.value)}>
                 <option value="">All regions</option>
@@ -766,7 +766,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataCell className="w-[22%]">
                     <button type="button" className="min-w-0 max-w-full text-left" onClick={() => openCustomer(c.id)}>
                       <p className="truncate font-semibold hover:underline">{c.name || '—'}</p>
-                      <p className="text-[12px] text-[#6f675c]">{c.emailVerified ? 'Email confirmed' : 'Email unconfirmed'}</p>
+                      <p className="text-[12px] text-[#6b6275]">{c.emailVerified ? 'Email confirmed' : 'Email unconfirmed'}</p>
                     </button>
                   </DataCell>
                   <DataCell truncate title={c.email}>{c.email}</DataCell>
@@ -836,9 +836,9 @@ export const AdminWorkspacePage: React.FC = () => {
                   {customerDetail.customer.emailVerified ? <StatusBadge status="verified" label="Email verified" /> : null}
                   {customerDetail.customer.isQa ? <StatusBadge status="pending" label="QA account" /> : null}
                 </div>
-                <p className="truncate text-[13px] text-[#6f675c]" title={customerDetail.customer.email}>{customerDetail.customer.email}</p>
+                <p className="truncate text-[13px] text-[#6b6275]" title={customerDetail.customer.email}>{customerDetail.customer.email}</p>
 
-                <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-[#efe8dc] pb-2" role="tablist" aria-label="Customer sections">
+                <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-[#ede4f7] pb-2" role="tablist" aria-label="Customer sections">
                   {[
                     ['overview', 'Overview'],
                     ['profile', 'Customer Profile'],
@@ -856,7 +856,7 @@ export const AdminWorkspacePage: React.FC = () => {
                       role="tab"
                       aria-selected={customerTab === key}
                       onClick={() => setCustomerTab(key)}
-                      className={`min-h-9 shrink-0 rounded-[10px] px-3 text-[12.5px] font-medium ${customerTab === key ? 'bg-[#161616] text-[#F7F4EF]' : 'text-[#6f675c] hover:bg-[#faf7f2]'}`}
+                      className={`min-h-9 shrink-0 rounded-[10px] px-3 text-[12.5px] font-medium ${customerTab === key ? 'bg-[#6d28d9] text-white' : 'text-[#6b6275] hover:bg-[#faf5ff]'}`}
                     >
                       {label}
                     </button>
@@ -866,12 +866,12 @@ export const AdminWorkspacePage: React.FC = () => {
                 {customerTab === 'overview' ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-2 text-[12.5px]">
-                      <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2">
-                        <p className="text-[11px] uppercase tracking-wide text-[#8a7a52]">Bookings</p>
+                      <div className="rounded-[12px] bg-[#faf7ff] px-3 py-2">
+                        <p className="text-[11px] uppercase tracking-wide text-[#7e22ce]">Bookings</p>
                         <p className="mt-1 text-[18px] font-semibold">{customerDetail.bookings.length}</p>
                       </div>
-                      <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2">
-                        <p className="text-[11px] uppercase tracking-wide text-[#8a7a52]">Assigned providers</p>
+                      <div className="rounded-[12px] bg-[#faf7ff] px-3 py-2">
+                        <p className="text-[11px] uppercase tracking-wide text-[#7e22ce]">Assigned providers</p>
                         <p className="mt-1 text-[18px] font-semibold">{customerAssignments.length}</p>
                       </div>
                     </div>
@@ -889,9 +889,9 @@ export const AdminWorkspacePage: React.FC = () => {
                       >
                         Assign provider
                       </button>
-                      <span className="self-center text-[12px] text-[#6f675c]">Assignments never create a booking or payment.</span>
+                      <span className="self-center text-[12px] text-[#6b6275]">Assignments never create a booking or payment.</span>
                     </div>
-                    <p className="text-[12.5px] text-[#6f675c]">
+                    <p className="text-[12.5px] text-[#6b6275]">
                       Joined {customerDetail.customer.createdAt ? formatScheduledDate(customerDetail.customer.createdAt) : '—'} · Phone {customerDetail.customer.phone || '—'}
                     </p>
                   </div>
@@ -911,16 +911,16 @@ export const AdminWorkspacePage: React.FC = () => {
                     <FormField label="First name"><input className={adminInputClass} value={customerProfile.firstName} onChange={(e) => setCustomerProfile({ ...customerProfile, firstName: e.target.value })} required /></FormField>
                     <FormField label="Last name"><input className={adminInputClass} value={customerProfile.lastName} onChange={(e) => setCustomerProfile({ ...customerProfile, lastName: e.target.value })} /></FormField>
                     <FormField label="Phone"><input className={adminInputClass} value={customerProfile.phone} onChange={(e) => setCustomerProfile({ ...customerProfile, phone: e.target.value })} /></FormField>
-                    <p className="text-[12px] text-[#6f675c]">Email changes stay with the customer verification flow.</p>
+                    <p className="text-[12px] text-[#6b6275]">Email changes stay with the customer verification flow.</p>
                     <button className={adminBtnClass} type="submit" disabled={busy}>Save profile</button>
                   </form>
                 ) : null}
 
                 {customerTab === 'location' ? (
                   <div className="space-y-4">
-                    <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
+                    <div className="rounded-[12px] bg-[#faf7ff] px-3 py-2 text-[12.5px] text-[#6b6275]">
                       <p className="inline-flex items-center gap-1.5 font-semibold text-[#161616]">
-                        <MapPin className="h-3.5 w-3.5 text-[#8F6D35]" aria-hidden /> Saved location
+                        <MapPin className="h-3.5 w-3.5 text-[#6d28d9]" aria-hidden /> Saved location
                       </p>
                       <p className="mt-1">
                         {customerLocation
@@ -928,7 +928,7 @@ export const AdminWorkspacePage: React.FC = () => {
                           : 'No saved location yet.'}
                       </p>
                       {customerLocation?.latitude != null && customerLocation?.longitude != null ? (
-                        <p className="mt-1 text-[11.5px] text-[#8a7a52]">Exact pin on file. Only staff with customer-write permission can see it here.</p>
+                        <p className="mt-1 text-[11.5px] text-[#7e22ce]">Exact pin on file. Only staff with customer-write permission can see it here.</p>
                       ) : null}
                     </div>
 
@@ -981,13 +981,13 @@ export const AdminWorkspacePage: React.FC = () => {
                           <input className={adminInputClass} inputMode="decimal" value={customerLocationForm.longitude} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, longitude: e.target.value })} />
                         </FormField>
                       </div>
-                      <p className="text-[11.5px] text-[#8a7a52]">Clearing the coordinates removes the pin. Changes are audited without storing the exact pin in the audit log.</p>
+                      <p className="text-[11.5px] text-[#7e22ce]">Clearing the coordinates removes the pin. Changes are audited without storing the exact pin in the audit log.</p>
                       <button className={adminBtnClass} type="submit" disabled={busy}>Save location</button>
                     </form>
 
-                    <div className="space-y-2 border-t border-[#efe8dc] pt-3">
+                    <div className="space-y-2 border-t border-[#ede4f7] pt-3">
                       <p className="text-[13px] font-semibold">Assign nearest provider</p>
-                      <p className="text-[12px] text-[#6f675c]">Recommendations use service coverage, verification, publication and availability. You still review and confirm in Assignments.</p>
+                      <p className="text-[12px] text-[#6b6275]">Recommendations use service coverage, verification, publication and availability. You still review and confirm in Assignments.</p>
                       <div className="flex flex-wrap gap-2">
                         <select className={`${adminInputClass} w-[150px]`} aria-label="Search radius" value={nearbyRadius} onChange={(e) => setNearbyRadius(e.target.value)}>
                           {['5', '10', '20', '50', '100'].map((km) => <option key={km} value={km}>Within {km} km</option>)}
@@ -996,17 +996,17 @@ export const AdminWorkspacePage: React.FC = () => {
                           {nearbyLoading ? 'Finding…' : 'Find eligible providers'}
                         </button>
                       </div>
-                      {!customerLocation ? <p className="text-[12px] text-[#8a7a52]">Save a customer location first.</p> : null}
-                      {nearbyNote ? <p className="text-[12px] text-[#6f675c]">{nearbyNote}</p> : null}
+                      {!customerLocation ? <p className="text-[12px] text-[#7e22ce]">Save a customer location first.</p> : null}
+                      {nearbyNote ? <p className="text-[12px] text-[#6b6275]">{nearbyNote}</p> : null}
                       {nearbyProviders.length > 0 ? (
                         <ul className="space-y-2">
                           {nearbyProviders.map((provider) => (
-                            <li key={provider.providerProfileId} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12.5px]">
+                            <li key={provider.providerProfileId} className="rounded-[12px] border border-[#ede4f7] px-3 py-2 text-[12.5px]">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="truncate font-semibold">{provider.displayName} <span className="font-normal capitalize text-[#8a7a52]">· {provider.providerKind}</span></p>
-                                  <p className="truncate text-[11.5px] text-[#6f675c]">{[provider.area, provider.city, provider.region].filter(Boolean).join(', ')}</p>
-                                  <p className="mt-1 text-[11.5px] text-[#8a7a52]">
+                                  <p className="truncate font-semibold">{provider.displayName} <span className="font-normal capitalize text-[#7e22ce]">· {provider.providerKind}</span></p>
+                                  <p className="truncate text-[11.5px] text-[#6b6275]">{[provider.area, provider.city, provider.region].filter(Boolean).join(', ')}</p>
+                                  <p className="mt-1 text-[11.5px] text-[#7e22ce]">
                                     {provider.distanceKm != null ? `~${provider.distanceKm} km · ` : ''}
                                     {provider.reasons.join(' · ')}
                                   </p>
@@ -1037,16 +1037,16 @@ export const AdminWorkspacePage: React.FC = () => {
                   <div className="space-y-2">
                     <p className="text-[13px] font-semibold">Bookings</p>
                     {customerDetail.bookings.length === 0 ? (
-                      <p className="text-[12.5px] text-[#6f675c]">No bookings.</p>
+                      <p className="text-[12.5px] text-[#6b6275]">No bookings.</p>
                     ) : (
                       <ul className="max-h-[420px] space-y-2 overflow-y-auto text-[12.5px]">
                         {customerDetail.bookings.map((b) => (
-                          <li key={b.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2">
+                          <li key={b.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2">
                             <div className="flex items-center justify-between gap-2">
                               <span className="min-w-0 truncate font-medium">{b.serviceName}</span>
                               <StatusBadge status={b.status} />
                             </div>
-                            <p className="truncate text-[11.5px] text-[#6f675c]">
+                            <p className="truncate text-[11.5px] text-[#6b6275]">
                               {b.scheduledAt ? formatScheduledDate(b.scheduledAt) : 'No date'} · {b.reference ?? b.id}
                             </p>
                           </li>
@@ -1060,16 +1060,16 @@ export const AdminWorkspacePage: React.FC = () => {
                   <div className="space-y-2">
                     <p className="text-[13px] font-semibold">Assigned providers</p>
                     {customerAssignments.length === 0 ? (
-                      <p className="text-[12.5px] text-[#6f675c]">No assignments yet.</p>
+                      <p className="text-[12.5px] text-[#6b6275]">No assignments yet.</p>
                     ) : (
                       <ul className="max-h-[420px] space-y-2 overflow-y-auto">
                         {customerAssignments.map((a) => (
-                          <li key={a.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12.5px]">
+                          <li key={a.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2 text-[12.5px]">
                             <div className="flex items-center justify-between gap-2">
                               <span className="truncate font-medium">{a.providerName || 'Provider'}</span>
                               <StatusBadge status={a.status} label={a.statusLabel} />
                             </div>
-                            <p className="truncate text-[11.5px] text-[#6f675c]">
+                            <p className="truncate text-[11.5px] text-[#6b6275]">
                               {a.providerType === 'agency' ? 'Agency' : 'Individual'}
                               {a.teamMemberName ? ` · ${a.teamMemberName}` : ''}
                               {a.serviceName ? ` · ${a.serviceName}` : ''}
@@ -1078,21 +1078,21 @@ export const AdminWorkspacePage: React.FC = () => {
                         ))}
                       </ul>
                     )}
-                    <p className="text-[11.5px] text-[#8a7a52]">Assignments are operational intents, not paid bookings.</p>
+                    <p className="text-[11.5px] text-[#7e22ce]">Assignments are operational intents, not paid bookings.</p>
                   </div>
                 ) : null}
 
                 {customerTab === 'payments' ? (
                   <div className="space-y-3">
                     <p className="text-[13px] font-semibold">Payments</p>
-                    <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
+                    <div className="rounded-[12px] bg-[#faf7ff] px-3 py-2 text-[12.5px] text-[#6b6275]">
                       {customerDetail.paymentNote ?? 'No booking payment ledger is recorded here.'}
                     </div>
                     <ul className="space-y-2 text-[12.5px]">
                       {customerDetail.bookings.length === 0 ? (
-                        <li className="text-[#6f675c]">No bookings to price.</li>
+                        <li className="text-[#6b6275]">No bookings to price.</li>
                       ) : customerDetail.bookings.slice(0, 12).map((b) => (
-                        <li key={b.id} className="flex items-center justify-between gap-3 rounded-[12px] border border-[#efe8dc] px-3 py-2">
+                        <li key={b.id} className="flex items-center justify-between gap-3 rounded-[12px] border border-[#ede4f7] px-3 py-2">
                           <span className="min-w-0 truncate">{b.serviceName}</span>
                           <span className="shrink-0 font-semibold">{b.currency} {b.price.toLocaleString()}</span>
                         </li>
@@ -1106,11 +1106,11 @@ export const AdminWorkspacePage: React.FC = () => {
                     <p className="text-[13px] font-semibold">Internal notes</p>
                     <ul className="max-h-64 space-y-2 overflow-y-auto">
                       {customerDetail.notes.length === 0 ? (
-                        <li className="text-[12.5px] text-[#6f675c]">No notes yet.</li>
+                        <li className="text-[12.5px] text-[#6b6275]">No notes yet.</li>
                       ) : customerDetail.notes.map((n) => (
-                        <li key={n.id} className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px]">
+                        <li key={n.id} className="rounded-[12px] bg-[#faf7ff] px-3 py-2 text-[12.5px]">
                           <p>{n.body}</p>
-                          <p className="mt-1 text-[11px] text-[#8a7a52]">{n.author} · {n.createdAt}</p>
+                          <p className="mt-1 text-[11px] text-[#7e22ce]">{n.author} · {n.createdAt}</p>
                         </li>
                       ))}
                     </ul>
@@ -1181,7 +1181,7 @@ export const AdminWorkspacePage: React.FC = () => {
                     </div>
 
                     {customerDetail.privacyRequests.length > 0 ? (
-                      <div className="border-t border-[#efe8dc] pt-3">
+                      <div className="border-t border-[#ede4f7] pt-3">
                         <p className="text-[13px] font-semibold">Privacy requests</p>
                         <ul className="mt-2 space-y-1 text-[12.5px]">
                           {customerDetail.privacyRequests.map((p) => (
@@ -1200,15 +1200,15 @@ export const AdminWorkspacePage: React.FC = () => {
                   <div className="space-y-2">
                     <p className="text-[13px] font-semibold">Activity history</p>
                     {(customerDetail.activity ?? []).length === 0 ? (
-                      <p className="text-[12.5px] text-[#6f675c]">No admin activity recorded yet.</p>
+                      <p className="text-[12.5px] text-[#6b6275]">No admin activity recorded yet.</p>
                     ) : (
                       <ul className="max-h-[420px] space-y-2 overflow-y-auto text-[12.5px]">
                         {(customerDetail.activity ?? []).map((entry) => (
-                          <li key={entry.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2">
+                          <li key={entry.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2">
                             <p className="font-medium capitalize">{entry.action.replace(/[._]/g, ' ')}</p>
-                            <p className="text-[11.5px] text-[#8a7a52]">{entry.actor ?? 'Staff'} · {entry.createdAt ? formatScheduledDate(entry.createdAt) : '—'}</p>
+                            <p className="text-[11.5px] text-[#7e22ce]">{entry.actor ?? 'Staff'} · {entry.createdAt ? formatScheduledDate(entry.createdAt) : '—'}</p>
                             {entry.meta ? (
-                              <p className="mt-1 text-[11.5px] text-[#6f675c]">
+                              <p className="mt-1 text-[11.5px] text-[#6b6275]">
                                 {Object.entries(entry.meta).slice(0, 3).map(([k, v]) => `${k}: ${String(v)}`).join(' · ')}
                               </p>
                             ) : null}
@@ -1227,7 +1227,7 @@ export const AdminWorkspacePage: React.FC = () => {
       {tab === 'providers' || tab === 'agencies' ? (
         <div className="space-y-4">
           <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
-            <div className="flex flex-wrap items-end gap-2 border-b border-[#efe8dc] p-4">
+            <div className="flex flex-wrap items-end gap-2 border-b border-[#ede4f7] p-4">
               {tab === 'providers' ? (
                 <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Provider type" value={kind} onChange={(e) => setKind(e.target.value)}>
                   <option value="all">All types</option>
@@ -1276,12 +1276,12 @@ export const AdminWorkspacePage: React.FC = () => {
                 <DataRow key={p.userId} selected={selectedProviderId === p.userId}>
                   <DataCell>
                     <button type="button" className="flex w-full min-w-0 items-center gap-3 text-left" onClick={() => setSelectedProviderId(p.userId)}>
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#161616] text-[11px] font-semibold text-[#F5F2FA]">
                         {initials(p.displayName)}
                       </span>
                       <div className="min-w-0">
                         <p className="truncate font-semibold hover:underline">{p.displayName}</p>
-                        <p className="truncate text-[12px] text-[#6f675c]" title={`${p.email} · ${[p.area, p.city, p.region].filter(Boolean).join(', ') || '—'}`}>
+                        <p className="truncate text-[12px] text-[#6b6275]" title={`${p.email} · ${[p.area, p.city, p.region].filter(Boolean).join(', ') || '—'}`}>
                           {p.email} · {[p.area, p.city, p.region].filter(Boolean).join(', ') || '—'}
                         </p>
                       </div>
@@ -1290,7 +1290,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataCell className="capitalize">{p.kind}</DataCell>
                   <DataCell>
                     <StatusBadge status={p.verificationStatus} />
-                    <p className="mt-1 truncate text-[12px] text-[#6f675c]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
+                    <p className="mt-1 truncate text-[12px] text-[#6b6275]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
                   </DataCell>
                   <DataCell>
                     <StatusBadge
@@ -1337,7 +1337,7 @@ export const AdminWorkspacePage: React.FC = () => {
                 </DataRow>
               ))}
             </DataTable>
-            <p className="border-t border-[#efe8dc] px-4 py-3 text-[12px] text-[#6f675c]">
+            <p className="border-t border-[#ede4f7] px-4 py-3 text-[12px] text-[#6b6275]">
               Open a provider for remove, suspend, block, gallery moderation and permanent deletion. Publication never grants verification.
             </p>
           </AdminCard>
@@ -1350,7 +1350,7 @@ export const AdminWorkspacePage: React.FC = () => {
                 if (e.target === e.currentTarget) setSelectedProviderId(null);
               }}
             >
-              <div className="h-full w-full max-w-[560px] overflow-y-auto bg-[#FAF7F2] shadow-2xl sm:rounded-[18px]">
+              <div className="h-full w-full max-w-[560px] overflow-y-auto bg-[#faf7ff] shadow-2xl sm:rounded-[18px]">
                 <div className="min-h-full p-3 sm:p-4">
                   <AdminProviderDetail
                     userId={selectedProviderId}
@@ -1399,11 +1399,11 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataRow key={s.userId}>
                     <DataCell className="min-w-0">
                       <p className="truncate font-semibold">{s.name || '—'}</p>
-                      <p className="truncate text-[12px] text-[#6f675c]" title={s.email}>{s.email}</p>
+                      <p className="truncate text-[12px] text-[#6b6275]" title={s.email}>{s.email}</p>
                     </DataCell>
                     <DataCell>
                       <select
-                        className="h-11 rounded-[12px] border border-[#e0d7c8] bg-white px-2 text-[12.5px]"
+                        className="h-11 rounded-[12px] border border-[#e2d4f2] bg-white px-2 text-[12.5px]"
                         value={s.staffRole}
                         disabled={busy}
                         onChange={(e) => {
@@ -1446,12 +1446,12 @@ export const AdminWorkspacePage: React.FC = () => {
             {invitations.length > 0 ? (
               <AdminCard>
                 <AdminCardHeader title="Pending invitations" />
-                <ul className="divide-y divide-[#efe8dc]">
+                <ul className="divide-y divide-[#ede4f7]">
                   {invitations.map((inv) => (
                     <li key={inv.id} className="flex items-center justify-between gap-3 py-3 text-[13px]">
                       <div>
                         <p className="font-semibold">{inv.email}</p>
-                        <p className="text-[12px] text-[#6f675c]">{inv.staffRoleLabel} · expires {inv.expiresAt}</p>
+                        <p className="text-[12px] text-[#6b6275]">{inv.staffRoleLabel} · expires {inv.expiresAt}</p>
                       </div>
                       <StatusBadge status="pending" />
                     </li>
@@ -1462,7 +1462,7 @@ export const AdminWorkspacePage: React.FC = () => {
           </div>
 
           <form
-            className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]"
+            className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -1475,7 +1475,7 @@ export const AdminWorkspacePage: React.FC = () => {
             }}
           >
             <h2 className="font-display text-[22px] font-semibold">Invite staff</h2>
-            <p className="text-[12.5px] text-[#6f675c]">They receive an email with a 72-hour activation link.</p>
+            <p className="text-[12.5px] text-[#6b6275]">They receive an email with a 72-hour activation link.</p>
             <FormField label="Email"><input className={adminInputClass} type="email" value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} required /></FormField>
             <FormField label="First name"><input className={adminInputClass} value={inviteForm.firstName} onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })} /></FormField>
             <FormField label="Last name"><input className={adminInputClass} value={inviteForm.lastName} onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })} /></FormField>
@@ -1506,7 +1506,7 @@ export const AdminWorkspacePage: React.FC = () => {
                 <DataRow key={s.id}>
                   <DataCell>
                     <p className="font-semibold">{s.name}</p>
-                    <p className="max-w-md text-[12px] text-[#6f675c]">{s.description}</p>
+                    <p className="max-w-md text-[12px] text-[#6b6275]">{s.description}</p>
                   </DataCell>
                   <DataCell>{s.durationMinutes} min</DataCell>
                   <DataCell>{s.currency} {s.price.toLocaleString()}</DataCell>
@@ -1524,7 +1524,7 @@ export const AdminWorkspacePage: React.FC = () => {
             </DataTable>
           </AdminCard>
 
-          <form className="min-w-0 space-y-3 rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
+          <form className="min-w-0 space-y-3 rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
             e.preventDefault();
             act(async () => {
               await apiRequest('/admin/services.php', { method: 'POST', body: JSON.stringify(serviceForm) });
@@ -1542,7 +1542,7 @@ export const AdminWorkspacePage: React.FC = () => {
               <input className={adminInputClass} value={serviceForm.image} onChange={(e) => setServiceForm({ ...serviceForm, image: e.target.value })} />
             </FormField>
             <label className="flex min-h-12 items-center gap-3 text-[13px]">
-              <input type="checkbox" className="h-5 w-5 rounded border-[#d9cfba]" checked={serviceForm.active} onChange={(e) => setServiceForm({ ...serviceForm, active: e.target.checked })} />
+              <input type="checkbox" className="h-5 w-5 rounded border-[#d8c7ea]" checked={serviceForm.active} onChange={(e) => setServiceForm({ ...serviceForm, active: e.target.checked })} />
               Active on public website
             </label>
             <button className={adminBtnClass} type="submit" disabled={busy}>{serviceForm.id ? 'Save changes' : 'Create service'}</button>
@@ -1553,7 +1553,7 @@ export const AdminWorkspacePage: React.FC = () => {
       {tab === 'bookings' ? (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-5">
           <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
-            <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
+            <div className="flex flex-wrap gap-2 border-b border-[#ede4f7] p-4">
               <select className={`${adminInputClass} max-w-[200px] shrink-0`} value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
                 {['pending', 'confirmed', 'reschedule_requested', 'completed', 'cancelled', 'no_show'].map((s) => (
@@ -1576,24 +1576,24 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataCell className="min-w-0">
                     <button type="button" className="min-w-0 max-w-full text-left" onClick={() => openBooking(b.id)}>
                       <p className="truncate font-semibold hover:underline">{b.serviceName}</p>
-                      <p className="truncate text-[12px] text-[#6f675c]">{b.reference ?? b.id}</p>
+                      <p className="truncate text-[12px] text-[#6b6275]">{b.reference ?? b.id}</p>
                     </button>
                   </DataCell>
                   <DataCell className="min-w-0">
                     <p className="truncate">{b.customerName || '—'}</p>
-                    <p className="truncate text-[12px] text-[#6f675c]" title={b.customerEmail ?? undefined}>{b.customerEmail}</p>
+                    <p className="truncate text-[12px] text-[#6b6275]" title={b.customerEmail ?? undefined}>{b.customerEmail}</p>
                   </DataCell>
-                  <DataCell className="whitespace-nowrap">{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6f675c]">{b.timeSlot ?? ''}</p></DataCell>
+                  <DataCell className="whitespace-nowrap">{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6b6275]">{b.timeSlot ?? ''}</p></DataCell>
                   <DataCell className="min-w-0">
                     <p className="truncate">{b.providerName ?? 'Unassigned'}</p>
-                    {b.teamMemberName ? <p className="truncate text-[12px] text-[#6f675c]">{b.teamMemberName}</p> : null}
+                    {b.teamMemberName ? <p className="truncate text-[12px] text-[#6b6275]">{b.teamMemberName}</p> : null}
                   </DataCell>
                   <DataCell><StatusBadge status={b.status} /></DataCell>
                   <DataCell className="w-[1%] whitespace-nowrap">
                     <div className="flex items-center justify-end gap-1.5">
                       <button className={adminBtnGhostCompactClass} onClick={() => openBooking(b.id)}>Detail</button>
                       <select
-                        className="h-9 max-w-[120px] rounded-[10px] border border-[#e0d7c8] bg-white px-2 text-[12px]"
+                        className="h-9 max-w-[120px] rounded-[10px] border border-[#e2d4f2] bg-white px-2 text-[12px]"
                         defaultValue=""
                         disabled={busy}
                         aria-label={`Change status for ${b.reference ?? b.id}`}
@@ -1631,20 +1631,20 @@ export const AdminWorkspacePage: React.FC = () => {
             {bookingDetail ? (
               <div className="space-y-4">
                 <StatusBadge status={bookingDetail.status} />
-                <p className="text-[12.5px] text-[#6f675c]">{bookingDetail.reference ?? bookingDetail.id}</p>
+                <p className="text-[12.5px] text-[#6b6275]">{bookingDetail.reference ?? bookingDetail.id}</p>
                 <dl className="space-y-3 text-[13px]">
-                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Customer</dt><dd className="mt-1">{bookingDetail.customerName || '—'}<br /><span className="text-[12px] text-[#6f675c]">{bookingDetail.customerEmail} · {bookingDetail.customerPhone || '—'}</span></dd></div>
-                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">When</dt><dd className="mt-1">{formatScheduledDate(bookingDetail.scheduledAt)} · {bookingDetail.timeSlot || '—'}</dd></div>
-                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Location</dt><dd className="mt-1">{bookingDetail.locationType || '—'}{bookingDetail.address ? ` · ${bookingDetail.address}` : ''}</dd></div>
-                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Provider</dt><dd className="mt-1">{bookingDetail.providerName ?? 'Unassigned'}{bookingDetail.teamMemberName ? ` · ${bookingDetail.teamMemberName}` : ''}</dd></div>
-                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Price</dt><dd className="mt-1">{bookingDetail.currency} {bookingDetail.price.toLocaleString()}</dd></div>
-                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Payment</dt><dd className="mt-1 text-[12px] text-[#6f675c]">{bookingDetail.paymentNote ?? 'No payment ledger is recorded for this booking.'}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Customer</dt><dd className="mt-1">{bookingDetail.customerName || '—'}<br /><span className="text-[12px] text-[#6b6275]">{bookingDetail.customerEmail} · {bookingDetail.customerPhone || '—'}</span></dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">When</dt><dd className="mt-1">{formatScheduledDate(bookingDetail.scheduledAt)} · {bookingDetail.timeSlot || '—'}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Location</dt><dd className="mt-1">{bookingDetail.locationType || '—'}{bookingDetail.address ? ` · ${bookingDetail.address}` : ''}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Provider</dt><dd className="mt-1">{bookingDetail.providerName ?? 'Unassigned'}{bookingDetail.teamMemberName ? ` · ${bookingDetail.teamMemberName}` : ''}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Price</dt><dd className="mt-1">{bookingDetail.currency} {bookingDetail.price.toLocaleString()}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Payment</dt><dd className="mt-1 text-[12px] text-[#6b6275]">{bookingDetail.paymentNote ?? 'No payment ledger is recorded for this booking.'}</dd></div>
                   {bookingDetail.cancellationReason ? (
-                    <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Cancellation reason</dt><dd className="mt-1 text-[12px] text-[#6f675c]">{bookingDetail.cancellationReason}</dd></div>
+                    <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce]">Cancellation reason</dt><dd className="mt-1 text-[12px] text-[#6b6275]">{bookingDetail.cancellationReason}</dd></div>
                   ) : null}
                 </dl>
                 {['pending', 'confirmed', 'reschedule_requested'].includes(bookingDetail.status) ? (
-                  <div className="space-y-2 border-t border-[#efe8dc] pt-3">
+                  <div className="space-y-2 border-t border-[#ede4f7] pt-3">
                     <p className="text-[13px] font-semibold">Assign verified provider</p>
                     <select className={adminInputClass} value={bookingProviderId} onChange={(e) => setBookingProviderId(e.target.value)}>
                       <option value="">Select provider</option>
@@ -1670,17 +1670,17 @@ export const AdminWorkspacePage: React.FC = () => {
                     >
                       Assign provider
                     </button>
-                    <p className="text-[11.5px] text-[#8a7a52]">Only verified providers. Assigning does not create or mark a payment.</p>
+                    <p className="text-[11.5px] text-[#7e22ce]">Only verified providers. Assigning does not create or mark a payment.</p>
                   </div>
                 ) : null}
                 {bookingDetail.events && bookingDetail.events.length > 0 ? (
-                  <div className="border-t border-[#efe8dc] pt-3">
+                  <div className="border-t border-[#ede4f7] pt-3">
                     <p className="text-[13px] font-semibold">Timeline</p>
                     <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto text-[12.5px]">
                       {bookingDetail.events.map((ev, idx) => (
-                        <li key={`${ev.event}-${idx}`} className="rounded-[12px] bg-[#faf7f2] px-3 py-2">
+                        <li key={`${ev.event}-${idx}`} className="rounded-[12px] bg-[#faf7ff] px-3 py-2">
                           <p className="font-medium">{ev.event}</p>
-                          <p className="text-[#6f675c]">{ev.fromStatus ?? '—'} → {ev.toStatus ?? '—'} · {ev.createdAt}</p>
+                          <p className="text-[#6b6275]">{ev.fromStatus ?? '—'} → {ev.toStatus ?? '—'} · {ev.createdAt}</p>
                           {ev.note ? <p className="mt-1">{ev.note}</p> : null}
                         </li>
                       ))}
@@ -1697,18 +1697,18 @@ export const AdminWorkspacePage: React.FC = () => {
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5">
           <div className="min-w-0 space-y-4">
             <AdminCard padding={false}>
-              <div className="flex items-center justify-between border-b border-[#efe8dc] px-5 py-4">
+              <div className="flex items-center justify-between border-b border-[#ede4f7] px-5 py-4">
                 <h2 className="font-display text-[22px] font-semibold">Pages</h2>
                 <button className={adminBtnGhostClass} onClick={() => setPageEditor({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' })}>New page</button>
               </div>
-              <ul className="divide-y divide-[#efe8dc]">
+              <ul className="divide-y divide-[#ede4f7]">
                 {content.pages.length === 0 ? (
                   <li><EmptyState title="No pages yet." description="Create one, save a draft, then publish." className="py-10" /></li>
                 ) : content.pages.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <button type="button" className="min-w-0 text-left" onClick={() => setPageEditor({ id: p.id, slug: p.slug, title: p.title, bodyHtml: p.bodyHtml, seoTitle: p.seoTitle, seoDescription: p.seoDescription })}>
                       <p className="truncate text-[13.5px] font-semibold">{p.title}</p>
-                      <p className="text-[12px] text-[#6f675c]">/{p.slug}</p>
+                      <p className="text-[12px] text-[#6b6275]">/{p.slug}</p>
                     </button>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={p.status === 'published' ? 'published' : 'pending'} label={p.status} />
@@ -1723,10 +1723,10 @@ export const AdminWorkspacePage: React.FC = () => {
 
             <AdminCard>
               <AdminCardHeader title="FAQs" />
-              <ul className="divide-y divide-[#efe8dc]">
-                {content.faqs.length === 0 ? <li className="py-3 text-[13px] text-[#6f675c]">No FAQs yet.</li> : content.faqs.map((f) => (
+              <ul className="divide-y divide-[#ede4f7]">
+                {content.faqs.length === 0 ? <li className="py-3 text-[13px] text-[#6b6275]">No FAQs yet.</li> : content.faqs.map((f) => (
                   <li key={f.id} className="flex items-start justify-between gap-3 py-3">
-                    <div><p className="text-[13.5px] font-semibold">{f.question}</p><p className="text-[12.5px] text-[#6f675c]">{f.answer}</p></div>
+                    <div><p className="text-[13.5px] font-semibold">{f.question}</p><p className="text-[12.5px] text-[#6b6275]">{f.answer}</p></div>
                     <div className="flex flex-col items-end gap-2">
                       <StatusBadge status={f.active ? 'active' : 'pending'} label={f.active ? 'Active' : 'Hidden'} />
                       <button type="button" className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
@@ -1736,7 +1736,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              <form className="mt-4 space-y-2 border-t border-[#efe8dc] pt-4" onSubmit={(e) => {
+              <form className="mt-4 space-y-2 border-t border-[#ede4f7] pt-4" onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
                 const data = new FormData(form);
@@ -1781,9 +1781,9 @@ export const AdminWorkspacePage: React.FC = () => {
                     <input name={key} defaultValue={content.settings[key] ?? ''} className={adminInputClass} />
                   </FormField>
                 ))}
-                <div className="sm:col-span-2 mt-2 border-t border-[#efe8dc] pt-4">
+                <div className="sm:col-span-2 mt-2 border-t border-[#ede4f7] pt-4">
                   <h3 className="text-[13.5px] font-semibold">Booking schedule</h3>
-                  <p className="mt-1 text-[12px] leading-relaxed text-[#6f675c]">
+                  <p className="mt-1 text-[12px] leading-relaxed text-[#6b6275]">
                     These values generate the public time slots. Leave them empty to show an honest “not published yet” state.
                   </p>
                 </div>
@@ -1805,7 +1805,7 @@ export const AdminWorkspacePage: React.FC = () => {
             </AdminCard>
           </div>
 
-          <form className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
+          <form className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
             e.preventDefault();
             act(async () => {
               await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: 'save_page', ...pageEditor }) });
@@ -1831,7 +1831,7 @@ export const AdminWorkspacePage: React.FC = () => {
       {tab === 'media' ? (
         <div className="space-y-4">
           <form
-            className="rounded-[16px] border border-dashed border-[#d9cfba] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] flex flex-wrap items-end gap-3"
+            className="rounded-[16px] border border-dashed border-[#d8c7ea] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] flex flex-wrap items-end gap-3"
             onSubmit={(e) => {
               e.preventDefault();
               const fileInput = e.currentTarget.elements.namedItem('file') as HTMLInputElement | null;
@@ -1861,16 +1861,16 @@ export const AdminWorkspacePage: React.FC = () => {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {media.map((m) => (
-                <article key={m.id} className="rounded-[16px] border border-[#e8e0d2] bg-white p-3 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3">
-                  <div className="aspect-[4/3] overflow-hidden rounded-[14px] bg-[#faf7f2]">
+                <article key={m.id} className="rounded-[16px] border border-[#e5d9f2] bg-white p-3 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3">
+                  <div className="aspect-[4/3] overflow-hidden rounded-[14px] bg-[#faf7ff]">
                     <img src={m.url} alt={m.altText || m.filename} className="h-full w-full object-cover" />
                   </div>
                   <div>
                     <p className="truncate text-[13px] font-semibold">{m.filename}</p>
-                    <p className="text-[11.5px] text-[#6f675c]">{Math.round(m.sizeBytes / 1024)} KB · {m.mime}{m.createdAt ? ` · ${formatScheduledDate(m.createdAt)}` : ''}</p>
+                    <p className="text-[11.5px] text-[#6b6275]">{Math.round(m.sizeBytes / 1024)} KB · {m.mime}{m.createdAt ? ` · ${formatScheduledDate(m.createdAt)}` : ''}</p>
                     <button
                       type="button"
-                      className="mt-1 text-[12px] font-semibold text-[#8F6D35] hover:underline"
+                      className="mt-1 text-[12px] font-semibold text-[#6d28d9] hover:underline"
                       onClick={() => {
                         void navigator.clipboard?.writeText(m.url);
                         setNotice('URL copied.');
@@ -1948,11 +1948,11 @@ export const AdminWorkspacePage: React.FC = () => {
               {recentChanges.length === 0 ? (
                 <EmptyState title="No recent activity yet." description="CMS changes will appear here after edits." className="py-8" />
               ) : (
-                <ul className="divide-y divide-[#efe8dc]">
+                <ul className="divide-y divide-[#ede4f7]">
                   {recentChanges.map((c) => (
                     <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-[13px]">
                       <span className="truncate">{c.action}{c.entityType ? ` · ${c.entityType}` : ''}</span>
-                      <span className="shrink-0 text-[12px] text-[#6f675c]">{c.createdAt}</span>
+                      <span className="shrink-0 text-[12px] text-[#6b6275]">{c.createdAt}</span>
                     </li>
                   ))}
                 </ul>
@@ -1961,7 +1961,7 @@ export const AdminWorkspacePage: React.FC = () => {
           </div>
 
           <form
-            className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]"
+            className="min-w-0 space-y-3 self-start rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -1988,7 +1988,7 @@ export const AdminWorkspacePage: React.FC = () => {
         <div className="grid gap-4 lg:grid-cols-2">
           <AdminCard>
             <AdminCardHeader title="Email delivery" />
-            <p className="text-[13px] text-[#6f675c]">
+            <p className="text-[13px] text-[#6b6275]">
               Transport: <strong>{overview.mail.transport}</strong> ·{' '}
               {overview.mail.configured ? 'configured' : 'not configured'}
             </p>
@@ -2002,7 +2002,7 @@ export const AdminWorkspacePage: React.FC = () => {
           </AdminCard>
 
           <form
-            className="rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3"
+            className="rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)] space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
               act(async () => {
@@ -2014,7 +2014,7 @@ export const AdminWorkspacePage: React.FC = () => {
             }}
           >
             <h2 className="font-display text-[22px] font-semibold">Booking settings</h2>
-            <p className="text-[12.5px] text-[#6f675c]">
+            <p className="text-[12.5px] text-[#6b6275]">
               Controls public availability. Empty values keep the booking UI honest instead of inventing slots.
             </p>
             {([
@@ -2055,7 +2055,7 @@ export const AdminWorkspacePage: React.FC = () => {
               <DataRow key={a.id}>
                 <DataCell>{a.createdAt}</DataCell>
                 <DataCell>{a.action}</DataCell>
-                <DataCell>{a.entityType ?? '—'}{a.entityId ? <span className="block text-[11.5px] text-[#6f675c]">{a.entityId}</span> : null}</DataCell>
+                <DataCell>{a.entityType ?? '—'}{a.entityId ? <span className="block text-[11.5px] text-[#6b6275]">{a.entityId}</span> : null}</DataCell>
                 <DataCell>{a.actor ?? '—'}</DataCell>
               </DataRow>
             ))}

@@ -4,10 +4,16 @@
   "description": "Discover trusted professional massage and wellness services near you.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#161616",
-  "theme_color": "#B08B4B",
+  "background_color": "#060608",
+  "theme_color": "#060608",
   "lang": "en",
   "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/favicon-16.png",
       "sizes": "16x16",

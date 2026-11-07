@@ -67,7 +67,7 @@ function toLocationValue(location: CustomerLocation | null): LocationValue {
   };
 }
 
-const surface = 'rounded-2xl border border-[#e6dfd2] bg-white p-5 shadow-[0_1px_2px_rgba(24,20,12,0.04)]';
+const surface = 'rounded-2xl border border-[#e4d8f2] bg-white p-5 shadow-[0_1px_2px_rgba(59,7,100,0.05)]';
 const statusTone: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-800 border-amber-200',
   confirmed: 'bg-emerald-50 text-emerald-800 border-emerald-200',
@@ -197,27 +197,27 @@ export const ClientDashboard: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-[#faf7f0] text-[#221f19]">
-      <header className="sticky top-0 z-40 border-b border-[#e6dfd2] bg-[#f2eee4]/95 backdrop-blur">
+    <div className="min-h-screen bg-[#faf5ff] text-[#1a1424]">
+      <header className="sticky top-0 z-40 border-b border-[#e4d8f2] bg-[#f3edfa]/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onBackToHome}
-              className="inline-flex h-11 items-center gap-2 rounded-lg px-2 text-[12px] font-semibold uppercase tracking-wider text-[#6b6252] hover:text-[#221f19] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f]"
+              className="inline-flex h-11 items-center gap-2 rounded-lg px-2 text-[12px] font-semibold uppercase tracking-wider text-[#675f73] hover:text-[#1a1424] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea]"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden /> Home
             </button>
-            <BrandLogo variant="plate" withWordmark markHeight={24} />
+            <BrandLogo variant="plate" withWordmark onLight markHeight={24} />
           </div>
           <div className="flex items-center gap-3">
             {profile ? (
               <div className="hidden text-right sm:block">
                 <p className="text-[13px] font-semibold">{profile.user.firstName} {profile.user.lastName}</p>
-                <p className="text-[11px] text-[#6b6252]">{profile.user.email}</p>
+                <p className="text-[11px] text-[#675f73]">{profile.user.email}</p>
               </div>
             ) : null}
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#221f19] text-[13px] font-semibold text-[#e5c17a]">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#1a1424] text-[13px] font-semibold text-[#c084fc]">
               {profile?.user.firstName?.[0] ?? 'M'}
             </span>
           </div>
@@ -226,11 +226,11 @@ export const ClientDashboard: React.FC<{
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a7a52]">My account</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7e22ce]">My account</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">Your bookings</h1>
         </div>
 
-        <nav className="mb-6 flex gap-2 border-b border-[#e6dfd2] pb-3" aria-label="Account sections">
+        <nav className="mb-6 flex gap-2 border-b border-[#e4d8f2] pb-3" aria-label="Account sections">
           {[
             { id: 'bookings' as const, label: 'Bookings', icon: Calendar },
             { id: 'location' as const, label: 'Location', icon: MapPin },
@@ -240,8 +240,8 @@ export const ClientDashboard: React.FC<{
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`inline-flex h-11 items-center gap-2 rounded-lg px-4 text-[13px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f] ${
-                tab === id ? 'bg-[#221f19] text-white' : 'text-[#6b6252] hover:bg-[#ece6d8]'
+              className={`inline-flex h-11 items-center gap-2 rounded-lg px-4 text-[13px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea] ${
+                tab === id ? 'bg-[#6d28d9] text-white' : 'text-[#675f73] hover:bg-[#ece4f7]'
               }`}
             >
               <Icon className="h-4 w-4" aria-hidden /> {label}
@@ -261,22 +261,22 @@ export const ClientDashboard: React.FC<{
         ) : null}
 
         {!data && !error ? (
-          <p className="py-16 text-center text-[13.5px] text-[#6b6252]">Loading your account…</p>
+          <p className="py-16 text-center text-[13.5px] text-[#675f73]">Loading your account…</p>
         ) : null}
 
         {tab === 'bookings' && data ? (
           data.bookings.length === 0 ? (
             <div className={`${surface} text-center`}>
-              <Calendar className="mx-auto h-10 w-10 text-[#b7a883]" aria-hidden />
+              <Calendar className="mx-auto h-10 w-10 text-[#a78bfa]" aria-hidden />
               <h2 className="mt-3 text-[17px] font-semibold">No bookings yet</h2>
-              <p className="mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-[#6b6252]">
+              <p className="mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-[#675f73]">
                 When you request a massage, it will appear here with its status and reference so you can
                 track it from request to completion.
               </p>
               <button
                 type="button"
                 onClick={onOpenBooking}
-                className="mt-5 inline-flex h-12 items-center rounded-xl bg-[#221f19] px-5 text-[13.5px] font-semibold text-white hover:bg-[#3a342a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f]"
+                className="mt-5 inline-flex h-12 items-center rounded-xl bg-[#6d28d9] px-5 text-[13.5px] font-semibold text-white hover:bg-[#9333ea] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea]"
               >
                 Book A Massage
               </button>
@@ -291,16 +291,16 @@ export const ClientDashboard: React.FC<{
                         {booking.status.replace('_', ' ')}
                       </span>
                       <h3 className="mt-2 text-[16px] font-semibold">{booking.serviceName}</h3>
-                      <p className="mt-0.5 text-[12px] text-[#6b6252]">
+                      <p className="mt-0.5 text-[12px] text-[#675f73]">
                         {booking.reference ? `Ref ${booking.reference}` : 'Reference pending'}
                       </p>
                     </div>
                     <p className="text-[14px] font-semibold">{booking.currency} {booking.price.toLocaleString()}</p>
                   </div>
 
-                  <dl className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-[#eee7d9] bg-[#fbf8f1] p-3 text-[12px]">
+                  <dl className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-[#ece3f6] bg-[#faf5ff] p-3 text-[12px]">
                     <div>
-                      <dt className="text-[#8a7a52]">When</dt>
+                      <dt className="text-[#7e22ce]">When</dt>
                       <dd className="mt-0.5 font-medium">
                         <Clock className="mr-1 inline h-3.5 w-3.5" aria-hidden />
                         {formatScheduledDate(booking.scheduledAt)}
@@ -308,7 +308,7 @@ export const ClientDashboard: React.FC<{
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-[#8a7a52]">Where</dt>
+                      <dt className="text-[#7e22ce]">Where</dt>
                       <dd className="mt-0.5 font-medium capitalize">
                         <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
                         {booking.locationType === 'home' ? 'Home visit' : 'Studio'}
@@ -316,7 +316,7 @@ export const ClientDashboard: React.FC<{
                     </div>
                     {booking.providerName ? (
                       <div className="col-span-2">
-                        <dt className="text-[#8a7a52]">Provider</dt>
+                        <dt className="text-[#7e22ce]">Provider</dt>
                         <dd className="mt-0.5 font-medium">{booking.providerName}</dd>
                       </div>
                     ) : null}
@@ -329,7 +329,7 @@ export const ClientDashboard: React.FC<{
                           type="button"
                           disabled={busy}
                           onClick={() => reschedule(booking.id)}
-                          className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d9cfba] px-3.5 text-[12.5px] font-semibold hover:bg-[#f2eee4] disabled:opacity-60"
+                          className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d8c7ea] px-3.5 text-[12.5px] font-semibold hover:bg-[#f3edfa] disabled:opacity-60"
                         >
                           <RefreshCw className="h-4 w-4" aria-hidden /> Request reschedule
                         </button>
@@ -357,7 +357,7 @@ export const ClientDashboard: React.FC<{
             <h2 className="mb-3 text-[15px] font-semibold">Receipts</h2>
             <div className={`${surface} overflow-x-auto p-0`}>
               <table className="w-full min-w-[540px] text-left text-[13px]">
-                <thead className="bg-[#f2eee4] text-[11px] uppercase tracking-wider text-[#6b6252]">
+                <thead className="bg-[#f3edfa] text-[11px] uppercase tracking-wider text-[#675f73]">
                   <tr>
                     <th className="px-4 py-3">Reference</th>
                     <th className="px-4 py-3">Service</th>
@@ -367,17 +367,17 @@ export const ClientDashboard: React.FC<{
                 </thead>
                 <tbody>
                   {data.receipts.map((r) => (
-                    <tr key={r.id} className="border-t border-[#eee7d9]">
+                    <tr key={r.id} className="border-t border-[#ece3f6]">
                       <td className="px-4 py-3 font-medium">{r.reference ?? '—'}</td>
                       <td className="px-4 py-3">{r.serviceName}</td>
                       <td className="px-4 py-3">{r.currency} {r.amount.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-[#6b6252]">{r.date ?? '—'}</td>
+                      <td className="px-4 py-3 text-[#675f73]">{r.date ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="mt-2 text-[11.5px] text-[#8a7a52]">
+            <p className="mt-2 text-[11.5px] text-[#7e22ce]">
               Receipts list completed bookings only. No online payment gateway is integrated, so no card
               transactions are recorded.
             </p>
@@ -387,24 +387,24 @@ export const ClientDashboard: React.FC<{
         {tab === 'location' ? (
           <section className={surface}>
             <h2 className="text-[15px] font-semibold">Your location</h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-[#6b6252]">
+            <p className="mt-1 text-[13px] leading-relaxed text-[#675f73]">
               Explore uses this to show nearby, eligible providers first. Your exact pin and home address
               are private and are never shown to providers or other customers.
             </p>
 
             {location?.region || location?.city ? (
-              <div className="mt-4 rounded-xl border border-[#eee7d9] bg-[#fbf8f1] px-3 py-2.5 text-[13px]">
-                <p className="font-semibold text-[#221f19]">
+              <div className="mt-4 rounded-xl border border-[#ece3f6] bg-[#faf5ff] px-3 py-2.5 text-[13px]">
+                <p className="font-semibold text-[#1a1424]">
                   {[location.area, location.city, location.district, location.region].filter(Boolean).join(', ')}
                 </p>
-                <p className="mt-0.5 text-[11.5px] text-[#8a7a52]">
+                <p className="mt-0.5 text-[11.5px] text-[#7e22ce]">
                   {location.latitude != null && location.longitude != null
                     ? 'Exact pin saved — distances use approximate straight-line measurement.'
                     : 'No exact pin saved — matching uses your town and region.'}
                 </p>
               </div>
             ) : (
-              <p className="mt-3 rounded-xl border border-dashed border-[#d9cfba] px-3 py-3 text-[13px] text-[#6b6252]">
+              <p className="mt-3 rounded-xl border border-dashed border-[#d8c7ea] px-3 py-3 text-[13px] text-[#675f73]">
                 No saved location yet. You can still browse Explore, but nearest-first results need a town.
               </p>
             )}
@@ -412,9 +412,9 @@ export const ClientDashboard: React.FC<{
             <form onSubmit={saveLocation} className="mt-4 space-y-4">
               <LocationFields value={locationForm} onChange={setLocationForm} disabled={busy} />
               <label className="block">
-                <span className="text-[12px] font-medium text-[#6b6252]">Location note (optional)</span>
+                <span className="text-[12px] font-medium text-[#675f73]">Location note (optional)</span>
                 <textarea
-                  className="mt-1.5 min-h-24 w-full rounded-xl border border-[#d9cfba] bg-white px-3 py-2.5 text-[14px] text-[#221f19] outline-none focus:border-[#b8862f] focus:ring-2 focus:ring-[#b8862f]/25"
+                  className="mt-1.5 min-h-24 w-full rounded-xl border border-[#d8c7ea] bg-white px-3 py-2.5 text-[14px] text-[#1a1424] outline-none focus:border-[#9333ea] focus:ring-2 focus:ring-[#9333ea]/25"
                   maxLength={500}
                   value={locationDescription}
                   onChange={(e) => setLocationDescription(e.target.value)}
@@ -425,7 +425,7 @@ export const ClientDashboard: React.FC<{
                 <button
                   type="submit"
                   disabled={busy}
-                  className="inline-flex h-12 items-center rounded-xl bg-[#221f19] px-5 text-[13.5px] font-semibold text-white hover:bg-[#3a342a] disabled:opacity-60"
+                  className="inline-flex h-12 items-center rounded-xl bg-[#6d28d9] px-5 text-[13.5px] font-semibold text-white hover:bg-[#9333ea] disabled:opacity-60"
                 >
                   {busy ? 'Saving…' : 'Save location'}
                 </button>
@@ -434,14 +434,14 @@ export const ClientDashboard: React.FC<{
                     type="button"
                     disabled={busy}
                     onClick={clearLocation}
-                    className="inline-flex h-12 items-center rounded-xl border border-[#d9cfba] px-4 text-[13px] font-semibold text-[#6b6252] hover:bg-[#f2eee4] disabled:opacity-60"
+                    className="inline-flex h-12 items-center rounded-xl border border-[#d8c7ea] px-4 text-[13px] font-semibold text-[#675f73] hover:bg-[#f3edfa] disabled:opacity-60"
                   >
                     Remove saved location
                   </button>
                 ) : null}
                 <Link
                   to="/explore/accra"
-                  className="inline-flex h-12 items-center rounded-xl border border-[#d9cfba] px-4 text-[13px] font-semibold text-[#221f19] hover:bg-[#f2eee4]"
+                  className="inline-flex h-12 items-center rounded-xl border border-[#d8c7ea] px-4 text-[13px] font-semibold text-[#1a1424] hover:bg-[#f3edfa]"
                 >
                   Find nearby providers
                 </Link>
@@ -456,19 +456,19 @@ export const ClientDashboard: React.FC<{
               <h2 className="text-[15px] font-semibold">Account details</h2>
               <dl className="mt-3 space-y-3 text-[13px]">
                 <div>
-                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Name</dt>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Name</dt>
                   <dd className="mt-0.5 font-medium">{profile.user.firstName} {profile.user.lastName}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Email</dt>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Email</dt>
                   <dd className="mt-0.5 font-medium">{profile.user.email}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Phone (contact only)</dt>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Phone (contact only)</dt>
                   <dd className="mt-0.5 font-medium">{profile.user.phone || 'Not provided'}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] uppercase tracking-wider text-[#8a7a52]">Email status</dt>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Email status</dt>
                   <dd className={`mt-0.5 inline-flex items-center gap-1.5 font-medium ${profile.emailVerified ? 'text-emerald-700' : 'text-amber-700'}`}>
                     {profile.emailVerified ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : <Lock className="h-4 w-4" aria-hidden />}
                     {profile.emailVerified ? 'Confirmed' : 'Not confirmed'}
@@ -478,7 +478,7 @@ export const ClientDashboard: React.FC<{
               {!profile.emailVerified ? (
                 <Link
                   to="/verify-email?sent=0"
-                  className="mt-4 inline-flex h-11 items-center rounded-lg border border-[#d9cfba] px-3.5 text-[12.5px] font-semibold hover:bg-[#f2eee4]"
+                  className="mt-4 inline-flex h-11 items-center rounded-lg border border-[#d8c7ea] px-3.5 text-[12.5px] font-semibold hover:bg-[#f3edfa]"
                 >
                   Confirm your email
                 </Link>
@@ -486,13 +486,13 @@ export const ClientDashboard: React.FC<{
             </section>
             <section className={surface}>
               <h2 className="text-[15px] font-semibold">Security</h2>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#6b6252]">
+              <p className="mt-2 text-[13px] leading-relaxed text-[#675f73]">
                 Use the password reset flow to change your password securely. Your phone number is contact
                 information only and is never used as a sign-in gate.
               </p>
               <Link
                 to="/forgot-password"
-                className="mt-4 inline-flex h-11 items-center rounded-lg border border-[#d9cfba] px-3.5 text-[12.5px] font-semibold hover:bg-[#f2eee4]"
+                className="mt-4 inline-flex h-11 items-center rounded-lg border border-[#d8c7ea] px-3.5 text-[12.5px] font-semibold hover:bg-[#f3edfa]"
               >
                 Change password
               </Link>

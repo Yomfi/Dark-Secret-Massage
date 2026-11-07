@@ -20,7 +20,7 @@ export const Hero: React.FC = () => {
 
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
             Discover near you
           </p>
 
@@ -47,22 +47,22 @@ export const Hero: React.FC = () => {
 
           <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[12.5px] text-zinc-400">
             <li className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-brand-gold-light" aria-hidden />
+              <ShieldCheck className="h-4 w-4 text-brand-purple-light" aria-hidden />
               Verified profiles
             </li>
             <li className="inline-flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-brand-gold-light" aria-hidden />
+              <Sparkles className="h-4 w-4 text-brand-purple-light" aria-hidden />
               Reviewed providers
             </li>
             <li className="inline-flex items-center gap-1.5">
-              <Lock className="h-4 w-4 text-brand-gold-light" aria-hidden />
+              <Lock className="h-4 w-4 text-brand-purple-light" aria-hidden />
               Private booking details
             </li>
           </ul>
         </div>
 
         <div className="mx-auto mt-10 flex max-w-xl items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
           <p className="text-[12.5px] leading-relaxed text-zinc-300">
             Profiles appear here only after identity review and admin approval. Verified counts are not
             published until real providers are approved.

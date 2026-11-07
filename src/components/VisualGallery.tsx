@@ -26,7 +26,7 @@ export const VisualGallery: React.FC = () => {
   return (
     <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/[0.08]">
       <div className="max-w-3xl mb-12 sm:mb-16">
-        <span className="text-xs uppercase tracking-[0.3em] text-brand-gold font-semibold block mb-3">
+        <span className="text-xs uppercase tracking-[0.3em] text-brand-purple font-semibold block mb-3">
           ATMOSPHERE & SPACES
         </span>
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-sans leading-[1.08]">
@@ -42,7 +42,7 @@ export const VisualGallery: React.FC = () => {
         {cards.map((card) => (
           <div
             key={card.id}
-            className="group relative rounded-3xl overflow-hidden border border-white/[0.08] bg-[#09090f] flex flex-col hover:border-brand-gold/40 transition-all duration-300"
+            className="group relative rounded-3xl overflow-hidden border border-white/[0.08] bg-[#09090f] flex flex-col hover:border-brand-purple/40 transition-all duration-300"
           >
             {/* Large Photograph */}
             <div className="relative aspect-[4/3] w-full overflow-hidden">
@@ -55,10 +55,10 @@ export const VisualGallery: React.FC = () => {
 
             {/* Content Below Photo: Short Category Label + Short Title (No paragraphs) */}
             <div className="p-6 bg-gradient-to-b from-[#09090f] to-[#060608]">
-              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-gold block mb-1.5">
+              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple block mb-1.5">
                 {card.category}
               </span>
-              <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-brand-gold-light transition-colors">
+              <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-brand-purple-light transition-colors">
                 {card.title}
               </h3>
             </div>

@@ -109,7 +109,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({ it
                 <ul className="space-y-2">
                   {item.whatToExpect.map((line) => (
                     <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-zinc-300">
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-gold" aria-hidden />
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-purple" aria-hidden />
                       {line}
                     </li>
                   ))}
@@ -118,7 +118,7 @@ export const MassageServiceDetails: React.FC<MassageServiceDetailsProps> = ({ it
 
               <DetailBlock title="Where it is available">
                 <p className="inline-flex items-start gap-2 text-[14px] leading-relaxed text-zinc-300">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
                   {item.locationAvailability}
                 </p>
               </DetailBlock>

@@ -795,7 +795,7 @@ export const ProviderRegisterPage: React.FC = () => {
           </Link>
           <Link
             to="/login"
-            className="inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+            className="inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80"
           >
             Sign in
           </Link>
@@ -805,7 +805,7 @@ export const ProviderRegisterPage: React.FC = () => {
       <main className="pb-16">
         <Container className="pt-8 sm:pt-10 lg:pt-12">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
               Provider registration
             </p>
             <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[32px]">
@@ -825,7 +825,7 @@ export const ProviderRegisterPage: React.FC = () => {
                     Step {stepNumber} of {STEPS.length}
                   </p>
                   {profile.services.length > 0 ? (
-                    <p className="text-[11px] tabular-nums text-brand-gold-light">{completion}%</p>
+                    <p className="text-[11px] tabular-nums text-brand-purple-light">{completion}%</p>
                   ) : null}
                 </div>
                 <ProgressBar value={stepProgress} className="mt-2" />
@@ -840,7 +840,7 @@ export const ProviderRegisterPage: React.FC = () => {
                           className={[
                             'flex items-center gap-2.5 rounded-lg px-2 py-2 text-[13px]',
                             active
-                              ? 'bg-brand-gold/[0.10] font-semibold text-white'
+                              ? 'bg-brand-purple/[0.10] font-semibold text-white'
                               : done
                                 ? 'text-zinc-300'
                                 : 'text-zinc-500',
@@ -850,9 +850,9 @@ export const ProviderRegisterPage: React.FC = () => {
                             className={[
                               'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold',
                               done
-                                ? 'border-brand-gold/40 bg-brand-gold/15 text-brand-gold-light'
+                                ? 'border-brand-purple/40 bg-brand-purple/15 text-brand-purple-light'
                                 : active
-                                  ? 'border-brand-gold/60 bg-brand-gold text-brand-ink'
+                                  ? 'border-brand-purple/60 bg-brand-purple text-white'
                                   : 'border-white/12 text-zinc-500',
                             ].join(' ')}
                           >
@@ -877,7 +877,7 @@ export const ProviderRegisterPage: React.FC = () => {
                     Step {stepNumber} of {STEPS.length}
                   </p>
                   {profile.services.length > 0 ? (
-                    <p className="text-[12px] tabular-nums text-brand-gold-light">
+                    <p className="text-[12px] tabular-nums text-brand-purple-light">
                       Profile {completion}%
                     </p>
                   ) : null}
@@ -1342,9 +1342,9 @@ export const ProviderRegisterPage: React.FC = () => {
                               aria-pressed={selected}
                               onClick={() => toggleService(label)}
                               className={[
-                                'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80',
                                 selected
-                                  ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                  ? 'border-brand-purple/50 bg-brand-purple/15 text-white'
                                   : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
                               ].join(' ')}
                             >
@@ -1454,9 +1454,9 @@ export const ProviderRegisterPage: React.FC = () => {
                                 })
                               }
                               className={[
-                                'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80',
                                 selected
-                                  ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                  ? 'border-brand-purple/50 bg-brand-purple/15 text-white'
                                   : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
                               ].join(' ')}
                             >
@@ -1573,9 +1573,9 @@ export const ProviderRegisterPage: React.FC = () => {
                                 aria-pressed={teamDraft.gender === g}
                                 onClick={() => setTeamDraft({ ...teamDraft, gender: g })}
                                 className={[
-                                  'inline-flex h-12 items-center justify-center rounded-xl border text-[13px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                  'inline-flex h-12 items-center justify-center rounded-xl border text-[13px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80',
                                   teamDraft.gender === g
-                                    ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                    ? 'border-brand-purple/50 bg-brand-purple/15 text-white'
                                     : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:text-zinc-200',
                                 ].join(' ')}
                               >
@@ -1614,9 +1614,9 @@ export const ProviderRegisterPage: React.FC = () => {
                                   })
                                 }
                                 className={[
-                                  'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                  'inline-flex min-h-11 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80',
                                   selected
-                                    ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                    ? 'border-brand-purple/50 bg-brand-purple/15 text-white'
                                     : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
                                 ].join(' ')}
                               >
@@ -1664,9 +1664,9 @@ export const ProviderRegisterPage: React.FC = () => {
                               aria-pressed={teamDraft.status === s}
                               onClick={() => setTeamDraft({ ...teamDraft, status: s })}
                               className={[
-                                'inline-flex h-12 items-center justify-center rounded-xl border text-[13px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80',
+                                'inline-flex h-12 items-center justify-center rounded-xl border text-[13px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80',
                                 teamDraft.status === s
-                                  ? 'border-brand-gold/50 bg-brand-gold/15 text-white'
+                                  ? 'border-brand-purple/50 bg-brand-purple/15 text-white'
                                   : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:text-zinc-200',
                               ].join(' ')}
                             >
@@ -1910,12 +1910,12 @@ function FileField({
       <p className="mb-1.5 flex items-center gap-1 text-[13px] font-medium text-zinc-200">
         {label}
         {required ? (
-          <span className="text-brand-gold-light" aria-hidden>
+          <span className="text-brand-purple-light" aria-hidden>
             *
           </span>
         ) : null}
       </p>
-      <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/12 bg-[#101012] px-3.5 text-[13px] text-zinc-400 transition-colors hover:border-white/25 focus-within:border-brand-gold/60 focus-within:ring-2 focus-within:ring-brand-gold/20">
+      <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/12 bg-[#100d17] px-3.5 text-[13px] text-zinc-400 transition-colors hover:border-white/25 focus-within:border-brand-purple/60 focus-within:ring-2 focus-within:ring-brand-purple/20">
         <span className="truncate">{file ? file.name : 'Choose file'}</span>
         <span className="shrink-0 rounded-lg border border-white/12 px-2.5 py-1 text-[12px] font-medium text-zinc-200">
           Browse

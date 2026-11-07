@@ -23,7 +23,7 @@ export const DetailPanel: React.FC<{
   className = '',
 }) => (
   <aside
-    className={`min-w-0 max-w-full self-start overflow-hidden rounded-[16px] border border-[#e8e0d2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] xl:sticky xl:top-24 ${className}`}
+    className={`min-w-0 max-w-full self-start overflow-hidden rounded-[16px] border border-[#e5d9f2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] xl:sticky xl:top-24 ${className}`}
   >
     {!open ? (
       <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDescription} className="py-16" />
@@ -41,7 +41,7 @@ export const DetailPanel: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#e8e0d2] text-[#6f675c] hover:bg-[#faf7f2]"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#e5d9f2] text-[#6b6275] hover:bg-[#faf7ff]"
               aria-label="Close detail panel"
             >
               <X className="h-4 w-4" />

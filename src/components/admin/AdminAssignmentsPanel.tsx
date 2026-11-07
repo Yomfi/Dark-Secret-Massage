@@ -284,7 +284,7 @@ export const AdminAssignmentsPanel: React.FC<{
       {notice ? <div role="status" className="rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">{notice}</div> : null}
 
       <AdminCard padding={false}>
-        <div className="flex flex-wrap items-center gap-2 border-b border-[#efe8dc] p-4">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[#ede4f7] p-4">
           <select className={`${adminInputClass} w-[190px]`} aria-label="Assignment status" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="all">All statuses ({Object.values(counts).reduce((a, b) => a + b, 0)})</option>
             {Object.entries(statuses).map(([key, label]) => (
@@ -316,12 +316,12 @@ export const AdminAssignmentsPanel: React.FC<{
               <DataCell>
                 <button type="button" className="w-full min-w-0 text-left" onClick={() => void openDetail(row)}>
                   <p className="truncate font-semibold hover:underline">{row.customerName}</p>
-                  <p className="truncate text-[12px] text-[#6f675c]" title={row.customerEmail ?? ''}>{row.customerEmail ?? '—'}</p>
+                  <p className="truncate text-[12px] text-[#6b6275]" title={row.customerEmail ?? ''}>{row.customerEmail ?? '—'}</p>
                 </button>
               </DataCell>
               <DataCell>
                 <p className="truncate">{row.providerName ?? '—'}</p>
-                <p className="truncate text-[12px] text-[#6f675c]">
+                <p className="truncate text-[12px] text-[#6b6275]">
                   {row.providerType === 'agency' ? `Agency${row.teamMemberName ? ` · ${row.teamMemberName}` : ''}` : 'Individual'}
                 </p>
               </DataCell>
@@ -333,7 +333,7 @@ export const AdminAssignmentsPanel: React.FC<{
                   <button type="button" className={adminBtnGhostClass} onClick={() => void openDetail(row)}>View</button>
                   {canWrite && row.allowedTransitions.length > 0 ? (
                     <select
-                      className="h-11 max-w-[130px] rounded-[12px] border border-[#e0d7c8] bg-white px-2 text-[12px]"
+                      className="h-11 max-w-[130px] rounded-[12px] border border-[#e2d4f2] bg-white px-2 text-[12px]"
                       aria-label={`Update ${row.customerName} assignment`}
                       value=""
                       disabled={busy}
@@ -364,30 +364,30 @@ export const AdminAssignmentsPanel: React.FC<{
           <div className="h-full w-full max-w-[520px] overflow-y-auto bg-white p-5 shadow-2xl sm:rounded-[18px]">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a7a52]">Assignment</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7e22ce]">Assignment</p>
                 <h2 className="truncate font-display text-[24px] font-semibold">{modal.assignment.customerName}</h2>
-                <p className="text-[12.5px] text-[#6f675c]">{modal.assignment.providerName} · {modal.assignment.providerType}</p>
+                <p className="text-[12.5px] text-[#6b6275]">{modal.assignment.providerName} · {modal.assignment.providerType}</p>
               </div>
               <StatusBadge status={modal.assignment.status} label={modal.assignment.statusLabel} />
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-[12.5px]">
-              <div><dt className="text-[#8a7a52]">Service</dt><dd>{modal.assignment.serviceName ?? 'Any service'}</dd></div>
-              <div><dt className="text-[#8a7a52]">Preferred</dt><dd>{modal.assignment.preferredAt ? formatScheduledDate(modal.assignment.preferredAt) : '—'}</dd></div>
-              <div><dt className="text-[#8a7a52]">Team member</dt><dd>{modal.assignment.teamMemberName ?? '—'}</dd></div>
-              <div><dt className="text-[#8a7a52]">Created</dt><dd>{formatScheduledDate(modal.assignment.createdAt)}</dd></div>
+              <div><dt className="text-[#7e22ce]">Service</dt><dd>{modal.assignment.serviceName ?? 'Any service'}</dd></div>
+              <div><dt className="text-[#7e22ce]">Preferred</dt><dd>{modal.assignment.preferredAt ? formatScheduledDate(modal.assignment.preferredAt) : '—'}</dd></div>
+              <div><dt className="text-[#7e22ce]">Team member</dt><dd>{modal.assignment.teamMemberName ?? '—'}</dd></div>
+              <div><dt className="text-[#7e22ce]">Created</dt><dd>{formatScheduledDate(modal.assignment.createdAt)}</dd></div>
             </dl>
-            <p className="mt-3 rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">Reason: {modal.assignment.reason}</p>
-            {modal.assignment.notes ? <p className="mt-2 text-[12.5px] text-[#6f675c]">Notes: {modal.assignment.notes}</p> : null}
-            {modal.assignment.statusNote ? <p className="mt-2 text-[12.5px] text-[#6f675c]">Status note: {modal.assignment.statusNote}</p> : null}
-            <p className="mt-3 text-[11.5px] text-[#8a7a52]">An assignment is not a paid booking. Create the appointment through Bookings.</p>
+            <p className="mt-3 rounded-[12px] bg-[#faf7ff] px-3 py-2 text-[12.5px] text-[#6b6275]">Reason: {modal.assignment.reason}</p>
+            {modal.assignment.notes ? <p className="mt-2 text-[12.5px] text-[#6b6275]">Notes: {modal.assignment.notes}</p> : null}
+            {modal.assignment.statusNote ? <p className="mt-2 text-[12.5px] text-[#6b6275]">Status note: {modal.assignment.statusNote}</p> : null}
+            <p className="mt-3 text-[11.5px] text-[#7e22ce]">An assignment is not a paid booking. Create the appointment through Bookings.</p>
             <p className="mt-4 text-[12.5px] font-semibold">History</p>
-            {events.length === 0 ? <p className="mt-1 text-[12.5px] text-[#6f675c]">No events yet.</p> : (
+            {events.length === 0 ? <p className="mt-1 text-[12.5px] text-[#6b6275]">No events yet.</p> : (
               <ul className="mt-2 space-y-2">
                 {events.map((e) => (
-                  <li key={e.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12px]">
+                  <li key={e.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2 text-[12px]">
                     <p className="font-semibold capitalize">{e.event.replace(/_/g, ' ')}</p>
-                    <p className="text-[#6f675c]">{e.note || '—'}</p>
-                    <p className="text-[11px] text-[#8a7a52]">{e.actor || 'Staff'} · {formatScheduledDate(e.createdAt)}</p>
+                    <p className="text-[#6b6275]">{e.note || '—'}</p>
+                    <p className="text-[11px] text-[#7e22ce]">{e.actor || 'Staff'} · {formatScheduledDate(e.createdAt)}</p>
                   </li>
                 ))}
               </ul>
@@ -403,7 +403,7 @@ export const AdminAssignmentsPanel: React.FC<{
             <h2 id="assignment-dialog-title" className="font-display text-[24px] font-semibold">
               {modal.mode === 'create' ? 'Assign provider' : 'Reassign provider'}
             </h2>
-            <p className="mt-1 text-[12.5px] text-[#6f675c]">Assignments are operational only; no booking or payment is created.</p>
+            <p className="mt-1 text-[12.5px] text-[#6b6275]">Assignments are operational only; no booking or payment is created.</p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <FormField label="Customer">

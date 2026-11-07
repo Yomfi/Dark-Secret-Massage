@@ -111,7 +111,7 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChang
         <p className="text-[12px] text-zinc-400">
           {locationLabel ? (
             <span className="inline-flex items-center gap-1.5 text-zinc-300">
-              <LocateFixed className="h-3.5 w-3.5 text-brand-gold-light" aria-hidden /> {locationLabel}
+              <LocateFixed className="h-3.5 w-3.5 text-brand-purple-light" aria-hidden /> {locationLabel}
             </span>
           ) : (
             'General results — set a town or share your location for nearest-first matching.'
@@ -121,7 +121,7 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChang
           type="button"
           onClick={onUseCurrentLocation}
           disabled={locating}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-brand-gold/40 px-3 text-[12px] font-semibold text-brand-gold-light hover:bg-brand-gold/10 disabled:opacity-60"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-brand-purple/40 px-3 text-[12px] font-semibold text-brand-purple-light hover:bg-brand-purple/10 disabled:opacity-60"
         >
           <LocateFixed className="h-3.5 w-3.5" aria-hidden />
           {locating ? 'Locating…' : 'Use current location'}
@@ -323,7 +323,7 @@ export const ExploreFilters: React.FC<Props> = (props) => {
                 type="button"
                 onClick={() => setSheetOpen(false)}
                 aria-label="Close"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80"
               >
                 <X className="h-4 w-4" aria-hidden />
               </button>

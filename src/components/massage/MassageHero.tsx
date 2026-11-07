@@ -33,7 +33,7 @@ export const MassageHero: React.FC<MassageHeroProps> = ({ onViewServices }) => {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-xl"
         >
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
             Massage therapy
           </p>
           <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-white text-balance sm:text-[2.75rem] lg:text-[3.1rem]">

@@ -102,7 +102,7 @@ export const VerifyEmailPage: React.FC = () => {
         footer={
           <Link
             to="/login"
-            className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold"
+            className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple"
           >
             Back to sign in
           </Link>
@@ -176,7 +176,7 @@ export const VerifyEmailPage: React.FC = () => {
         title="Email confirmed"
         description="Your Massager Studio email address is verified. You can continue where you left off."
         footer={
-          <Link to="/" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
             Back to home
           </Link>
         }
@@ -210,7 +210,7 @@ export const VerifyEmailPage: React.FC = () => {
         title="Link could not be used"
         description="Sign in to request a new confirmation email. Links expire after 24 hours and can only be used once."
         footer={
-          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
             Back to sign in
           </Link>
         }
@@ -227,7 +227,7 @@ export const VerifyEmailPage: React.FC = () => {
       title="Confirmation link incomplete"
       description="This page needs the token from your verification email."
       footer={
-        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
           Back to sign in
         </Link>
       }

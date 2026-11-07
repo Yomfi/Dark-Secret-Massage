@@ -84,7 +84,7 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
         }
       >
         <label className={`flex min-w-0 flex-1 items-center gap-2.5 ${isHero ? 'min-h-12 px-2.5' : ''}`}>
-          <MapPin className="h-4 w-4 shrink-0 text-brand-gold-light" aria-hidden />
+          <MapPin className="h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
           <input
             type="text"
             role="combobox"
@@ -144,10 +144,10 @@ export const CitySearch = forwardRef<CitySearchHandle, CitySearchProps>(function
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => go(city)}
                 className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13.5px] transition-colors ${
-                  i === highlight ? 'bg-brand-gold/15 text-white' : 'text-zinc-300 hover:bg-white/[0.05]'
+                  i === highlight ? 'bg-brand-purple/15 text-white' : 'text-zinc-300 hover:bg-white/[0.05]'
                 }`}
               >
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-gold-light" aria-hidden />
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-purple-light" aria-hidden />
                 <span>{city.name}</span>
                 <span className="ml-auto text-[11px] text-zinc-500">Ghana</span>
               </button>

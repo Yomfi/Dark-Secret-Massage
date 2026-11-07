@@ -16,16 +16,16 @@ const STYLES: Record<string, string> = {
   blocked: 'border-red-200 bg-red-50 text-red-800',
   rejected: 'border-red-200 bg-red-50 text-red-800',
   removed: 'border-orange-200 bg-orange-50 text-orange-900',
-  unpublished: 'border-[#e4ddd0] bg-[#f3efe6] text-[#6f675c]',
-  cancelled: 'border-[#e4ddd0] bg-[#f3efe6] text-[#6f675c]',
-  completed: 'border-[#e4ddd0] bg-[#f3efe6] text-[#6f675c]',
-  deleted: 'border-[#e4ddd0] bg-[#f3efe6] text-[#6f675c]',
-  inactive: 'border-[#e4ddd0] bg-[#f3efe6] text-[#6f675c]',
+  unpublished: 'border-[#e4dcf2] bg-[#f1e9fb] text-[#6b6275]',
+  cancelled: 'border-[#e4dcf2] bg-[#f1e9fb] text-[#6b6275]',
+  completed: 'border-[#e4dcf2] bg-[#f1e9fb] text-[#6b6275]',
+  deleted: 'border-[#e4dcf2] bg-[#f1e9fb] text-[#6b6275]',
+  inactive: 'border-[#e4dcf2] bg-[#f1e9fb] text-[#6b6275]',
 };
 
 export function statusBadgeClass(status: string): string {
   const key = status.toLowerCase().replace(/\s+/g, '_');
-  return `inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${STYLES[key] ?? 'border-[#e4ddd0] bg-[#f3efe6] text-[#6f675c]'}`;
+  return `inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${STYLES[key] ?? 'border-[#e4dcf2] bg-[#f1e9fb] text-[#6b6275]'}`;
 }
 
 export const StatusBadge: React.FC<{ status: string; label?: string }> = ({ status, label }) => (

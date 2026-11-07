@@ -1,11 +1,11 @@
 import React from 'react';
 
-/** Shared control surface: 48px tall, readable text, visible border, gold focus ring. */
+/** Shared control surface: 48px tall, readable text, visible border, purple focus ring. */
 const CONTROL =
-  'w-full rounded-xl border bg-[#101012] px-3.5 text-sm text-zinc-100 placeholder:text-zinc-500 ' +
+  'w-full rounded-xl border bg-[#100d17] px-3.5 text-sm text-zinc-100 placeholder:text-zinc-500 ' +
   'transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60';
 
-const NEUTRAL = 'border-white/12 focus:border-brand-gold/60 focus:ring-brand-gold/20';
+const NEUTRAL = 'border-white/12 focus:border-brand-purple/60 focus:ring-brand-purple/20';
 const INVALID = 'border-rose-500/50 focus:border-rose-400 focus:ring-rose-500/20';
 
 export function inputClass(invalid = false, className = ''): string {
@@ -47,7 +47,7 @@ export const FieldShell: React.FC<FieldShellProps> = ({
     >
       {label}
       {required ? (
-        <span className="text-brand-gold-light" aria-hidden>
+        <span className="text-brand-purple-light" aria-hidden>
           *
         </span>
       ) : null}
@@ -165,7 +165,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
         <input
           id={fieldId}
           type="checkbox"
-          className="mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer accent-brand-gold"
+          className="mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer accent-brand-purple"
           {...rest}
         />
         <span className="text-[13px] leading-relaxed text-zinc-300">{label}</span>

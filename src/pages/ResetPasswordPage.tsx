@@ -52,7 +52,7 @@ export const ResetPasswordPage: React.FC = () => {
         title="Choose a new password"
         description="This reset link is missing its token. Request a new password reset email to continue."
         footer={
-          <Link to="/forgot-password" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/forgot-password" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
             Request a new link
           </Link>
         }
@@ -70,7 +70,7 @@ export const ResetPasswordPage: React.FC = () => {
         title="Password updated"
         description="You can now sign in with your new password."
         footer={
-          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
             Back to sign in
           </Link>
         }
@@ -92,7 +92,7 @@ export const ResetPasswordPage: React.FC = () => {
       title="Choose a new password"
       description="Enter a new password for your account. Reset links work once and expire after an hour."
       footer={
-        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
           Back to sign in
         </Link>
       }

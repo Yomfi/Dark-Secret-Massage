@@ -12,7 +12,7 @@ interface NavbarProps {
 }
 
 const navLinkClass =
-  'inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5 text-[13.5px] font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80';
+  'inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5 text-[13.5px] font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80';
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenBooking,
@@ -89,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/12 text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/12 text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >

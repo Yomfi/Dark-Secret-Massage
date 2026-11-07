@@ -51,7 +51,7 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({ className = '', urls }
               rel="noopener noreferrer"
               aria-label={`Massager Studio on ${label} (opens in a new tab)`}
               title={`Massager Studio on ${label}`}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition-colors hover:border-brand-gold/50 hover:bg-brand-gold/10 hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-[#050507]"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition-colors hover:border-brand-purple/50 hover:bg-brand-purple/10 hover:text-brand-purple-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple focus-visible:ring-offset-2 focus-visible:ring-offset-[#050507]"
             >
               <Icon className="h-[1.05rem] w-[1.05rem]" />
             </a>

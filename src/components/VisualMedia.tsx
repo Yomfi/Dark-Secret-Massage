@@ -46,7 +46,7 @@ export const VisualMedia: React.FC<VisualMediaProps> = ({ type, className = '', 
         <div className="absolute inset-0 bg-black/30 pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(5,5,8,0.50)_0%,rgba(5,5,8,0.35)_50%,rgba(6,6,8,0.15)_80%,transparent_100%)] pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#050508]/90 via-[#050508]/40 to-transparent pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/4 w-[500px] h-[260px] bg-brand-gold/18 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/4 w-[500px] h-[260px] bg-brand-purple/18 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#060608] via-[#060608]/90 to-transparent pointer-events-none" />
         <div className="absolute inset-0 bg-radial from-transparent via-transparent to-[#040406]/70 pointer-events-none" />
       </div>

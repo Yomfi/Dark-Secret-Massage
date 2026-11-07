@@ -32,11 +32,11 @@ export const DataTable: React.FC<{
         </colgroup>
       ) : null}
       <thead>
-        <tr className="border-b border-[#efe8dc] bg-[#faf7f2]/80">
+        <tr className="border-b border-[#ede4f7] bg-[#faf7ff]/80">
           {headers.map((h) => (
             <th
               key={h}
-              className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52] sm:px-4"
+              className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e22ce] sm:px-4"
             >
               {h}
             </th>
@@ -64,8 +64,8 @@ export const DataRow: React.FC<{
   onClick?: () => void;
 }> = ({ children, selected, onClick }) => (
   <tr
-    className={`border-t border-[#efe8dc] transition-colors ${
-      selected ? 'bg-[#faf7f2]' : 'hover:bg-[#faf7f2]/70'
+    className={`border-t border-[#ede4f7] transition-colors ${
+      selected ? 'bg-[#faf7ff]' : 'hover:bg-[#faf7ff]/70'
     } ${onClick ? 'cursor-pointer' : ''}`}
     onClick={onClick}
   >

@@ -167,7 +167,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
 
   if (error) {
     return (
-      <aside className="min-w-0 rounded-[16px] border border-[#e8e0d2] bg-white p-5 shadow-[0_8px_30px_rgba(22,22,22,0.06)]">
+      <aside className="min-w-0 rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_8px_30px_rgba(22,22,22,0.06)]">
         <p className="text-[13px] text-red-700">{error}</p>
         <button type="button" className={`${adminBtnGhostClass} mt-3`} onClick={onClose}>Close</button>
       </aside>
@@ -176,7 +176,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
 
   if (!detail) {
     return (
-      <aside className="min-w-0 rounded-[16px] border border-[#e8e0d2] bg-white p-8 text-center text-[13px] text-[#6f675c] shadow-[0_8px_30px_rgba(22,22,22,0.06)]">
+      <aside className="min-w-0 rounded-[16px] border border-[#e5d9f2] bg-white p-8 text-center text-[13px] text-[#6b6275] shadow-[0_8px_30px_rgba(22,22,22,0.06)]">
         Loading provider…
       </aside>
     );
@@ -185,17 +185,17 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
   const p = detail.provider;
 
   return (
-    <aside className="min-w-0 max-w-full overflow-hidden rounded-[16px] border border-[#e8e0d2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] xl:sticky xl:top-24">
-      <div className="border-b border-[#efe8dc] p-5">
+    <aside className="min-w-0 max-w-full overflow-hidden rounded-[16px] border border-[#e5d9f2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] xl:sticky xl:top-24">
+      <div className="border-b border-[#ede4f7] p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-[#161616] text-[11px] font-semibold text-[#F7F4EF]">
+              <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-[#161616] text-[11px] font-semibold text-[#F5F2FA]">
                 {p.primaryImage ? <img src={p.primaryImage} alt="" className="h-full w-full object-cover" /> : p.displayName.slice(0, 2).toUpperCase()}
               </span>
               <div className="min-w-0">
                 <h2 className="truncate font-display text-[24px] font-semibold tracking-tight">{p.displayName}</h2>
-                <p className="truncate text-[12.5px] text-[#6f675c]" title={p.email}>{p.email} · {p.kind}</p>
+                <p className="truncate text-[12.5px] text-[#6b6275]" title={p.email}>{p.email} · {p.kind}</p>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -213,7 +213,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
               type="button"
               onClick={() => setTab(t)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-semibold ${
-                tab === t ? 'bg-[#161616] text-[#F7F4EF]' : 'bg-[#faf7f2] text-[#6f675c] hover:text-[#161616]'
+                tab === t ? 'bg-[#6d28d9] text-white' : 'bg-[#faf5ff] text-[#6b6275] hover:text-[#161616]'
               }`}
             >
               {t}
@@ -225,12 +225,12 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
       <div className="max-h-[70vh] space-y-4 overflow-y-auto p-5">
         {tab === 'Overview' ? (
           <div className="space-y-3 text-[13px]">
-            <p><span className="text-[#8a7a52]">City</span> · {p.city || '—'}</p>
-            <p><span className="text-[#8a7a52]">Verification</span> · {p.verificationStatus.replace(/_/g, ' ')}</p>
-            <p><span className="text-[#8a7a52]">Listing</span> · {p.listingStatus}</p>
-            <p><span className="text-[#8a7a52]">Account</span> · {p.accountStatus}</p>
-            {p.slug ? <Link to={`/profile/${p.slug}`} className="font-semibold text-[#8F6D35] hover:underline">Open public profile</Link> : null}
-            <div className="flex flex-wrap gap-2 border-t border-[#efe8dc] pt-4">
+            <p><span className="text-[#7e22ce]">City</span> · {p.city || '—'}</p>
+            <p><span className="text-[#7e22ce]">Verification</span> · {p.verificationStatus.replace(/_/g, ' ')}</p>
+            <p><span className="text-[#7e22ce]">Listing</span> · {p.listingStatus}</p>
+            <p><span className="text-[#7e22ce]">Account</span> · {p.accountStatus}</p>
+            {p.slug ? <Link to={`/profile/${p.slug}`} className="font-semibold text-[#6d28d9] hover:underline">Open public profile</Link> : null}
+            <div className="flex flex-wrap gap-2 border-t border-[#ede4f7] pt-4">
               {!p.published ? (
                 <button type="button" className={adminBtnCompactClass} disabled={busy} onClick={() => post({ action: 'publish' }, 'Provider published.')}>Publish</button>
               ) : (
@@ -290,7 +290,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
               );
             }}
           >
-            <p className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12px] leading-relaxed text-[#6f675c]">
+            <p className="rounded-[12px] bg-[#faf7ff] px-3 py-2 text-[12px] leading-relaxed text-[#6b6275]">
               The pin is internal and never returned by the public API. Customers see the town, area and published service areas only.
             </p>
             <LocationFields value={locationForm} onChange={setLocationForm} theme="light" />
@@ -306,11 +306,11 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
               />
             </FormField>
 
-            <div className="space-y-2 border-t border-[#efe8dc] pt-3">
+            <div className="space-y-2 border-t border-[#ede4f7] pt-3">
               <p className="text-[13px] font-semibold">Additional service areas</p>
-              <p className="text-[12px] text-[#6f675c]">Used for coverage eligibility. A provider is never recommended outside these areas.</p>
+              <p className="text-[12px] text-[#6b6275]">Used for coverage eligibility. A provider is never recommended outside these areas.</p>
               {serviceAreas.map((area, idx) => (
-                <div key={idx} className="rounded-[12px] border border-[#efe8dc] p-2.5">
+                <div key={idx} className="rounded-[12px] border border-[#ede4f7] p-2.5">
                   <div className="grid grid-cols-2 gap-2">
                     <FormField label="Region">
                       <select
@@ -370,13 +370,13 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
         {tab === 'Photos & Gallery' ? (
           <div className="space-y-3">
             {detail.images.length === 0 ? (
-              <p className="text-[13px] text-[#6f675c]">No media uploaded yet.</p>
+              <p className="text-[13px] text-[#6b6275]">No media uploaded yet.</p>
             ) : detail.images.map((img) => (
-              <article key={img.id} className="overflow-hidden rounded-[14px] border border-[#efe8dc]">
+              <article key={img.id} className="overflow-hidden rounded-[14px] border border-[#ede4f7]">
                 <img src={img.thumbUrl || img.url} alt={img.altText || img.kind} className="aspect-[16/10] w-full object-cover" loading="lazy" />
                 <div className="space-y-2 p-3">
                   <p className="text-[12.5px] font-semibold capitalize">{img.kind} · {img.moderationStatus}</p>
-                  {img.moderationReason ? <p className="text-[12px] text-[#6f675c]">{img.moderationReason}</p> : null}
+                  {img.moderationReason ? <p className="text-[12px] text-[#6b6275]">{img.moderationReason}</p> : null}
                   <div className="flex flex-wrap gap-1.5">
                     <button type="button" className={adminBtnGhostCompactClass} disabled={busy} onClick={() => post({ action: 'moderate_image', imageId: img.id, moderation: 'approve' }, 'Image approved.')}>Approve</button>
                     <button type="button" className={adminBtnGhostCompactClass} disabled={busy} onClick={() => {
@@ -397,8 +397,8 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
 
         {tab === 'Services & Pricing' ? (
           <ul className="space-y-2 text-[13px]">
-            {detail.services.length === 0 ? <li className="text-[#6f675c]">No services yet.</li> : detail.services.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-2 rounded-[12px] border border-[#efe8dc] px-3 py-2">
+            {detail.services.length === 0 ? <li className="text-[#6b6275]">No services yet.</li> : detail.services.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-2 rounded-[12px] border border-[#ede4f7] px-3 py-2">
                 <span className="min-w-0 truncate">{s.name} · {s.durationMinutes}m</span>
                 <span className="shrink-0">{s.currency} {s.price.toLocaleString()} · {s.active ? 'Active' : 'Off'}</span>
               </li>
@@ -430,21 +430,21 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
             {detail.verification.identityDocuments?.length ? (
               <div className="flex flex-wrap gap-2">
                 {detail.verification.identityDocuments.slice(0, 3).map((doc) => (
-                  <span key={doc.id} className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#efe8dc] px-2.5 py-1 text-[11.5px]">
+                  <span key={doc.id} className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#ede4f7] px-2.5 py-1 text-[11.5px]">
                     {doc.hasId ? (
-                      <a className="font-semibold text-[#8F6D35] hover:underline" href={`/api/admin/documents.php?id=${encodeURIComponent(doc.id)}&side=id`} target="_blank" rel="noreferrer">View ID</a>
+                      <a className="font-semibold text-[#6d28d9] hover:underline" href={`/api/admin/documents.php?id=${encodeURIComponent(doc.id)}&side=id`} target="_blank" rel="noreferrer">View ID</a>
                     ) : null}
                     {doc.hasSelfie ? (
-                      <a className="font-semibold text-[#8F6D35] hover:underline" href={`/api/admin/documents.php?id=${encodeURIComponent(doc.id)}&side=selfie`} target="_blank" rel="noreferrer">View selfie</a>
+                      <a className="font-semibold text-[#6d28d9] hover:underline" href={`/api/admin/documents.php?id=${encodeURIComponent(doc.id)}&side=selfie`} target="_blank" rel="noreferrer">View selfie</a>
                     ) : null}
                   </span>
                 ))}
               </div>
             ) : null}
-            {detail.verification.rejectionReason ? <p className="text-[#6f675c]">{detail.verification.rejectionReason}</p> : null}
+            {detail.verification.rejectionReason ? <p className="text-[#6b6275]">{detail.verification.rejectionReason}</p> : null}
             {detail.verification.reviewHistory?.length ? (
-              <details className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12px] text-[#6f675c]">
-                <summary className="cursor-pointer font-semibold text-[#3f3a33]">Verification history</summary>
+              <details className="rounded-[12px] border border-[#ede4f7] px-3 py-2 text-[12px] text-[#6b6275]">
+                <summary className="cursor-pointer font-semibold text-[#3f3548]">Verification history</summary>
                 <ul className="mt-2 space-y-1">
                   {detail.verification.reviewHistory.slice(0, 10).map((entry, index) => (
                     <li key={`${entry.action}-${entry.createdAt}-${index}`}>
@@ -457,16 +457,16 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
               </details>
             ) : null}
             <Link to="/admin/provider-reviews" className={`${adminBtnGhostClass} mt-2 inline-flex`}>Open review queue</Link>
-            <p className="text-[12px] text-[#6f675c]">Publishing or restoring a profile never grants verification.</p>
+            <p className="text-[12px] text-[#6b6275]">Publishing or restoring a profile never grants verification.</p>
           </div>
         ) : null}
 
         {tab === 'Bookings' ? (
           <ul className="space-y-2 text-[13px]">
-            {detail.bookings.length === 0 ? <li className="text-[#6f675c]">No bookings yet.</li> : detail.bookings.map((b) => (
-              <li key={b.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2">
+            {detail.bookings.length === 0 ? <li className="text-[#6b6275]">No bookings yet.</li> : detail.bookings.map((b) => (
+              <li key={b.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2">
                 <p className="font-medium">{b.serviceName}</p>
-                <p className="text-[12px] text-[#6f675c]">{b.customerName || '—'} · {b.status} · {b.reference ?? b.id}</p>
+                <p className="text-[12px] text-[#6b6275]">{b.customerName || '—'} · {b.status} · {b.reference ?? b.id}</p>
               </li>
             ))}
           </ul>
@@ -474,7 +474,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
 
         {tab === 'Account Status' ? (
           <div className="space-y-4">
-            <div className="rounded-[14px] bg-[#faf7f2] p-3 text-[12.5px] text-[#6f675c]">
+            <div className="rounded-[14px] bg-[#faf7ff] p-3 text-[12.5px] text-[#6b6275]">
               Account, verification, and publication stay independent. Suspend / block / remove do not change verification status.
             </div>
             <FormField label="Reason"><input className={adminInputClass} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Required for suspend, block, remove, delete" /></FormField>
@@ -499,9 +499,9 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
             </div>
 
             {canDelete ? (
-              <div className="space-y-2 border-t border-[#efe8dc] pt-4">
+              <div className="space-y-2 border-t border-[#ede4f7] pt-4">
                 <p className="text-[12.5px] font-semibold text-[#9b2c2c]">Permanently Delete</p>
-                <p className="text-[12px] text-[#6f675c]">Anonymizes the account, preserves bookings, and does not cascade-delete customer records. Type DELETE to confirm.</p>
+                <p className="text-[12px] text-[#6b6275]">Anonymizes the account, preserves bookings, and does not cascade-delete customer records. Type DELETE to confirm.</p>
                 <input className={adminInputClass} value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="DELETE" />
                 <button
                   type="button"
@@ -518,7 +518,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
             ) : null}
 
             {(p.suspendReason || p.blockReason || detail.profile?.removeReason) ? (
-              <div className="rounded-[14px] border border-[#efe8dc] p-3 text-[12.5px]">
+              <div className="rounded-[14px] border border-[#ede4f7] p-3 text-[12.5px]">
                 {p.suspendReason ? <p>Suspend: {p.suspendReason}{p.suspendedUntil ? ` · until ${p.suspendedUntil}` : ''}</p> : null}
                 {p.blockReason ? <p>Block: {p.blockReason}</p> : null}
                 {detail.profile?.removeReason ? <p>Remove: {detail.profile.removeReason}</p> : null}
@@ -530,34 +530,34 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
         {tab === 'Team' ? (
           <div className="space-y-2">
             {detail.teamMembers.length === 0 ? (
-              <p className="text-[13px] text-[#6f675c]">
+              <p className="text-[13px] text-[#6b6275]">
                 {p.kind === 'agency' ? 'No agency team members have been added.' : 'Team members apply to agency profiles only.'}
               </p>
             ) : detail.teamMembers.map((m) => (
-              <article key={m.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[13px]">
+              <article key={m.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2 text-[13px]">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate font-semibold">{m.displayName}</p>
                   <StatusBadge status={m.status} />
                 </div>
-                <p className="mt-0.5 text-[12px] text-[#6f675c]">
+                <p className="mt-0.5 text-[12px] text-[#6b6275]">
                   {m.gender ? `${m.gender} · ` : ''}{m.yearsExperience ? `${m.yearsExperience} years · ` : ''}{m.status}
                 </p>
-                {m.bio ? <p className="mt-1 text-[12px] text-[#6f675c]">{m.bio}</p> : null}
+                {m.bio ? <p className="mt-1 text-[12px] text-[#6b6275]">{m.bio}</p> : null}
               </article>
             ))}
-            <p className="pt-2 text-[12px] text-[#6f675c]">Suspending or blocking the agency affects new bookability; existing appointments are not silently removed.</p>
+            <p className="pt-2 text-[12px] text-[#6b6275]">Suspending or blocking the agency affects new bookability; existing appointments are not silently removed.</p>
           </div>
         ) : null}
 
         {tab === 'Moderation History' ? (
           <ul className="space-y-2 text-[12.5px]">
             {detail.moderationHistory.length === 0 ? (
-              <li className="text-[#6f675c]">No moderation events yet.</li>
+              <li className="text-[#6b6275]">No moderation events yet.</li>
             ) : detail.moderationHistory.map((h) => (
-              <li key={h.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2">
+              <li key={h.id} className="rounded-[12px] border border-[#ede4f7] px-3 py-2">
                 <p className="font-semibold capitalize">{h.action.replace(/_/g, ' ')}</p>
-                <p className="text-[#6f675c]">{h.reason || '—'}{h.notes ? ` · ${h.notes}` : ''}</p>
-                <p className="text-[11px] text-[#8a7a52]">{h.createdAt}</p>
+                <p className="text-[#6b6275]">{h.reason || '—'}{h.notes ? ` · ${h.notes}` : ''}</p>
+                <p className="text-[11px] text-[#7e22ce]">{h.createdAt}</p>
               </li>
             ))}
           </ul>

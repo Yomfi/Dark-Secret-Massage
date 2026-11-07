@@ -77,7 +77,7 @@ export const OnboardingPage: React.FC = () => {
       </header>
 
       <main className="mx-auto w-full max-w-2xl px-5 py-12 sm:py-16">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
           Get started
         </p>
         <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-3xl">

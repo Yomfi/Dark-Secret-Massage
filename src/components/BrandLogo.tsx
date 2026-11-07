@@ -12,6 +12,8 @@ interface BrandLogoProps {
   markHeight?: number;
   /** Hide decorative plate even on dark shells when using `plate`. */
   compact?: boolean;
+  /** Dark wordmark for light headers (customer dashboard, admin review). */
+  onLight?: boolean;
 }
 
 /**
@@ -24,6 +26,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
   markHeight = 28,
   compact = false,
+  onLight = false,
 }) => {
   const usePlate = variant === 'plate' && !compact;
   const src = variant === 'onDark' ? BRAND.logoOnDark : BRAND.logo;
@@ -45,7 +48,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <span className={`inline-flex items-center gap-2.5 min-w-0 ${className}`.trim()}>
       {usePlate ? (
         <span
-          className="inline-flex items-center justify-center rounded-xl bg-brand-offwhite px-1.5 py-1 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+          className="inline-flex items-center justify-center rounded-xl bg-brand-offwhite px-1.5 py-1 shadow-[0_0_0_1px_rgba(168,85,247,0.18)]"
           style={{ height: markHeight + 10 }}
         >
           {mark}
@@ -56,7 +59,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         </span>
       )}
       {withWordmark ? (
-        <span className="hidden text-[12px] font-semibold tracking-[0.22em] uppercase text-white whitespace-nowrap sm:inline">
+        <span
+          className={`hidden text-[12px] font-semibold tracking-[0.22em] uppercase whitespace-nowrap sm:inline ${
+            onLight ? 'text-brand-ink' : 'text-white'
+          }`}
+        >
           {BRAND.name}
         </span>
       ) : null}

@@ -38,12 +38,12 @@ type Booking = {
 
 type TeamMember = { id: string; display_name?: string; displayName?: string; gender?: string; status?: string; services_json?: string[] };
 
-const card = 'rounded-2xl border border-[#e6dfd2] bg-white p-5';
-const label = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a7a52]';
-const input = 'h-12 w-full rounded-xl border border-[#d9cfba] bg-white px-3 text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f]';
-const btn = 'inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#221f19] px-4 text-[13px] font-semibold text-white hover:bg-[#3a342a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f] disabled:opacity-60';
-const btnGhost = 'inline-flex h-12 items-center justify-center rounded-xl border border-[#d9cfba] px-4 text-[13px] font-semibold hover:bg-[#f2eee4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8862f] disabled:opacity-60';
-const th = 'px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6b6252]';
+const card = 'rounded-2xl border border-[#e4d8f2] bg-white p-5';
+const label = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7e22ce]';
+const input = 'h-12 w-full rounded-xl border border-[#d8c7ea] bg-white px-3 text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea]';
+const btn = 'inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 text-[13px] font-semibold text-white hover:bg-[#9333ea] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea] disabled:opacity-60';
+const btnGhost = 'inline-flex h-12 items-center justify-center rounded-xl border border-[#d8c7ea] px-4 text-[13px] font-semibold hover:bg-[#f3edfa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea] disabled:opacity-60';
+const th = 'px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#675f73]';
 const td = 'px-3 py-3 align-top text-[13px]';
 
 export const ProviderWorkspacePage: React.FC = () => {
@@ -177,7 +177,7 @@ export const ProviderWorkspacePage: React.FC = () => {
     >
       {error ? <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">{error}</div> : null}
       {notice ? <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">{notice}</div> : null}
-      {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded bg-[#e6dfd2]"><div className="h-full w-1/3 animate-pulse bg-[#b8862f]" /></div> : null}
+      {busy ? <div className="mb-4 h-1 w-full overflow-hidden rounded bg-[#e4d8f2]"><div className="h-full w-1/3 animate-pulse bg-[#9333ea]" /></div> : null}
 
       {tab === 'overview' ? (
         <div className="grid gap-4 lg:grid-cols-3">
@@ -188,15 +188,15 @@ export const ProviderWorkspacePage: React.FC = () => {
               <div><dt className={label}>Services</dt><dd className="mt-1 text-[14px] font-semibold">{services.length}</dd></div>
               <div><dt className={label}>Bookings</dt><dd className="mt-1 text-[14px] font-semibold">{bookings.length}</dd></div>
             </dl>
-            <p className="mt-4 rounded-xl border border-[#eee7d9] bg-[#fbf8f1] px-3 py-2.5 text-[12.5px] leading-relaxed text-[#6b6252]">
+            <p className="mt-4 rounded-xl border border-[#ece3f6] bg-[#faf5ff] px-3 py-2.5 text-[12.5px] leading-relaxed text-[#675f73]">
               Your profile is public only after identity review and admin approval. The verified badge cannot be
               self-granted from this workspace.
             </p>
           </section>
           <section className={card}>
             <h2 className="text-[15px] font-semibold">Membership</h2>
-            <p className="mt-2 text-[13px] text-[#6b6252]">Membership is currently free.</p>
-            <ul className="mt-3 space-y-2 text-[12.5px] text-[#6b6252]">
+            <p className="mt-2 text-[13px] text-[#675f73]">Membership is currently free.</p>
+            <ul className="mt-3 space-y-2 text-[12.5px] text-[#675f73]">
               <li>No membership payment is required.</li>
               <li>Identity checks and admin review still apply.</li>
               <li>Email confirmation is required to accept bookings.</li>
@@ -228,32 +228,32 @@ export const ProviderWorkspacePage: React.FC = () => {
           }, 'Profile saved.');
         }}>
           <h2 className="text-[15px] font-semibold">Public profile</h2>
-          <label className="block text-[12px] font-medium text-[#6b6252]">Display name
+          <label className="block text-[12px] font-medium text-[#675f73]">Display name
             <input className={`${input} mt-1`} value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} required />
           </label>
-          <label className="block text-[12px] font-medium text-[#6b6252]">City
+          <label className="block text-[12px] font-medium text-[#675f73]">City
             <input className={`${input} mt-1`} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
           </label>
-          <label className="block text-[12px] font-medium text-[#6b6252]">About
+          <label className="block text-[12px] font-medium text-[#675f73]">About
             <textarea className={`${input} mt-1 h-32 py-2`} value={form.about} onChange={(e) => setForm({ ...form, about: e.target.value })} />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-[12px] font-medium text-[#6b6252]">Service area
+            <label className="block text-[12px] font-medium text-[#675f73]">Service area
               <input className={`${input} mt-1`} value={form.serviceArea} onChange={(e) => setForm({ ...form, serviceArea: e.target.value })} />
             </label>
-            <label className="block text-[12px] font-medium text-[#6b6252]">Starting price (GHS)
+            <label className="block text-[12px] font-medium text-[#675f73]">Starting price (GHS)
               <input className={`${input} mt-1`} type="number" min={0} value={form.startingPrice} onChange={(e) => setForm({ ...form, startingPrice: Number(e.target.value) })} />
             </label>
-            <label className="block text-[12px] font-medium text-[#6b6252]">Working days
+            <label className="block text-[12px] font-medium text-[#675f73]">Working days
               <input className={`${input} mt-1`} value={form.workingDays} onChange={(e) => setForm({ ...form, workingDays: e.target.value })} />
             </label>
-            <label className="block text-[12px] font-medium text-[#6b6252]">Working hours
+            <label className="block text-[12px] font-medium text-[#675f73]">Working hours
               <input className={`${input} mt-1`} value={form.workingHours} onChange={(e) => setForm({ ...form, workingHours: e.target.value })} />
             </label>
           </div>
           <button className={btn} type="submit" disabled={busy}>Save profile</button>
           {profileData?.profile?.slug ? (
-            <Link to={`/profile/${profileData.profile.slug}`} className="ml-2 inline-flex h-12 items-center text-[13px] font-semibold text-[#8a6a1f] hover:underline">View public page</Link>
+            <Link to={`/profile/${profileData.profile.slug}`} className="ml-2 inline-flex h-12 items-center text-[13px] font-semibold text-[#6d28d9] hover:underline">View public page</Link>
           ) : null}
         </form>
       ) : null}
@@ -266,13 +266,13 @@ export const ProviderWorkspacePage: React.FC = () => {
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           <div className={`${card} overflow-x-auto p-0`}>
             <table className="w-full min-w-[560px]">
-              <thead className="bg-[#f2eee4]"><tr><th className={th}>Service</th><th className={th}>Duration</th><th className={th}>Price</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+              <thead className="bg-[#f3edfa]"><tr><th className={th}>Service</th><th className={th}>Duration</th><th className={th}>Price</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {services.length === 0 ? (
-                  <tr><td className={`${td} text-[#6b6252]`} colSpan={5}>No services yet. Add your real services and rates.</td></tr>
+                  <tr><td className={`${td} text-[#675f73]`} colSpan={5}>No services yet. Add your real services and rates.</td></tr>
                 ) : services.map((s) => (
-                  <tr key={s.id} className="border-t border-[#eee7d9]">
-                    <td className={td}><p className="font-medium">{s.name}</p><p className="text-[12px] text-[#6b6252]">{s.description}</p></td>
+                  <tr key={s.id} className="border-t border-[#ece3f6]">
+                    <td className={td}><p className="font-medium">{s.name}</p><p className="text-[12px] text-[#675f73]">{s.description}</p></td>
                     <td className={td}>{s.durationMinutes} min</td>
                     <td className={td}>{s.currency} {s.price.toLocaleString()}</td>
                     <td className={td}>{s.active ? 'Active' : 'Inactive'}</td>
@@ -315,20 +315,20 @@ export const ProviderWorkspacePage: React.FC = () => {
       {tab === 'bookings' ? (
         <div className={`${card} overflow-x-auto p-0`}>
           <table className="w-full min-w-[780px]">
-            <thead className="bg-[#f2eee4]"><tr><th className={th}>Booking</th><th className={th}>Customer</th><th className={th}>When</th><th className={th}>Team</th><th className={th}>Status</th><th className={th}>Actions</th></tr></thead>
+            <thead className="bg-[#f3edfa]"><tr><th className={th}>Booking</th><th className={th}>Customer</th><th className={th}>When</th><th className={th}>Team</th><th className={th}>Status</th><th className={th}>Actions</th></tr></thead>
             <tbody>
               {bookings.length === 0 ? (
-                <tr><td className={`${td} text-[#6b6252]`} colSpan={6}>No bookings assigned yet.</td></tr>
+                <tr><td className={`${td} text-[#675f73]`} colSpan={6}>No bookings assigned yet.</td></tr>
               ) : bookings.map((b) => (
-                <tr key={b.id} className="border-t border-[#eee7d9]">
-                  <td className={td}><p className="font-medium">{b.serviceName}</p><p className="text-[12px] text-[#6b6252]">{b.reference ?? b.id}</p></td>
+                <tr key={b.id} className="border-t border-[#ece3f6]">
+                  <td className={td}><p className="font-medium">{b.serviceName}</p><p className="text-[12px] text-[#675f73]">{b.reference ?? b.id}</p></td>
                   <td className={td}>{b.customerName ?? '—'}</td>
-                  <td className={td}>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#6b6252]">{b.timeSlot ?? ''}</p></td>
+                  <td className={td}>{formatScheduledDate(b.scheduledAt)}<p className="text-[12px] text-[#675f73]">{b.timeSlot ?? ''}</p></td>
                   <td className={td}>{b.teamMemberName ?? '—'}</td>
                   <td className={td}>{b.status.replace('_', ' ')}</td>
                   <td className={td}>
                     <select
-                      className="h-11 rounded-lg border border-[#d9cfba] bg-white px-2 text-[12.5px]"
+                      className="h-11 rounded-lg border border-[#d8c7ea] bg-white px-2 text-[12.5px]"
                       defaultValue=""
                       disabled={busy}
                       onChange={(e) => {
@@ -353,10 +353,10 @@ export const ProviderWorkspacePage: React.FC = () => {
       {tab === 'team' && isAgency ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
           <div className={`${card} p-0`}>
-            <ul className="divide-y divide-[#eee7d9]">
-              {team.length === 0 ? <li className="px-5 py-6 text-[13px] text-[#6b6252]">No team members yet.</li> : team.map((m) => (
+            <ul className="divide-y divide-[#ece3f6]">
+              {team.length === 0 ? <li className="px-5 py-6 text-[13px] text-[#675f73]">No team members yet.</li> : team.map((m) => (
                 <li key={m.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                  <div><p className="text-[13.5px] font-medium">{m.display_name ?? m.displayName ?? 'Team member'}</p><p className="text-[12px] text-[#6b6252]">{m.gender ?? ''} · {m.status ?? 'active'}</p></div>
+                  <div><p className="text-[13.5px] font-medium">{m.display_name ?? m.displayName ?? 'Team member'}</p><p className="text-[12px] text-[#675f73]">{m.gender ?? ''} · {m.status ?? 'active'}</p></div>
                   <button className={btnGhost} disabled={busy} onClick={() => act(async () => {
                     await apiRequest('/provider/team.php', { method: 'DELETE', body: JSON.stringify({ id: m.id }) });
                   }, 'Team member removed.')}>Remove</button>
@@ -383,7 +383,7 @@ export const ProviderWorkspacePage: React.FC = () => {
             <input name="displayName" className={input} placeholder="Name" required />
             <select name="gender" className={input} defaultValue="female"><option value="female">Female</option><option value="male">Male</option></select>
             <button className={btn} type="submit" disabled={busy}>Add member</button>
-            <p className="text-[11.5px] leading-relaxed text-[#6b6252]">Team members do not receive login access; they are assignable resources on agency bookings.</p>
+            <p className="text-[11.5px] leading-relaxed text-[#675f73]">Team members do not receive login access; they are assignable resources on agency bookings.</p>
           </form>
         </div>
       ) : null}
@@ -400,14 +400,14 @@ export const ProviderWorkspacePage: React.FC = () => {
                     ? 'bg-amber-50 text-amber-800'
                     : verification === 'rejected'
                       ? 'bg-red-50 text-red-800'
-                      : 'bg-[#f2eee4] text-[#6b6252]'
+                      : 'bg-[#f3edfa] text-[#675f73]'
               }`}>
                 {verificationLabel}
               </span>
             </div>
 
             {verification === 'verified' ? (
-              <p className="mt-3 text-[13px] leading-relaxed text-[#6b6252]">
+              <p className="mt-3 text-[13px] leading-relaxed text-[#675f73]">
                 Your identity has been approved. The Verified badge appears beside your name on public profiles.
               </p>
             ) : verification === 'pending_review' ? (
@@ -416,11 +416,11 @@ export const ProviderWorkspacePage: React.FC = () => {
               </p>
             ) : (
               <>
-                <p className="mt-3 text-[13px] leading-relaxed text-[#6b6252]">
+                <p className="mt-3 text-[13px] leading-relaxed text-[#675f73]">
                   Your profile is currently Unverified. Complete identity verification to receive a Verified badge after approval.
                 </p>
                 {verificationInfo?.verificationChoice === 'verify_later' ? (
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#6b6252]">
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#675f73]">
                     You chose Verify Later. Your selfie is on file; add a government ID whenever you are ready.
                   </p>
                 ) : null}
@@ -431,7 +431,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                   </p>
                 ) : null}
                 {verification === 'rejected' || verification === 'changes_requested' ? (
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#6b6252]">
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#675f73]">
                     Upload a new government ID and selfie to resubmit. You do not need to repeat registration.
                   </p>
                 ) : null}
@@ -449,7 +449,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                     }}
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block text-[12px] font-medium text-[#6b6252]">
+                      <label className="block text-[12px] font-medium text-[#675f73]">
                         ID type
                         <select
                           className={`${input} mt-1`}
@@ -462,7 +462,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                           <option>Voter ID</option>
                         </select>
                       </label>
-                      <label className="block text-[12px] font-medium text-[#6b6252]">
+                      <label className="block text-[12px] font-medium text-[#675f73]">
                         ID number (optional)
                         <input
                           className={`${input} mt-1`}
@@ -471,7 +471,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                         />
                       </label>
                     </div>
-                    <label className="block text-[12px] font-medium text-[#6b6252]">
+                    <label className="block text-[12px] font-medium text-[#675f73]">
                       Government ID image
                       <input
                         className={`${input} mt-1 py-2.5`}
@@ -481,7 +481,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                         onChange={(e) => setVerifyForm({ ...verifyForm, idImage: e.target.files?.[0] ?? null })}
                       />
                     </label>
-                    <label className="block text-[12px] font-medium text-[#6b6252]">
+                    <label className="block text-[12px] font-medium text-[#675f73]">
                       Selfie / live photo
                       <input
                         className={`${input} mt-1 py-2.5`}
@@ -491,7 +491,7 @@ export const ProviderWorkspacePage: React.FC = () => {
                         onChange={(e) => setVerifyForm({ ...verifyForm, selfieImage: e.target.files?.[0] ?? null })}
                       />
                     </label>
-                    <p className="text-[11.5px] leading-relaxed text-[#6b6252]">
+                    <p className="text-[11.5px] leading-relaxed text-[#675f73]">
                       JPG, PNG or WebP under 5MB. These documents are private, separate from your gallery, and visible only to authorised admins. Uploading does not grant a Verified badge.
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -507,14 +507,14 @@ export const ProviderWorkspacePage: React.FC = () => {
               </>
             )}
 
-            <p className="mt-4 text-[12px] leading-relaxed text-[#6b6252]">
+            <p className="mt-4 text-[12px] leading-relaxed text-[#675f73]">
               Identity documents are stored privately. Only authorised admins can open them, and every view is recorded in the audit log.
             </p>
           </section>
           <section className={card}>
             <h2 className="text-[15px] font-semibold">Membership</h2>
             <p className="mt-2 text-[13px]">{membershipFree ? 'Membership is currently free.' : 'Membership fee required.'}</p>
-            <p className="mt-2 text-[12.5px] text-[#6b6252]">Identity checks and admin approval are still required, and no payment gateway is integrated.</p>
+            <p className="mt-2 text-[12.5px] text-[#675f73]">Identity checks and admin approval are still required, and no payment gateway is integrated.</p>
           </section>
         </div>
       ) : null}

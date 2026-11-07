@@ -204,7 +204,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <PublicSiteProvider>
-        <div className="min-h-screen bg-brand-surface font-sans text-zinc-200 selection:bg-brand-gold/35 selection:text-brand-offwhite">
+        <div className="min-h-screen bg-brand-surface font-sans text-zinc-200 selection:bg-brand-purple/35 selection:text-brand-offwhite">
           <AppRoutes />
         </div>
         </PublicSiteProvider>

@@ -31,7 +31,7 @@ export const ForgotPasswordPage: React.FC = () => {
       title="Forgot password"
       description="Enter your email and we'll send reset instructions if an account exists."
       footer={
-        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
           Back to sign in
         </Link>
       }

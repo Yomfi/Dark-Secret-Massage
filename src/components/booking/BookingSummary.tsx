@@ -92,7 +92,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
               <button
                 type="button"
                 onClick={() => onEditStep(row.step!)}
-                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-brand-gold-light hover:text-brand-gold-light cursor-pointer"
+                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-brand-purple-light hover:text-brand-purple-light cursor-pointer"
               >
                 Edit
               </button>
@@ -116,7 +116,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       </div>
 
       <div className="flex items-start gap-2 text-sm text-zinc-400 font-normal pt-1">
-        <Lock className="h-4 w-4 text-brand-gold shrink-0 mt-0.5" aria-hidden />
+        <Lock className="h-4 w-4 text-brand-purple shrink-0 mt-0.5" aria-hidden />
         <span>Booking details stay private. Payment is confirmed only after secure checkout.</span>
       </div>
     </div>
@@ -131,7 +131,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left cursor-pointer"
         >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light">Your session</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-purple-light">Your session</p>
             <p className="text-sm font-semibold text-white mt-0.5">
               {service?.name || 'Select a therapy'}
               {pricing.totalGHS > 0 ? ` · GHS ${pricing.totalGHS}` : ''}
@@ -150,8 +150,8 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   return (
     <aside className="rounded-2xl border border-white/[0.08] bg-[#0c0c12] p-5 sm:p-6 sticky top-24">
       <div className="flex items-center gap-2 mb-5">
-        <ShieldCheck className="h-4 w-4 text-brand-gold" aria-hidden />
-        <h3 className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-gold-light">Your session</h3>
+        <ShieldCheck className="h-4 w-4 text-brand-purple" aria-hidden />
+        <h3 className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple-light">Your session</h3>
       </div>
       {body}
     </aside>

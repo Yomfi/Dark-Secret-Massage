@@ -8,7 +8,7 @@ import { bookMassageHref } from '../../lib/massageServicePresentation';
 export const MassageFinalCTA: React.FC = () => (
   <Section divider>
     <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-6 py-10 sm:px-10 sm:py-12">
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[420px] -translate-x-1/2 rounded-full bg-brand-gold/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[420px] -translate-x-1/2 rounded-full bg-brand-purple/10 blur-3xl" />
       <div className="relative flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-lg">
           <h2 className="text-2xl font-semibold tracking-[-0.02em] text-white sm:text-[28px]">

@@ -117,7 +117,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             onSelectDate(e.target.value);
             onSelectSlot('', '');
           }}
-          className="w-full sm:max-w-xs rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base font-normal text-white focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/40 [color-scheme:dark]"
+          className="w-full sm:max-w-xs rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base font-normal text-white focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple/40 [color-scheme:dark]"
         />
         {errors.date && (
           <p className="mt-1.5 text-sm font-medium text-rose-300" role="alert">
@@ -188,7 +188,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             if (periodSlots.length === 0) return null;
             return (
               <div key={period}>
-                <p className="text-xs font-semibold uppercase tracking-wider text-brand-gold-light mb-2.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand-purple-light mb-2.5">
                   {PERIOD_LABELS[period]}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -207,8 +207,8 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                           disabled
                             ? 'border-white/[0.05] bg-white/[0.015] text-zinc-600 cursor-not-allowed line-through decoration-zinc-600'
                             : selected
-                              ? 'border-brand-gold/70 bg-brand-gold/15 text-white shadow-[0_0_24px_-10px_rgba(176,139,75,0.4)] cursor-pointer'
-                              : 'border-white/10 bg-white/[0.03] text-zinc-200 hover:border-brand-gold/40 hover:text-white cursor-pointer'
+                              ? 'border-brand-purple/70 bg-brand-purple/15 text-white shadow-[0_0_24px_-10px_rgba(147,51,234,0.4)] cursor-pointer'
+                              : 'border-white/10 bg-white/[0.03] text-zinc-200 hover:border-brand-purple/40 hover:text-white cursor-pointer'
                         }`}
                       >
                         {slot.label}

@@ -52,7 +52,7 @@ export const StaffAcceptInvitePage: React.FC = () => {
         title="Staff invitation"
         description="This invite link is missing its token. Ask an administrator to send a fresh invitation."
         footer={
-          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
             Back to sign in
           </Link>
         }
@@ -67,7 +67,7 @@ export const StaffAcceptInvitePage: React.FC = () => {
       title="Join the team"
       description="Set a password to activate your Massager Studio staff account."
       footer={
-        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-gold-light hover:text-brand-gold">
+        <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-brand-purple-light hover:text-brand-purple">
           Already activated? Sign in
         </Link>
       }

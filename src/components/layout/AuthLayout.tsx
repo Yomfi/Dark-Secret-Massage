@@ -28,7 +28,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         </Link>
         <Link
           to="/"
-          className="inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80"
+          className="inline-flex h-11 items-center rounded-lg px-3 text-[13.5px] font-medium text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80"
         >
           Back to home
         </Link>

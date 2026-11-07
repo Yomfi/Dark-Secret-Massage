@@ -276,7 +276,7 @@ export const ExplorePage: React.FC = () => {
       <main className="pb-16 pt-24 sm:pt-28">
         <Container>
           <header className="mb-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
               Explore
             </p>
             <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-3xl">
@@ -296,7 +296,7 @@ export const ExplorePage: React.FC = () => {
               {filters.gender && filters.gender !== 'all' ? ` · ${filters.gender}` : ''}
             </p>
             {geoMessage ? (
-              <p role="status" className="mt-2 text-[12px] text-brand-gold-light">{geoMessage}</p>
+              <p role="status" className="mt-2 text-[12px] text-brand-purple-light">{geoMessage}</p>
             ) : null}
           </header>
 
@@ -346,7 +346,7 @@ export const ExplorePage: React.FC = () => {
                         key={km}
                         type="button"
                         onClick={() => updateFilters({ ...filters, radiusKm: km })}
-                        className="inline-flex min-h-10 items-center rounded-lg border border-brand-gold/40 px-3 text-[12.5px] font-semibold text-brand-gold-light hover:bg-brand-gold/10"
+                        className="inline-flex min-h-10 items-center rounded-lg border border-brand-purple/40 px-3 text-[12.5px] font-semibold text-brand-purple-light hover:bg-brand-purple/10"
                       >
                         Widen to {km} km
                       </button>

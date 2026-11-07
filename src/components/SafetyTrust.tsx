@@ -36,7 +36,7 @@ export const SafetyTrust: React.FC = () => (
           key={title}
           className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6"
         >
-          <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-brand-gold/25 bg-brand-gold/10 text-brand-gold-light">
+          <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-brand-purple/25 bg-brand-purple/10 text-brand-purple-light">
             <Icon className="h-[18px] w-[18px]" aria-hidden />
           </span>
           <h3 className="text-[15px] font-semibold text-white">{title}</h3>

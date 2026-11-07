@@ -79,7 +79,7 @@ export const RegisterPage: React.FC = () => {
       footer={
         <>
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-brand-gold-light hover:text-brand-gold">
+          <Link to="/login" className="font-semibold text-brand-purple-light hover:text-brand-purple">
             Sign in
           </Link>
         </>
@@ -129,7 +129,7 @@ export const RegisterPage: React.FC = () => {
         />
 
         <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
-          <p className="text-[12px] font-semibold uppercase tracking-wider text-brand-gold-light">
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-brand-purple-light">
             Location (optional)
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-zinc-400">

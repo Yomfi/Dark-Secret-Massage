@@ -10,7 +10,7 @@ export const StaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f3ea] text-[#6b6252]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f2ff] text-[#675f73]">
         <p className="text-sm font-medium tracking-wide uppercase">Checking session…</p>
       </div>
     );

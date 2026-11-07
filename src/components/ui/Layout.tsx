@@ -54,7 +54,7 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
       .join(' ')}
   >
     {eyebrow ? (
-      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
         {eyebrow}
       </p>
     ) : null}
@@ -96,7 +96,7 @@ export const PageHeading: React.FC<{
   >
     <div className="max-w-2xl">
       {eyebrow ? (
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold-light">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-purple-light">
           {eyebrow}
         </p>
       ) : null}

@@ -7,11 +7,11 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const BASE =
   'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold leading-none transition-colors duration-200 ' +
-  '[&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/80 focus-visible:ring-offset-2 ' +
+  '[&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/80 focus-visible:ring-offset-2 ' +
   'focus-visible:ring-offset-brand-surface disabled:cursor-not-allowed disabled:border disabled:border-white/10 disabled:bg-white/[0.06] disabled:text-zinc-500';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-gold text-brand-ink hover:bg-brand-gold-light active:bg-brand-gold-dark',
+  primary: 'bg-brand-purple text-white hover:bg-brand-purple-dark active:bg-brand-purple-deep',
   secondary:
     'border border-white/15 bg-white/[0.04] text-zinc-100 hover:border-white/25 hover:bg-white/[0.07]',
   ghost: 'text-zinc-300 hover:bg-white/[0.06] hover:text-white',

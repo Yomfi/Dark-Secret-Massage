@@ -62,7 +62,7 @@ export const RowMenu: React.FC<{
             <div
               id={menuId}
               role="menu"
-              className="absolute right-0 top-full z-20 mt-1.5 min-w-[148px] overflow-hidden rounded-[12px] border border-[#e8e0d2] bg-white py-1 shadow-lg"
+              className="absolute right-0 top-full z-20 mt-1.5 min-w-[148px] overflow-hidden rounded-[12px] border border-[#e5d9f2] bg-white py-1 shadow-lg"
             >
               {items.map((item) => (
                 <button
@@ -70,7 +70,7 @@ export const RowMenu: React.FC<{
                   type="button"
                   role="menuitem"
                   disabled={item.disabled}
-                  className={`block w-full px-3 py-2.5 text-left text-[13px] transition hover:bg-[#faf7f2] disabled:opacity-50 ${
+                  className={`block w-full px-3 py-2.5 text-left text-[13px] transition hover:bg-[#faf7ff] disabled:opacity-50 ${
                     item.danger ? 'text-[#9b2c2c]' : 'text-[#161616]'
                   }`}
                   onClick={() => {

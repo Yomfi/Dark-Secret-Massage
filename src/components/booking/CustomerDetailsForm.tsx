@@ -19,7 +19,7 @@ interface CustomerDetailsFormProps {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base font-normal text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/40 transition-colors';
+  'w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base font-normal text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple/40 transition-colors';
 
 export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
   clientName,
@@ -85,7 +85,7 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
             onClick={() => onProviderPreference('any')}
             className={`rounded-2xl border p-4 text-left transition-all cursor-pointer ${
               providerPreference === 'any'
-                ? 'border-brand-gold/70 bg-brand-gold/12'
+                ? 'border-brand-purple/70 bg-brand-purple/12'
                 : 'border-white/[0.08] bg-white/[0.02] hover:border-white/20'
             }`}
           >
@@ -99,7 +99,7 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
             onClick={() => onProviderPreference('specific')}
             className={`rounded-2xl border p-4 text-left transition-all cursor-pointer ${
               providerPreference === 'specific'
-                ? 'border-brand-gold/70 bg-brand-gold/12'
+                ? 'border-brand-purple/70 bg-brand-purple/12'
                 : 'border-white/[0.08] bg-white/[0.02] hover:border-white/20'
             }`}
           >
@@ -138,7 +138,7 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
                     onClick={() => onChange({ preferredTherapistId: t.id })}
                     className={`rounded-xl border px-4 py-3.5 text-left transition-all cursor-pointer ${
                       selected
-                        ? 'border-brand-gold/70 bg-brand-gold/10'
+                        ? 'border-brand-purple/70 bg-brand-purple/10'
                         : 'border-white/[0.08] bg-black/20 hover:border-white/20'
                     }`}
                   >
