@@ -179,8 +179,6 @@ export const ProviderRegisterPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
-  const [demoEmailToken, setDemoEmailToken] = useState<string | null>(null);
-  const [emailToken, setEmailToken] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [membership, setMembership] = useState({
@@ -447,7 +445,7 @@ export const ProviderRegisterPage: React.FC = () => {
         providerType === 'agency'
           ? account.businessName.trim()
           : account.displayName.trim();
-      await providerApi.register({
+      const registered = await providerApi.register({
         firstName: account.firstName.trim(),
         lastName: account.lastName.trim(),
         displayName,
@@ -466,11 +464,15 @@ export const ProviderRegisterPage: React.FC = () => {
         ...p,
         displayName,
       }));
+      // Registration already sent the one confirmation link. Never request a
+      // second email here: it would retire the link the user just received.
+      setEmailSent(Boolean(registered.verificationEmailSent));
+      setResendMessage(
+        registered.verificationEmailSent
+          ? null
+          : 'We could not send the confirmation email. Use Resend email to try again.',
+      );
       setStep('email');
-      const sent = await providerApi.sendEmailCode();
-      if (sent.demoToken) setDemoEmailToken(sent.demoToken);
-      setEmailSent(Boolean(sent.sent));
-      setResendMessage(sent.message ?? null);
     } catch (err) {
       setError(profileFormError(err));
     } finally {
@@ -478,22 +480,7 @@ export const ProviderRegisterPage: React.FC = () => {
     }
   };
 
-  const onVerifyEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await providerApi.verifyEmail(emailToken.trim());
-      await refreshSession();
-      setStep('profile');
-    } catch (err) {
-      setError(profileFormError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /** After clicking the emailed link (another tab), re-read the session instead of typing the token. */
+  /** After clicking the emailed link (another tab), re-read the session. */
   const onConfirmEmailFromLink = async () => {
     setError(null);
     setLoading(true);
@@ -516,8 +503,13 @@ export const ProviderRegisterPage: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      const sent = await providerApi.sendEmailCode();
-      if (sent.demoToken) setDemoEmailToken(sent.demoToken);
+      const sent = await authApi.resendVerification();
+      await refreshSession();
+      if (sent.alreadyVerified) {
+        setEmailSent(true);
+        setStep('profile');
+        return;
+      }
       setEmailSent(Boolean(sent.sent));
       setResendMessage(sent.message ?? null);
     } catch (err) {
@@ -1059,10 +1051,10 @@ export const ProviderRegisterPage: React.FC = () => {
 
                 {step === 'email' ? (
                   <div className="space-y-4">
-                    <Alert variant={emailSent ? 'success' : 'info'} title="Confirm your email address">
+                    <Alert variant={emailSent ? 'success' : 'warning'} title="Confirm your email address">
                       {emailSent
                         ? `We sent a single-use confirmation link to ${account.email || 'your registered email'}. It expires in 24 hours.`
-                        : `Open the confirmation email for ${account.email || 'your registered email'} when it arrives. The link expires in 24 hours.`}
+                        : `We could not confirm that the email was delivered to ${account.email || 'your registered email'}. Use Resend email to try again.`}
                     </Alert>
 
                     <p className="text-[13px] leading-relaxed text-zinc-500">
@@ -1070,14 +1062,8 @@ export const ProviderRegisterPage: React.FC = () => {
                       shown as verified.
                     </p>
 
-                    {resendMessage && !emailSent ? (
+                    {resendMessage ? (
                       <p className="text-[13px] text-zinc-400">{resendMessage}</p>
-                    ) : null}
-
-                    {demoEmailToken ? (
-                      <Alert variant="warning" title="Demo mode (email delivery not configured)">
-                        <span className="break-all">{demoEmailToken}</span>
-                      </Alert>
                     ) : null}
 
                     <div className="flex flex-col gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
@@ -1100,24 +1086,10 @@ export const ProviderRegisterPage: React.FC = () => {
                       </Button>
                     </div>
 
-                    <details className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-                      <summary className="cursor-pointer text-[13px] font-medium text-zinc-300">
-                        Confirming on this device instead?
-                      </summary>
-                      <form onSubmit={onVerifyEmail} className="mt-3 space-y-3">
-                        <TextField
-                          label="Verification token"
-                          required
-                          autoComplete="one-time-code"
-                          hint="Paste the token from the confirmation link if you cannot open it."
-                          value={emailToken}
-                          onChange={(e) => setEmailToken(e.target.value)}
-                        />
-                        <Button type="submit" loading={loading} loadingLabel="Verifying" className="w-full sm:w-auto">
-                          Verify email
-                        </Button>
-                      </form>
-                    </details>
+                    <p className="text-[12.5px] leading-relaxed text-zinc-500">
+                      Open the link in this or another browser, then return here. If you are signed
+                      out, sign in again before continuing to your profile.
+                    </p>
                   </div>
                 ) : null}
 

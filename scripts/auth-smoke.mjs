@@ -9,14 +9,34 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const nativePhp = process.env.DS_SMOKE_PHP || '';
 const phpBin = path.join(root, 'node_modules', 'php-cli', 'php-cli.js');
 const apiRoot = path.join(root, 'public', 'api');
 const sqlitePath = path.join(root, 'public', 'api', 'storage', 'smoke.sqlite');
 const port = 8765;
 const base = `http://127.0.0.1:${port}`;
+// A developer config.local.php outranks env vars; isolate this run so the
+// unconfigured-SMTP development path (demoToken) is deterministic.
+const smokeConfigPath = path.join(apiRoot, 'storage', 'auth-smoke.config.local.php');
+fs.writeFileSync(
+  smokeConfigPath,
+  `<?php return [
+    'db_driver' => 'sqlite',
+    'sqlite_path' => getenv('DS_SQLITE_PATH') ?: '',
+    'app_env' => 'development',
+    'cookie_secure' => false,
+    'mail_transport' => 'smtp',
+    'smtp_host' => '',
+    'mail_from' => 'info@massagerstudio.com',
+    'mail_from_name' => 'Massager Studio',
+];`,
+);
 
 function runPhp(args, env = {}) {
-  return spawn(process.execPath, [phpBin, ...args], {
+  const [command, commandArgs] = nativePhp
+    ? [nativePhp, args]
+    : [process.execPath, [phpBin, ...args]];
+  return spawn(command, commandArgs, {
     cwd: root,
     env: { ...process.env, ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -137,6 +157,7 @@ async function main() {
   fs.mkdirSync(rateLimitDir, { recursive: true });
 
   const env = {
+    DS_CONFIG_PATH: smokeConfigPath,
     DS_DB_DRIVER: 'sqlite',
     DS_SQLITE_PATH: sqlitePath,
     DS_APP_ENV: 'development',

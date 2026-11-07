@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const nativePhp = process.env.DS_SMOKE_PHP || '';
 const phpBin = path.join(root, 'node_modules', 'php-cli', 'php-cli.js');
 const apiRoot = path.join(root, 'public', 'api');
 const sqlitePath = path.join(apiRoot, 'storage', 'mail-smoke.sqlite');
@@ -30,6 +31,53 @@ const outboxDir = path.join(apiRoot, 'storage', 'private', 'outbox');
 const phpPort = 8766;
 const base = `http://127.0.0.1:${phpPort}`;
 const smtpClosedPort = 2599;
+// The repository may carry a developer's config.local.php, which takes precedence
+// over environment variables. Point the smoke run at an explicit config that
+// reflects each phase's environment so local settings cannot mask production paths.
+const smokeConfigPath = path.join(apiRoot, 'storage', 'mail-smoke.config.local.php');
+fs.mkdirSync(path.dirname(smokeConfigPath), { recursive: true });
+fs.writeFileSync(
+  smokeConfigPath,
+  `<?php
+$map = [
+    'db_driver' => 'DS_DB_DRIVER',
+    'sqlite_path' => 'DS_SQLITE_PATH',
+    'app_env' => 'DS_APP_ENV',
+    'app_url' => 'DS_APP_URL',
+    'cookie_secure' => 'DS_COOKIE_SECURE',
+    'mail_transport' => 'DS_MAIL_TRANSPORT',
+    'smtp_host' => 'DS_SMTP_HOST',
+    'smtp_port' => 'DS_SMTP_PORT',
+    'smtp_secure' => 'DS_SMTP_SECURE',
+    'smtp_user' => 'DS_SMTP_USER',
+    'smtp_pass' => 'DS_SMTP_PASS',
+    'mail_from' => 'DS_MAIL_FROM',
+    'mail_from_name' => 'DS_MAIL_FROM_NAME',
+    'mail_reply_to' => 'DS_MAIL_REPLY_TO',
+    'membership_fee_enabled' => 'DS_MEMBERSHIP_FEE_ENABLED',
+    'membership_fee_amount' => 'DS_MEMBERSHIP_FEE_AMOUNT',
+    'membership_currency' => 'DS_MEMBERSHIP_CURRENCY',
+];
+$out = [];
+foreach ($map as $key => $env) {
+    $value = getenv($env);
+    if ($value !== false && $value !== '') {
+        $out[$key] = $value;
+    }
+}
+if (isset($out['cookie_secure'])) {
+    $out['cookie_secure'] = filter_var($out['cookie_secure'], FILTER_VALIDATE_BOOLEAN);
+}
+foreach (['smtp_port', 'membership_fee_amount'] as $numeric) {
+    if (isset($out[$numeric])) {
+        $out[$numeric] = (float) $out[$numeric];
+    }
+}
+if (isset($out['membership_fee_enabled'])) {
+    $out['membership_fee_enabled'] = filter_var($out['membership_fee_enabled'], FILTER_VALIDATE_BOOLEAN);
+}
+return $out;`,
+);
 
 const collectedTokens = [];
 const failures = [];
@@ -46,7 +94,10 @@ function check(label, condition, detail = '') {
 }
 
 function runPhp(args, env = {}) {
-  return spawn(process.execPath, [phpBin, ...args], {
+  const [command, commandArgs] = nativePhp
+    ? [nativePhp, args]
+    : [process.execPath, [phpBin, ...args]];
+  return spawn(command, commandArgs, {
     cwd: root,
     env: { ...process.env, ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -55,7 +106,10 @@ function runPhp(args, env = {}) {
 
 function runPhpCheck(env, code) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(process.execPath, [phpBin, '-r', code], {
+    const [command, commandArgs] = nativePhp
+      ? [nativePhp, ['-r', code]]
+      : [process.execPath, [phpBin, '-r', code]];
+    const proc = spawn(command, commandArgs, {
       cwd: root,
       env: { ...process.env, ...env },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -76,9 +130,15 @@ async function bootPhpServer(env) {
   const server = runPhp(['-S', `127.0.0.1:${phpPort}`, '-t', apiRoot, path.join(apiRoot, 'router.php')], env);
   let log = '';
   server.stdout.on('data', (d) => (log += d));
-  server.stderr.on('data', (d) => (log += d));
+  server.stderr.on('data', (d) => {
+    log += d;
+    if (process.env.DS_SMOKE_DEBUG) process.stderr.write(d);
+  });
 
   for (let i = 0; i < 40; i += 1) {
+    if (server.exitCode !== null) {
+      throw new Error(`PHP server exited during startup:\n${log.slice(-1500)}`);
+    }
     try {
       const res = await fetch(`${base}/health`);
       if (res.ok) return { server, log: () => log };
@@ -91,11 +151,23 @@ async function bootPhpServer(env) {
 }
 
 async function stopServer(server) {
+  if (!server) return;
   await new Promise((resolve) => {
+    if (server.exitCode !== null) return resolve();
     server.once('exit', resolve);
     server.kill('SIGTERM');
-    setTimeout(resolve, 1500);
+    setTimeout(resolve, 2000);
   });
+  // Do not let the next phase start while a previous listener still owns the port.
+  for (let i = 0; i < 30; i += 1) {
+    try {
+      await fetch(`${base}/health`, { signal: AbortSignal.timeout(300) });
+    } catch {
+      return;
+    }
+    await sleep(100);
+  }
+  throw new Error('Previous PHP server did not release the port.');
 }
 
 function mergeCookies(existing, setCookieHeaders) {
@@ -245,7 +317,7 @@ function registerBody(email, phoneSuffix) {
 }
 
 async function main() {
-  if (!fs.existsSync(phpBin)) {
+  if (!nativePhp && !fs.existsSync(phpBin)) {
     console.error('php-cli missing; installing temporarily…');
     const inst = spawn('npm', ['install', '--no-save', 'php-cli@0.1.5'], {
       cwd: root,
@@ -264,6 +336,7 @@ async function main() {
   fs.mkdirSync(rateLimitDir, { recursive: true });
 
   const devEnv = {
+    DS_CONFIG_PATH: smokeConfigPath,
     DS_DB_DRIVER: 'sqlite',
     DS_SQLITE_PATH: sqlitePath,
     DS_APP_ENV: 'development',
@@ -417,57 +490,172 @@ async function main() {
     );
     check('unknown address sends no email', outboxMessages(seen).length === 0);
 
-    // 4 — provider verification code flow
+    // 4 — provider + agency signup: exactly one confirmation link, shared flow
     const providerEmail = `mail_provider_dev_${stamp}@example.com`;
-    const regProvider = await request('POST', '/auth/register', {
-      body: registerBody(providerEmail, nextPhoneSuffix()),
+    seen = outboxSnapshot();
+    const regProvider = await request('POST', '/provider/register.php', {
+      body: {
+        ...registerBody(providerEmail, nextPhoneSuffix()),
+        displayName: 'Mail Provider',
+        providerType: 'individual',
+        gender: 'female',
+      },
     });
     check('provider registration returns 201', regProvider.status === 201, regProvider.text);
-    await promoteToProvider(providerEmail);
+    check(
+      'provider registration reports the confirmation email was sent',
+      regProvider.json?.data?.verificationEmailSent === true,
+    );
+    const providerCookie = mergeCookies('', regProvider.setCookie);
+    check('provider registration signs the account in', Boolean(providerCookie), regProvider.text);
 
+    const initialProviderMessages = outboxMessages(seen);
+    check('provider signup sends exactly one email', initialProviderMessages.length === 1, `count=${initialProviderMessages.length}`);
+    const initialProviderToken = initialProviderMessages[0]
+      ? tokenFrom(initialProviderMessages[0], '/verify-email')
+      : null;
+    check('provider signup email carries a confirmation link', Boolean(initialProviderToken));
+
+    // 4b — the legacy resend endpoint now sends the same link and retires the older one
+    seen = outboxSnapshot();
+    const providerResend = await request('POST', '/provider/send-email-code.php', {
+      cookie: providerCookie,
+      body: {},
+    });
+    check(
+      'legacy provider resend delegates to the shared flow',
+      providerResend.status === 200 && providerResend.json?.data?.sent === true,
+      providerResend.text,
+    );
+    const providerResentMessages = outboxMessages(seen);
+    check('provider resend delivers exactly one email', providerResentMessages.length === 1, `count=${providerResentMessages.length}`);
+    const providerResent = providerResentMessages[0];
+    check(
+      'provider resend uses the shared confirmation subject',
+      providerResent
+        ? providerResent.header('Subject') === 'Confirm your Massager Studio email address'
+        : false,
+      providerResent ? providerResent.header('Subject') : 'missing',
+    );
+    const providerToken = providerResent ? tokenFrom(providerResent, '/verify-email') : null;
+    check('provider resend carries a confirmation link', Boolean(providerToken));
+    if (initialProviderToken) {
+      const staleProvider = await request('POST', '/auth/verify-email', { body: { token: initialProviderToken } });
+      check('provider resend retires the earlier link', staleProvider.status === 400, staleProvider.text);
+    }
+
+    // 4c — confirming without a session updates users and provider_verification
+    if (providerToken) {
+      collectedTokens.push(providerToken);
+      const providerVerified = await request('POST', '/auth/verify-email', { body: { token: providerToken } });
+      check(
+        'provider link verifies without a signed-in session',
+        providerVerified.status === 200 && providerVerified.json?.data?.verified === true,
+        providerVerified.text,
+      );
+      const providerState = await sqlite(
+        `$stmt = $pdo->prepare("SELECT u.email_verified_at, v.email_verified_at AS provider_email_verified_at
+           FROM users u LEFT JOIN provider_verification v ON v.provider_user_id = u.id WHERE u.email = ?");
+         $stmt->execute(['${providerEmail}']); echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));`,
+      );
+      let state = {};
+      try {
+        state = JSON.parse(providerState.trim());
+      } catch {
+        state = {};
+      }
+      check('provider confirmation updates users.email_verified_at', Boolean(state.email_verified_at), providerState);
+      check(
+        'provider confirmation updates provider_verification.email_verified_at',
+        Boolean(state.provider_email_verified_at),
+        providerState,
+      );
+
+      const providerReuse = await request('POST', '/auth/verify-email', { body: { token: providerToken } });
+      check('provider confirmation link is single-use', providerReuse.status === 400, providerReuse.text);
+    }
+
+    // 4d — agency signup uses the same single-link flow
+    const agencyEmail = `mail_agency_dev_${stamp}@example.com`;
+    seen = outboxSnapshot();
+    const regAgency = await request('POST', '/provider/register.php', {
+      body: {
+        ...registerBody(agencyEmail, nextPhoneSuffix()),
+        displayName: 'Mail Agency',
+        businessName: 'Mail Agency',
+        providerType: 'agency',
+      },
+    });
+    check('agency registration returns 201', regAgency.status === 201, regAgency.text);
+    check('agency registration reports the confirmation email was sent', regAgency.json?.data?.verificationEmailSent === true);
+    const agencyMessages = outboxMessages(seen);
+    check('agency signup sends exactly one email', agencyMessages.length === 1, `count=${agencyMessages.length}`);
+    const agencyToken = agencyMessages[0] ? tokenFrom(agencyMessages[0], '/verify-email') : null;
+    if (agencyToken) {
+      const agencyVerified = await request('POST', '/auth/verify-email', { body: { token: agencyToken } });
+      check(
+        'agency link verifies without a session',
+        agencyVerified.status === 200 && agencyVerified.json?.data?.verified === true,
+        agencyVerified.text,
+      );
+      const agencyState = await sqlite(
+        `$stmt = $pdo->prepare("SELECT u.email_verified_at, v.email_verified_at AS provider_email_verified_at
+           FROM users u LEFT JOIN provider_verification v ON v.provider_user_id = u.id WHERE u.email = ?");
+         $stmt->execute(['${agencyEmail}']); echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));`,
+      );
+      let agency = {};
+      try {
+        agency = JSON.parse(agencyState.trim());
+      } catch {
+        agency = {};
+      }
+      check('agency confirmation updates users.email_verified_at', Boolean(agency.email_verified_at), agencyState);
+      check(
+        'agency confirmation updates provider_verification.email_verified_at',
+        Boolean(agency.provider_email_verified_at),
+        agencyState,
+      );
+    }
+
+    // 4e — cached clients can still confirm through the old provider endpoint
+    const legacyEmail = `mail_legacy_dev_${stamp}@example.com`;
+    seen = outboxSnapshot();
+    const regLegacy = await request('POST', '/provider/register.php', {
+      body: {
+        ...registerBody(legacyEmail, nextPhoneSuffix()),
+        displayName: 'Legacy Provider',
+        providerType: 'individual',
+        gender: 'male',
+      },
+    });
+    const legacyCookie = mergeCookies('', regLegacy.setCookie);
+    const legacyMessages = outboxMessages(seen);
+    const legacyToken = legacyMessages[0] ? tokenFrom(legacyMessages[0], '/verify-email') : null;
+    if (legacyToken) {
+      const legacyVerified = await request('POST', '/provider/verify-email.php', {
+        cookie: legacyCookie,
+        body: { token: legacyToken },
+      });
+      check(
+        'legacy provider verify endpoint still works',
+        legacyVerified.status === 200 && legacyVerified.json?.data?.verified === true,
+        legacyVerified.text,
+      );
+    }
+
+    // 4f — provider progress reflects the confirmed email
     const providerLogin = await request('POST', '/auth/login', {
       body: { identifier: providerEmail, password: 'Testpass1' },
     });
-    const providerCookie = mergeCookies('', providerLogin.setCookie);
     check('provider login works', providerLogin.status === 200, providerLogin.text);
 
-    seen = outboxSnapshot();
-    const codeRes = await request('POST', '/provider/send-email-code.php', { cookie: providerCookie, body: {} });
-    check('provider code request succeeds', codeRes.status === 200 && codeRes.json?.data?.sent === true, codeRes.text);
-    check('provider code response is honest about configuration', codeRes.json?.data?.emailConfigured === true);
-
-    const codeMessages = outboxMessages(seen);
-    check('one provider code message was delivered', codeMessages.length === 1, `count=${codeMessages.length}`);
-    const codeMessage = codeMessages[0];
-    if (codeMessage) {
-      check('provider code message goes to the provider address', codeMessage.header('To').includes(providerEmail));
-      check(
-        'provider code subject is branded',
-        codeMessage.header('Subject') === 'Your Massager Studio verification code',
-        codeMessage.header('Subject'),
-      );
-      const codeMatch = codeMessage.body.match(/[a-f0-9]{64}/);
-      check('verification code present in the message body', Boolean(codeMatch));
-      if (codeMatch) {
-        collectedTokens.push(codeMatch[0]);
-        const verified = await request('POST', '/provider/verify-email.php', {
-          cookie: providerCookie,
-          body: { token: codeMatch[0] },
-        });
-        check('emailed provider code verifies the account', verified.json?.data?.verified === true, verified.text);
-        const reuse = await request('POST', '/provider/verify-email.php', {
-          cookie: providerCookie,
-          body: { token: codeMatch[0] },
-        });
-        check('provider code is single-use', reuse.status === 400, reuse.text);
-      }
-    }
-
     // 4b — free membership: no payment record, no phone gate, review still gated by identity + email
-    await sqlite(`$pdo->prepare("INSERT INTO provider_profiles
-        (id, user_id, slug, display_name, provider_type, city, country, profile_completion, profile_completed_at, created_at, updated_at)
-        SELECT 'prof_${stamp}', id, 'mail-provider-${stamp}', 'Mail Provider', 'individual', 'Accra', 'Ghana', 95, '2026-01-01 00:00:00', '2026-01-01 00:00:00', '2026-01-01 00:00:00'
-        FROM users WHERE email = ?")->execute(['${providerEmail}']);
+    await sqlite(`$pdo->prepare("UPDATE provider_profiles
+        SET profile_completion = 95, profile_completed_at = '2026-01-01 00:00:00',
+            city = COALESCE(NULLIF(city, ''), 'Accra'), country = COALESCE(NULLIF(country, ''), 'Ghana'),
+            updated_at = '2026-01-01 00:00:00'
+        WHERE user_id = (SELECT id FROM users WHERE email = ?)")
+        ->execute(['${providerEmail}']);
       $pdo->prepare("UPDATE provider_verification SET identity_status = 'pending',
         phone_verified_at = NULL WHERE provider_user_id = (SELECT id FROM users WHERE email = ?)")
         ->execute(['${providerEmail}']);
@@ -543,6 +731,22 @@ async function main() {
     check('account creation survives delivery failure', regProd.status === 201, regProd.text);
     check('failed confirmation is reported truthfully', regProd.json?.data?.verificationEmailSent === false);
 
+    const prodProviderEmail = `mail_prod_provider_${stamp}@example.com`;
+    const regProdProvider = await request('POST', '/provider/register.php', {
+      body: {
+        ...registerBody(prodProviderEmail, nextPhoneSuffix()),
+        displayName: 'Prod Provider',
+        providerType: 'individual',
+        gender: 'female',
+      },
+    });
+    check('provider account creation survives delivery failure', regProdProvider.status === 201, regProdProvider.text);
+    check(
+      'provider signup reports failed delivery truthfully',
+      regProdProvider.json?.data?.verificationEmailSent === false,
+    );
+    check('provider failure response leaks no token', !/demoToken|token/i.test(regProdProvider.text), regProdProvider.text);
+
     await promoteToProvider(prodEmail);
     const login = await request('POST', '/auth/login', { body: { identifier: prodEmail, password: 'Testpass1' } });
     const cookie = mergeCookies('', login.setCookie);
@@ -616,7 +820,7 @@ async function main() {
     devEnv,
     `require 'public/api/config/bootstrap.php';
      $out = [];
-     foreach (['password_reset', 'verify_account', 'provider_verify'] as $name) {
+     foreach (['password_reset', 'verify_account'] as $name) {
        $vars = ['first_name' => 'Ada', 'link' => ds_app_link('/reset-password', ['token' => str_repeat('b', 64)]), 'token' => str_repeat('c', 64)];
        $m = ds_mail_template($name, $vars);
        $out[$name] = [
@@ -631,7 +835,7 @@ async function main() {
      echo json_encode($out);`,
   );
   const templates = JSON.parse(rendered.trim().split('\n').pop() || '{}');
-  for (const name of ['password_reset', 'verify_account', 'provider_verify']) {
+  for (const name of ['password_reset', 'verify_account']) {
     const t = templates[name] || {};
     check(`${name}: html links to the app URL`, t.html_has_link === true);
     check(`${name}: plain-text alternative has the link`, t.text_has_link === true);

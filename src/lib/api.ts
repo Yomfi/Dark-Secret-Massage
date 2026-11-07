@@ -244,10 +244,13 @@ export type ProviderDashboardDto = {
 
 export const providerApi = {
   register: (body: ProviderRegisterBody) =>
-    apiRequest<{ user: AuthUserDto; nextStep: string }>('/provider/register.php', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
+    apiRequest<{ user: AuthUserDto; nextStep: string; verificationEmailSent?: boolean }>(
+      '/provider/register.php',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    ),
   sendEmailCode: () =>
     apiRequest<{
       sent?: boolean;

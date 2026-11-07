@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { authApi } from '../lib/api';
+import { authApi, type AuthUserDto } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { Alert, Button } from '../components/ui';
@@ -23,6 +23,7 @@ export const VerifyEmailPage: React.FC = () => {
     token ? 'pending' : sentParam !== null ? 'inbox' : 'missing',
   );
   const [error, setError] = useState<string | null>(null);
+  const [verifiedUser, setVerifiedUser] = useState<AuthUserDto | null>(null);
   const [resend, setResend] = useState<ResendState>({ status: 'idle' });
   const attempted = useRef(false);
 
@@ -36,12 +37,16 @@ export const VerifyEmailPage: React.FC = () => {
 
     authApi
       .verifyEmail(token)
-      .then(() => setState('verified'))
+      .then(async (result) => {
+        setVerifiedUser(result.user);
+        if (isAuthenticated) await refreshSession();
+        setState('verified');
+      })
       .catch((err) => {
         setError(getAuthErrorMessage(err));
         setState('failed');
       });
-  }, [token]);
+  }, [token, isAuthenticated, refreshSession]);
 
   const onResend = async () => {
     setError(null);
@@ -65,7 +70,12 @@ export const VerifyEmailPage: React.FC = () => {
       const data = await authApi.me();
       await refreshSession();
       if (data.user.emailVerifiedAt) {
-        navigate('/onboarding', { replace: true });
+        navigate(
+          ['massage_provider', 'provider'].includes(data.user.role)
+            ? '/provider/register'
+            : '/onboarding',
+          { replace: true },
+        );
         return;
       }
       setError(
@@ -108,7 +118,8 @@ export const VerifyEmailPage: React.FC = () => {
           </Alert>
 
           <p className="text-[13px] leading-relaxed text-zinc-500">
-            The link can be used once. Open it in this browser to confirm, then return here.
+            The link can be used once and works in any browser. Open it to confirm, then return
+            here.
           </p>
 
           {resend.status === 'sent' && resend.message ? (
@@ -154,6 +165,12 @@ export const VerifyEmailPage: React.FC = () => {
   }
 
   if (state === 'verified') {
+    const destination =
+      verifiedUser && ['massage_provider', 'provider'].includes(verifiedUser.role)
+        ? '/provider/register'
+        : '/onboarding';
+    const sameAccount = isAuthenticated && (!verifiedUser || user?.id === verifiedUser.id);
+
     return (
       <AuthLayout
         title="Email confirmed"
@@ -164,19 +181,24 @@ export const VerifyEmailPage: React.FC = () => {
           </Link>
         }
       >
-        {isAuthenticated ? (
-          <Button fullWidth onClick={() => navigate('/onboarding', { replace: true })}>
+        {sameAccount ? (
+          <Button fullWidth onClick={() => navigate(destination, { replace: true })}>
             Continue
           </Button>
         ) : (
-          <Button
-            fullWidth
-            onClick={() => {
-              window.location.href = '/login';
-            }}
-          >
-            Sign in
-          </Button>
+          <div className="space-y-3">
+            <Alert variant="info">
+              Sign in to continue. Confirming the link does not sign you in on this device.
+            </Alert>
+            <Button
+              fullWidth
+              onClick={() =>
+                navigate(`/login?redirect=${encodeURIComponent(destination)}`, { replace: true })
+              }
+            >
+              Sign in to continue
+            </Button>
+          </div>
         )}
       </AuthLayout>
     );

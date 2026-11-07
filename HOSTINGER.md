@@ -123,7 +123,7 @@ PHPMailer 7.1.1, vendored in `api/vendor/phpmailer` (no Composer on the host —
 | Password reset | `POST /api/auth/forgot-password` | the requesting account's own address |
 | Account email confirmation | `POST /api/auth/register` | the new account's own address |
 | Confirmation resend | `POST /api/auth/resend-verification` | the signed-in account's own address |
-| Provider email verification | `POST /api/provider/send-email-code` | the provider account's own address |
+| Provider email confirmation resend | `POST /api/provider/send-email-code` (legacy alias) | the provider account's own address |
 | Provider submitted for review | `POST /api/provider/submit-review` | `info@massagerstudio.com` |
 
 Company mailboxes (recipients — keep separate from SMTP/`mail_from`):
@@ -165,9 +165,10 @@ masked, no tokens or message bodies). `storage/` is blocked from HTTP access by 
   reset token is deleted so no dead link survives, and the failure is logged.
 - Registration still succeeds when mail fails; the response reports
   `verificationEmailSent: false`.
-- Provider code requests return HTTP `503` (`EMAIL_DELIVERY_FAILED` or
-  `EMAIL_NOT_CONFIGURED`) in production instead of pretending the mail was sent. Development
-  returns the token so the flow stays testable.
+- Every account type uses one confirmation link (`/verify-email?token=…`), valid for 24
+  hours and single-use. Provider resend requests through the legacy endpoint return HTTP
+  `503` (`EMAIL_DELIVERY_FAILED` or `EMAIL_NOT_CONFIGURED`) in production instead of
+  pretending the mail was sent, and never retire an earlier delivered link.
 - The review notification never blocks a submission; `adminNotified` reports the outcome.
 
 ### Still required on the host

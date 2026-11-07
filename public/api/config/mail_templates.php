@@ -155,43 +155,6 @@ function ds_mail_template(string $template, array $vars): ?array
         ];
     }
 
-    if ($template === 'provider_verify') {
-        $token = (string) ($vars['token'] ?? '');
-        $link = (string) ($vars['link'] ?? '');
-        $hours = (int) ($vars['expires_hours'] ?? 24);
-
-        $html = '<p style="margin:0 0 12px 0;">' . ds_mail_greeting($firstName) . '</p>'
-            . '<p style="margin:0 0 8px 0;">Use this verification code on your Massager Studio provider '
-            . 'registration to confirm your email address.</p>'
-            . '<p style="margin:14px 0;padding:14px 18px;background:#f4f3f7;border:1px solid #e5e3ec;'
-            . 'border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;'
-            . 'font-size:16px;letter-spacing:0.04em;color:#141218;word-break:break-all;">'
-            . ds_mail_e($token) . '</p>'
-            . ds_mail_button($link, 'Open provider verification')
-            . ds_mail_link_fallback($link)
-            . '<p style="margin:18px 0 0 0;font-size:13px;color:#6b6778;">This code expires in '
-            . $hours . ' hours and can be used once. If you did not start a provider registration, '
-            . 'ignore this email.</p>';
-
-        $text = "Hi " . ($firstName !== '' ? $firstName : 'there') . ",\n\n"
-            . "Use this verification code on your Massager Studio provider registration:\n\n"
-            . "    " . $token . "\n\n"
-            . "Open provider verification: " . $link . "\n\n"
-            . "This code expires in " . $hours . " hours and can be used once.\n"
-            . "If you did not start a provider registration, ignore this email.\n\n"
-            . "Massager Studio\n" . ds_app_url() . "\n";
-
-        return [
-            'subject' => 'Your Massager Studio verification code',
-            'html' => ds_mail_layout(
-                'Your Massager Studio provider verification code expires in ' . $hours . ' hours.',
-                'Confirm your provider email',
-                $html
-            ),
-            'text' => $text,
-        ];
-    }
-
     if ($template === 'provider_review_notice') {
         $providerName = (string) ($vars['provider_name'] ?? 'Provider');
         $providerType = (string) ($vars['provider_type'] ?? 'individual');
