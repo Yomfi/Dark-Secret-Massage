@@ -155,18 +155,20 @@ if ($action === 'update_provider_location') {
     ds_location_ensure_schema();
     $fields = ds_location_provider_fields($body, $profile);
     $pdo->prepare(
-        'UPDATE provider_profiles SET district = ?, latitude = ?, longitude = ?,
+        'UPDATE provider_profiles SET country = ?, region = ?, city = ?, area_neighbourhood = ?,
+            district = ?, service_radius_km = ?, latitude = ?, longitude = ?,
             service_areas_json = ?, service_regions_json = ?, updated_at = ? WHERE id = ?'
     )->execute([
-        $fields['district'], $fields['latitude'], $fields['longitude'],
+        $fields['country'], $fields['region'], $fields['city'], $fields['area_neighbourhood'],
+        $fields['district'], $fields['service_radius_km'], $fields['latitude'], $fields['longitude'],
         $fields['service_areas_json'], $fields['service_regions_json'],
         ds_now_sql(), (string) $profile['id'],
     ]);
     ds_flush_table_columns('provider_profiles');
     ds_audit('provider.location_updated', 'provider_profile', (string) $profile['id'], [
         'byStaff' => true,
-        'region' => (string) ($body['region'] ?? $profile['region'] ?? ''),
-        'city' => (string) ($body['city'] ?? $profile['city'] ?? ''),
+        'region' => (string) ($fields['region'] ?? ''),
+        'city' => (string) ($fields['city'] ?? ''),
         'coordinatesPresent' => $fields['latitude'] !== null,
         'serviceAreaCount' => count(ds_json_decode_field($fields['service_areas_json'] ?? null)),
     ], (string) $admin['id']);

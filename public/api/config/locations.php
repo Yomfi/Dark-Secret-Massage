@@ -481,6 +481,18 @@ function ds_location_provider_fields(array $body, ?array $profile = null): array
         $longitude = round($longitude, 6);
     }
 
+    $radiusRaw = array_key_exists('serviceRadiusKm', $body)
+        ? $body['serviceRadiusKm']
+        : ($profile['service_radius_km'] ?? null);
+    $serviceRadiusKm = null;
+    if ($radiusRaw !== null && $radiusRaw !== '') {
+        $radiusValue = (float) $radiusRaw;
+        if ($radiusValue < 0 || $radiusValue > 500) {
+            ds_error(400, 'VALIDATION_ERROR', 'Home-visit radius must be between 0 and 500 km.');
+        }
+        $serviceRadiusKm = $radiusValue > 0 ? round($radiusValue, 1) : null;
+    }
+
     $areas = array_key_exists('serviceAreas', $body)
         ? ds_location_service_areas_validate($body['serviceAreas'])
         : ds_provider_service_areas($profile);
@@ -505,7 +517,12 @@ function ds_location_provider_fields(array $body, ?array $profile = null): array
     }
 
     return [
+        'country' => $country,
+        'region' => $region !== '' ? $region : null,
+        'city' => $city !== '' ? $city : null,
+        'area_neighbourhood' => $area !== '' ? $area : null,
         'district' => $district !== '' ? $district : null,
+        'service_radius_km' => $serviceRadiusKm,
         'latitude' => $latitude,
         'longitude' => $longitude,
         'service_areas_json' => json_encode($areas),

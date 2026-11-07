@@ -35,6 +35,7 @@ type ProviderDetail = {
     serviceArea: string;
     serviceAreas?: Array<{ region: string; district?: string; city: string; area?: string; radiusKm?: number | null }>;
     serviceRegions?: string[];
+    serviceRadiusKm?: number | null;
     latitude?: number | null;
     longitude?: number | null;
     offersHomeVisit?: boolean;
@@ -91,6 +92,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
   const [locationForm, setLocationForm] = useState<LocationValue>({ country: 'Ghana', region: '', district: '', city: '', area: '', latitude: null, longitude: null });
   const [serviceAreas, setServiceAreas] = useState<Array<{ region: string; city: string; area: string; radiusKm: string }>>([]);
   const [serviceRegions, setServiceRegions] = useState('');
+  const [serviceRadiusKm, setServiceRadiusKm] = useState('');
 
   const load = async () => {
     setError(null);
@@ -123,6 +125,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
         })),
       );
       setServiceRegions((data.profile.serviceRegions ?? []).join(', '));
+      setServiceRadiusKm(data.profile.serviceRadiusKm != null ? String(data.profile.serviceRadiusKm) : '');
     }
   };
 
@@ -258,6 +261,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
                   areaNeighbourhood: locationForm.area,
                   latitude: locationForm.latitude,
                   longitude: locationForm.longitude,
+                  serviceRadiusKm: serviceRadiusKm === '' ? null : Number(serviceRadiusKm),
                   serviceAreas: serviceAreas
                     .filter((area) => area.city.trim() !== '' || area.area.trim() !== '')
                     .map((area) => ({
@@ -279,6 +283,17 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
               The pin is internal and never returned by the public API. Customers see the town, area and published service areas only.
             </p>
             <LocationFields value={locationForm} onChange={setLocationForm} theme="light" />
+            <FormField label="Maximum home-visit radius (km)">
+              <input
+                className={adminInputClass}
+                type="number"
+                min={0}
+                max={500}
+                value={serviceRadiusKm}
+                onChange={(e) => setServiceRadiusKm(e.target.value)}
+                placeholder="e.g. 20"
+              />
+            </FormField>
 
             <div className="space-y-2 border-t border-[#efe8dc] pt-3">
               <p className="text-[13px] font-semibold">Additional service areas</p>

@@ -148,6 +148,17 @@ try {
     check('saved location becomes a search target', 'Accra', $target['city'] ?? null);
 
     echo "Provider-managed service areas\n";
+    $fields = ds_location_provider_fields([
+        'region' => 'Greater Accra',
+        'city' => 'Accra',
+        'areaNeighbourhood' => 'Osu',
+        'serviceRadiusKm' => 12,
+    ], null);
+    check('admin fields keep region', 'Greater Accra', $fields['region']);
+    check('admin fields keep city', 'Accra', $fields['city']);
+    check('admin fields keep area', 'Osu', $fields['area_neighbourhood']);
+    check('admin fields keep primary radius', 12.0, $fields['service_radius_km']);
+
     $areas = ds_location_service_areas_validate([
         ['region' => 'Greater Accra', 'city' => 'Accra', 'area' => 'Spintex', 'radiusKm' => 8],
         ['region' => 'Ashanti', 'city' => 'Kumasi', 'area' => '', 'radiusKm' => 15],

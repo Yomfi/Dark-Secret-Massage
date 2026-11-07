@@ -94,6 +94,32 @@ foreach ($profiles as $key => [$name, $type, $slug]) {
     }
     $ids[$key . 'Profile'] = $pid;
 
+    // Structured location + service coverage for local discovery tests. Guarded
+    // so the seed also works against a database that has not run the location
+    // migration yet.
+    if (ds_column_exists('provider_profiles', 'latitude')) {
+        $location = $key === 'agency'
+            ? [
+                'district' => 'Accra Metropolitan', 'area' => 'Osu',
+                'lat' => 5.5580, 'lng' => -0.1770, 'radius' => 25,
+                'areas' => [['region' => 'Greater Accra', 'district' => 'Accra Metropolitan', 'city' => 'Accra', 'area' => 'Osu', 'radiusKm' => 8, 'latitude' => 5.5580, 'longitude' => -0.1770]],
+            ]
+            : [
+                'district' => 'Accra Metropolitan', 'area' => 'East Legon',
+                'lat' => 5.6350, 'lng' => -0.1560, 'radius' => 20,
+                'areas' => [['region' => 'Greater Accra', 'district' => 'Accra Metropolitan', 'city' => 'Accra', 'area' => 'Cantonments', 'radiusKm' => 10, 'latitude' => 5.5800, 'longitude' => -0.1700]],
+            ];
+        $pdo->prepare(
+            'UPDATE provider_profiles SET region = ?, district = ?, area_neighbourhood = ?, latitude = ?, longitude = ?,
+                service_radius_km = ?, service_areas_json = ?, service_regions_json = ?, service_setting_json = ?, updated_at = ?
+             WHERE id = ?'
+        )->execute([
+            'Greater Accra', $location['district'], $location['area'], $location['lat'], $location['lng'],
+            $location['radius'], json_encode($location['areas'], JSON_UNESCAPED_SLASHES),
+            json_encode(['Greater Accra']), json_encode(['studio', 'home_visit']), $now, $pid,
+        ]);
+    }
+
     if (ds_table_exists('provider_verification')) {
         $v = ds_ensure_provider_verification($ids[$key]);
         $pdo->prepare('UPDATE provider_verification SET verification_status = ?, identity_status = ? WHERE provider_user_id = ?')
