@@ -110,6 +110,162 @@ function ds_ensure_provider_verification(string $userId): array
     ];
 }
 
+/**
+ * Additive verification fields for optional identity verification. Called only
+ * by the CLI migration (never by an ordinary request). Existing verified rows
+ * are preserved and are treated as "Verify My Identity".
+ */
+function ds_provider_verification_schema(bool $force = false): void
+{
+    static $done = false;
+    if ($done && !$force) {
+        return;
+    }
+    $done = true;
+
+    if (!ds_table_exists('provider_verification')) {
+        return;
+    }
+
+    $pdo = ds_pdo();
+    $columns = [
+        'verification_choice' => 'VARCHAR(32) NULL',
+        'business_status' => 'VARCHAR(32) NULL',
+        'identity_submitted_at' => 'DATETIME NULL',
+        'selfie_submitted_at' => 'DATETIME NULL',
+    ];
+    foreach ($columns as $column => $definition) {
+        if (ds_column_exists('provider_verification', $column)) {
+            continue;
+        }
+        try {
+            $pdo->exec('ALTER TABLE provider_verification ADD COLUMN ' . $column . ' ' . $definition);
+        } catch (Throwable $e) {
+            // A concurrent migration may have added it first.
+        }
+    }
+    if (ds_table_exists('provider_identity_documents') && !ds_column_exists('provider_identity_documents', 'verification_choice')) {
+        try {
+            $pdo->exec('ALTER TABLE provider_identity_documents ADD COLUMN verification_choice VARCHAR(32) NULL');
+        } catch (Throwable $e) {
+            // Harmless if another process added it.
+        }
+    }
+    if (ds_table_exists('provider_identity_documents') && !ds_column_exists('provider_identity_documents', 'is_current')) {
+        try {
+            $pdo->exec('ALTER TABLE provider_identity_documents ADD COLUMN is_current INT NOT NULL DEFAULT 1');
+        } catch (Throwable $e) {
+            // Harmless if another process added it.
+        }
+    }
+    ds_flush_table_columns('provider_verification');
+    ds_flush_table_columns('provider_identity_documents');
+
+    // Existing applications came through the ID + selfie path. Never alter
+    // identity_status/verification_status here.
+    try {
+        $pdo->exec("UPDATE provider_verification SET verification_choice = 'verify_identity'
+            WHERE verification_choice IS NULL AND (
+                identity_status IN ('pending', 'approved')
+                OR verification_status IN ('pending_review', 'verified')
+            )");
+        if (ds_table_exists('provider_identity_documents')) {
+            $pdo->exec("UPDATE provider_identity_documents SET verification_choice = 'verify_identity'
+                WHERE verification_choice IS NULL");
+        }
+    } catch (Throwable $e) {
+        // Backfill is best-effort; the badge itself still depends on approval.
+    }
+}
+
+/** Latest selfie/ID submission for provider-owned verification UI. */
+function ds_provider_identity_summary(string $userId): array
+{
+    if (!ds_table_exists('provider_identity_documents')) {
+        return [
+            'hasIdDocument' => false,
+            'hasSelfie' => false,
+            'latestDocumentId' => null,
+            'documentStatus' => null,
+            'documentChoice' => null,
+            'submittedAt' => null,
+        ];
+    }
+    try {
+        $stmt = ds_pdo()->prepare(
+            'SELECT id, id_image_path, selfie_image_path, status, verification_choice, created_at
+             FROM provider_identity_documents WHERE provider_user_id = ?
+             ORDER BY is_current DESC, created_at DESC, id DESC LIMIT 1'
+        );
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: null;
+    } catch (Throwable $e) {
+        $row = null;
+    }
+    return [
+        'hasIdDocument' => $row && trim((string) ($row['id_image_path'] ?? '')) !== '',
+        'hasSelfie' => $row && trim((string) ($row['selfie_image_path'] ?? '')) !== '',
+        'latestDocumentId' => $row['id'] ?? null,
+        'documentStatus' => $row['status'] ?? null,
+        'documentChoice' => $row['verification_choice'] ?? null,
+        'submittedAt' => $row['created_at'] ?? null,
+    ];
+}
+
+function ds_provider_verification_summary(array $verification, string $userId): array
+{
+    $docs = ds_provider_identity_summary($userId);
+    return [
+        'status' => (string) ($verification['verification_status'] ?? 'unverified'),
+        'identityStatus' => (string) ($verification['identity_status'] ?? 'not_submitted'),
+        'verificationChoice' => $verification['verification_choice'] ?? $docs['documentChoice'],
+        'businessStatus' => $verification['business_status'] ?? null,
+        'rejectionReason' => $verification['rejection_reason'] ?? null,
+        'adminNotes' => $verification['admin_notes'] ?? null,
+        'submittedAt' => $verification['submitted_for_review_at'] ?? null,
+        'verifiedAt' => $verification['verified_at'] ?? null,
+        'identitySubmittedAt' => $verification['identity_submitted_at'] ?? $docs['submittedAt'],
+        'selfieSubmittedAt' => $verification['selfie_submitted_at'] ?? $docs['submittedAt'],
+        'hasIdDocument' => $docs['hasIdDocument'],
+        'hasSelfie' => $docs['hasSelfie'],
+        'latestDocumentId' => $docs['latestDocumentId'],
+        'documentStatus' => $docs['documentStatus'],
+    ];
+}
+
+/** Admin-visible review history without exposing private document paths. */
+function ds_provider_review_history(string $userId, int $limit = 20): array
+{
+    if (!ds_table_exists('admin_audit_log')) {
+        return [];
+    }
+    try {
+        $stmt = ds_pdo()->prepare(
+            "SELECT action, meta_json, created_at, actor_user_id FROM admin_audit_log
+             WHERE entity_type = 'provider' AND entity_id = ?
+               AND (action LIKE 'provider.review_%' OR action = 'provider.identity_uploaded')
+             ORDER BY created_at DESC LIMIT " . max(1, min(50, $limit))
+        );
+        $stmt->execute([$userId]);
+        $rows = $stmt->fetchAll() ?: [];
+    } catch (Throwable $e) {
+        return [];
+    }
+    return array_map(static function (array $row): array {
+        $meta = json_decode((string) ($row['meta_json'] ?? ''), true);
+        return [
+            'action' => (string) ($row['action'] ?? ''),
+            'createdAt' => $row['created_at'] ?? null,
+            'actorUserId' => $row['actor_user_id'] ?? null,
+            'from' => is_array($meta) ? ($meta['from'] ?? null) : null,
+            'to' => is_array($meta) ? ($meta['to'] ?? null) : null,
+            'reason' => is_array($meta) ? ($meta['reason'] ?? null) : null,
+            'notes' => is_array($meta) ? ($meta['notes'] ?? null) : null,
+            'choice' => is_array($meta) ? ($meta['choice'] ?? null) : null,
+        ];
+    }, $rows);
+}
+
 function ds_provider_profile_by_user(string $userId): ?array
 {
     if (!ds_table_exists('provider_profiles')) {
@@ -315,6 +471,7 @@ function ds_provider_dashboard_dto(array $user, ?array $profile, array $verifica
     $paymentOk = ($verification['payment_status'] ?? '') === 'paid';
     $feeOk = !$feeEnabled || $paymentOk;
     $status = (string) ($verification['verification_status'] ?? 'unverified');
+    $verificationInfo = ds_provider_verification_summary($verification, (string) $user['id']);
 
     $completion = $profile ? ds_provider_completion_percent($profile) : 0;
 
@@ -341,6 +498,12 @@ function ds_provider_dashboard_dto(array $user, ?array $profile, array $verifica
             'verifiedAt' => $verification['verified_at'] ?? null,
             'rejectionReason' => $verification['rejection_reason'] ?? null,
             'submittedForReviewAt' => $verification['submitted_for_review_at'] ?? null,
+            'verificationChoice' => $verificationInfo['verificationChoice'],
+            'businessStatus' => $verificationInfo['businessStatus'],
+            'hasIdDocument' => $verificationInfo['hasIdDocument'],
+            'hasSelfie' => $verificationInfo['hasSelfie'],
+            'identitySubmittedAt' => $verificationInfo['identitySubmittedAt'],
+            'selfieSubmittedAt' => $verificationInfo['selfieSubmittedAt'],
         ],
         'membership' => ds_membership_status(),
         'progress' => [

@@ -8,6 +8,7 @@ import {
   type MassageBookingDraft,
 } from '../../lib/massageBooking';
 import type { MassageService, MassageTherapist } from '../../lib/catalogue';
+import { VerifiedBadge } from '../marketplace/VerifiedBadge';
 
 interface BookingSummaryProps {
   draft: MassageBookingDraft;
@@ -76,7 +77,16 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           <div key={row.label} className="flex items-start justify-between gap-3 text-sm sm:text-base">
             <div className="min-w-0">
               <p className="text-zinc-400 font-medium">{row.label}</p>
-              <p className="text-white font-medium leading-snug break-words">{row.value}</p>
+              <p className="text-white font-medium leading-snug break-words">
+                {row.label === 'Provider' && therapist ? (
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    {row.value}
+                    <VerifiedBadge verified={therapist.verified} />
+                  </span>
+                ) : (
+                  row.value
+                )}
+              </p>
             </div>
             {showEdit && row.step && onEditStep && (
               <button

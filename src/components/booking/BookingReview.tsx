@@ -7,6 +7,7 @@ import {
   type MassageBookingDraft,
 } from '../../lib/massageBooking';
 import type { MassageService, MassageTherapist } from '../../lib/catalogue';
+import { VerifiedBadge } from '../marketplace/VerifiedBadge';
 
 interface BookingReviewProps {
   draft: MassageBookingDraft;
@@ -69,7 +70,16 @@ export const BookingReview: React.FC<BookingReviewProps> = ({ draft, services, p
         <ReviewRow label="Location" value={locationDetail || '—'} onEdit={() => onEditStep(2)} />
         <ReviewRow
           label="Provider"
-          value={therapist?.name || 'Any available provider'}
+          value={
+            therapist ? (
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {therapist.name}
+                <VerifiedBadge verified={therapist.verified} />
+              </span>
+            ) : (
+              'Any available provider'
+            )
+          }
           onEdit={() => onEditStep(4)}
         />
         <ReviewRow
@@ -104,7 +114,7 @@ function ReviewRow({
   mono,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   onEdit: () => void;
   mono?: boolean;
 }) {

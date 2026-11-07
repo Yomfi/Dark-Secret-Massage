@@ -52,7 +52,8 @@ if ($method === 'GET') {
                     u.suspend_reason, u.suspended_until, u.block_reason,
                     p.id AS profile_id, p.slug, p.display_name, p.provider_type, p.city, p.region, p.is_published, p.published_at,
                     p.removed_at, p.primary_image, p.cover_image,
-                    v.verification_status, v.identity_status, v.rejection_reason, v.submitted_for_review_at
+                    v.verification_status, v.identity_status, v.rejection_reason, v.submitted_for_review_at,
+                    v.verification_choice, v.business_status, v.identity_submitted_at, v.selfie_submitted_at
              FROM users u
              LEFT JOIN provider_profiles p ON p.user_id = u.id
              LEFT JOIN provider_verification v ON v.provider_user_id = u.id
@@ -553,9 +554,39 @@ function ds_admin_provider_detail(string $userId): void
         'cover_image' => $profile['cover_image'] ?? null,
         'verification_status' => $verification['verification_status'] ?? 'unverified',
         'identity_status' => $verification['identity_status'] ?? 'not_submitted',
+        'verification_choice' => $verification['verification_choice'] ?? null,
+        'business_status' => $verification['business_status'] ?? null,
         'rejection_reason' => $verification['rejection_reason'] ?? null,
         'submitted_for_review_at' => $verification['submitted_for_review_at'] ?? null,
+        'identity_submitted_at' => $verification['identity_submitted_at'] ?? null,
+        'selfie_submitted_at' => $verification['selfie_submitted_at'] ?? null,
     ];
+
+    $verificationSummary = ds_provider_verification_summary($verification ?? [], $userId);
+    $identityDocuments = [];
+    if (ds_table_exists('provider_identity_documents')) {
+        try {
+            $docStmt = ds_pdo()->prepare(
+                'SELECT id, id_type, id_image_path, selfie_image_path, status, verification_choice, is_current, created_at
+                 FROM provider_identity_documents WHERE provider_user_id = ?
+                 ORDER BY is_current DESC, created_at DESC, id DESC LIMIT 10'
+            );
+            $docStmt->execute([$userId]);
+            foreach ($docStmt->fetchAll() ?: [] as $doc) {
+                $identityDocuments[] = [
+                    'id' => (string) $doc['id'],
+                    'idType' => (string) $doc['id_type'],
+                    'status' => (string) $doc['status'],
+                    'hasId' => trim((string) ($doc['id_image_path'] ?? '')) !== '',
+                    'hasSelfie' => trim((string) ($doc['selfie_image_path'] ?? '')) !== '',
+                    'verificationChoice' => $doc['verification_choice'] ?? null,
+                    'createdAt' => $doc['created_at'],
+                ];
+            }
+        } catch (Throwable $e) {
+            $identityDocuments = [];
+        }
+    }
 
     ds_success([
         'provider' => ds_admin_provider_list_dto($listRow),
@@ -588,12 +619,20 @@ function ds_admin_provider_detail(string $userId): void
             'removedAt' => $profile['removed_at'] ?? null,
         ] : null,
         'verification' => [
-            'status' => (string) ($verification['verification_status'] ?? 'unverified'),
-            'identityStatus' => (string) ($verification['identity_status'] ?? 'not_submitted'),
-            'rejectionReason' => $verification['rejection_reason'] ?? null,
-            'adminNotes' => $verification['admin_notes'] ?? null,
-            'submittedAt' => $verification['submitted_for_review_at'] ?? null,
-            'verifiedAt' => $verification['verified_at'] ?? null,
+            'status' => $verificationSummary['status'],
+            'identityStatus' => $verificationSummary['identityStatus'],
+            'verificationChoice' => $verificationSummary['verificationChoice'],
+            'businessStatus' => $verificationSummary['businessStatus'],
+            'rejectionReason' => $verificationSummary['rejectionReason'],
+            'adminNotes' => $verificationSummary['adminNotes'],
+            'submittedAt' => $verificationSummary['submittedAt'],
+            'identitySubmittedAt' => $verificationSummary['identitySubmittedAt'],
+            'selfieSubmittedAt' => $verificationSummary['selfieSubmittedAt'],
+            'hasIdDocument' => $verificationSummary['hasIdDocument'],
+            'hasSelfie' => $verificationSummary['hasSelfie'],
+            'verifiedAt' => $verificationSummary['verifiedAt'],
+            'identityDocuments' => $identityDocuments,
+            'reviewHistory' => ds_provider_review_history($userId),
         ],
         'images' => $images,
         'services' => $services,

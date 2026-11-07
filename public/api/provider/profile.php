@@ -76,6 +76,9 @@ if ($method === 'GET') {
     ds_success([
         'profile' => ds_profile_row_to_api($profile),
         'verificationStatus' => $verification['verification_status'] ?? 'unverified',
+        'verification' => $verification
+            ? ds_provider_verification_summary($verification, $user['id'])
+            : null,
     ]);
 }
 

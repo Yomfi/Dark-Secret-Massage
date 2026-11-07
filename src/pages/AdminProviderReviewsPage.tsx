@@ -31,6 +31,21 @@ type Row = {
   paymentStatus: string;
   membershipFree?: boolean;
   verificationStatus: string;
+  verificationChoice?: string | null;
+  businessStatus?: string | null;
+  hasIdDocument?: boolean;
+  hasSelfie?: boolean;
+  latestDocumentId?: string | null;
+  reviewHistory?: Array<{
+    action: string;
+    createdAt: string | null;
+    actorUserId: string | null;
+    from: string | null;
+    to: string | null;
+    reason: string | null;
+    notes: string | null;
+    choice: string | null;
+  }>;
   canDecide: boolean;
   canReopen: boolean;
   submittedAt?: string | null;
@@ -77,6 +92,17 @@ const initials = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return 'MS';
   return `${parts[0][0]}${parts[1]?.[0] ?? ''}`.toUpperCase();
+};
+
+const choiceLabel = (choice?: string | null) => {
+  if (choice === 'verify_identity') return 'Verify My Identity';
+  if (choice === 'verify_later') return 'Verify Later';
+  return 'Not recorded';
+};
+
+const statusLabel = (status?: string | null) => {
+  if (!status) return 'Not submitted';
+  return status.replace(/_/g, ' ');
 };
 
 const Inner: React.FC = () => {
@@ -334,10 +360,63 @@ const Inner: React.FC = () => {
                 </div>
               </dl>
 
+              <dl className="mt-3 grid gap-2 rounded-[12px] border border-[#efe8dc] bg-[#faf7f2] p-3 text-[12.5px] text-[#6f675c] sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Verification choice</dt>
+                  <dd>{choiceLabel(row.verificationChoice)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Government ID</dt>
+                  <dd>
+                    {row.hasIdDocument ? 'Uploaded' : 'Not uploaded'}
+                    {row.hasIdDocument && row.latestDocumentId ? (
+                      <a
+                        className="ml-2 font-semibold text-[#8F6D35] hover:underline"
+                        href={`/api/admin/documents.php?id=${encodeURIComponent(row.latestDocumentId)}&side=id`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View ID
+                      </a>
+                    ) : null}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Selfie</dt>
+                  <dd>
+                    {row.hasSelfie ? 'Uploaded' : 'Not uploaded'}
+                    {row.hasSelfie && row.latestDocumentId ? (
+                      <a
+                        className="ml-2 font-semibold text-[#8F6D35] hover:underline"
+                        href={`/api/admin/documents.php?id=${encodeURIComponent(row.latestDocumentId)}&side=selfie`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View selfie
+                      </a>
+                    ) : null}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">
+                    {row.providerType === 'agency' ? 'Business verification' : 'Identity status'}
+                  </dt>
+                  <dd className="capitalize">
+                    {row.providerType === 'agency'
+                      ? statusLabel(row.businessStatus)
+                      : statusLabel(row.identityStatus)}
+                  </dd>
+                </div>
+              </dl>
+
               {!row.canDecide ? (
                 <div className="mt-4 rounded-[12px] border border-[#efe8dc] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
                   <p>
-                    {row.verificationStatus === 'verified' ? 'Approved' : 'Rejected'}
+                    {row.verificationStatus === 'verified'
+                      ? 'Approved'
+                      : row.verificationStatus === 'changes_requested'
+                        ? 'Changes requested'
+                        : 'Rejected'}
                     {row.decidedBy ? ` by ${row.decidedBy}` : ''}
                     {row.decidedAt ? ` on ${formatScheduledDate(row.decidedAt)}` : ''}.
                   </p>
@@ -346,13 +425,31 @@ const Inner: React.FC = () => {
                 </div>
               ) : null}
 
+              {row.reviewHistory && row.reviewHistory.length > 0 ? (
+                <details className="mt-3 rounded-[12px] border border-[#efe8dc] bg-white px-3 py-2 text-[12.5px] text-[#6f675c]">
+                  <summary className="cursor-pointer font-semibold text-[#3f3a33]">Verification history</summary>
+                  <ul className="mt-2 space-y-1.5">
+                    {row.reviewHistory.map((entry, index) => (
+                      <li key={`${entry.action}-${entry.createdAt}-${index}`}>
+                        <span className="font-medium text-[#3f3a33]">{entry.action.replace(/^provider\./, '').replace(/_/g, ' ')}</span>
+                        {entry.from || entry.to ? ` · ${statusLabel(entry.from)} → ${statusLabel(entry.to)}` : ''}
+                        {entry.choice ? ` · ${choiceLabel(entry.choice)}` : ''}
+                        {entry.createdAt ? ` · ${formatScheduledDate(entry.createdAt)}` : ''}
+                        {entry.reason ? ` · ${entry.reason}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+
               <div className="mt-4 flex flex-wrap gap-2">
                 {canWrite && row.canDecide ? (
                   <>
                     <button
                       type="button"
                       className={adminBtnClass}
-                      disabled={busy === row.providerUserId}
+                      disabled={busy === row.providerUserId || !row.hasIdDocument || row.verificationChoice === 'verify_later'}
+                      title={!row.hasIdDocument ? 'A government ID is required before approval' : undefined}
                       onClick={() => openDecision(row, 'approve')}
                     >
                       Approve

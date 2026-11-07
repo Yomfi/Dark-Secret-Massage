@@ -129,6 +129,7 @@ if (ds_table_exists('users')) {
 echo 'preserve_before: ' . json_encode(['counts' => $preserve, 'roles' => $roleCounts], JSON_UNESCAPED_SLASHES) . "\n";
 
 ds_cms_migrate();
+ds_provider_verification_schema();
 
 $problems = [];
 if (!ds_cms_ready()) {
@@ -171,6 +172,20 @@ if (ds_table_exists('users') && !ds_column_exists('users', 'auth_epoch')) {
 }
 if (ds_table_exists('provider_profiles') && !ds_column_exists('provider_profiles', 'removed_at')) {
     $problems[] = 'provider_profiles.removed_at is missing';
+}
+if (ds_table_exists('provider_verification')) {
+    foreach (['verification_choice', 'business_status', 'identity_submitted_at', 'selfie_submitted_at'] as $column) {
+        if (!ds_column_exists('provider_verification', $column)) {
+            $problems[] = "provider_verification.{$column} is missing";
+        }
+    }
+    echo "provider_verification optional identity columns: " . ($problems === [] ? 'ok' : 'check output') . "\n";
+}
+if (ds_table_exists('provider_identity_documents') && !ds_column_exists('provider_identity_documents', 'verification_choice')) {
+    $problems[] = 'provider_identity_documents.verification_choice is missing';
+}
+if (ds_table_exists('provider_identity_documents') && !ds_column_exists('provider_identity_documents', 'is_current')) {
+    $problems[] = 'provider_identity_documents.is_current is missing';
 }
 
 if (ds_table_exists('media_assets') && !ds_column_exists('media_assets', 'alt_text')) {

@@ -46,7 +46,18 @@ type ProviderDetail = {
     coverImage: string | null;
     removeReason?: string | null;
   } | null;
-  verification: { status: string; identityStatus: string; rejectionReason: string | null; adminNotes: string | null };
+  verification: {
+    status: string;
+    identityStatus: string;
+    verificationChoice?: string | null;
+    businessStatus?: string | null;
+    rejectionReason: string | null;
+    adminNotes: string | null;
+    hasIdDocument?: boolean;
+    hasSelfie?: boolean;
+    identityDocuments?: Array<{ id: string; idType: string; status: string; hasId: boolean; hasSelfie: boolean; createdAt: string | null }>;
+    reviewHistory?: Array<{ action: string; createdAt: string | null; from: string | null; to: string | null; reason: string | null; choice: string | null }>;
+  };
   images: Array<{
     id: string; kind: string; url: string; thumbUrl: string; altText: string;
     moderationStatus: string; moderationReason?: string | null;
@@ -396,10 +407,55 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
         ) : null}
 
         {tab === 'Verification' ? (
-          <div className="space-y-2 text-[13px]">
+          <div className="space-y-3 text-[13px]">
             <p>Status: <strong className="capitalize">{detail.verification.status.replace(/_/g, ' ')}</strong></p>
             <p>Identity: <strong className="capitalize">{detail.verification.identityStatus.replace(/_/g, ' ')}</strong></p>
+            <p>
+              Choice:{' '}
+              <strong>
+                {detail.verification.verificationChoice === 'verify_identity'
+                  ? 'Verify My Identity'
+                  : detail.verification.verificationChoice === 'verify_later'
+                    ? 'Verify Later'
+                    : 'Not recorded'}
+              </strong>
+            </p>
+            {p.kind === 'agency' ? (
+              <p>Business verification: <strong className="capitalize">{(detail.verification.businessStatus || 'not submitted').replace(/_/g, ' ')}</strong></p>
+            ) : null}
+            <p>
+              Documents: {detail.verification.hasIdDocument ? 'ID uploaded' : 'No ID'} ·{' '}
+              {detail.verification.hasSelfie ? 'Selfie uploaded' : 'No selfie'}
+            </p>
+            {detail.verification.identityDocuments?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {detail.verification.identityDocuments.slice(0, 3).map((doc) => (
+                  <span key={doc.id} className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#efe8dc] px-2.5 py-1 text-[11.5px]">
+                    {doc.hasId ? (
+                      <a className="font-semibold text-[#8F6D35] hover:underline" href={`/api/admin/documents.php?id=${encodeURIComponent(doc.id)}&side=id`} target="_blank" rel="noreferrer">View ID</a>
+                    ) : null}
+                    {doc.hasSelfie ? (
+                      <a className="font-semibold text-[#8F6D35] hover:underline" href={`/api/admin/documents.php?id=${encodeURIComponent(doc.id)}&side=selfie`} target="_blank" rel="noreferrer">View selfie</a>
+                    ) : null}
+                  </span>
+                ))}
+              </div>
+            ) : null}
             {detail.verification.rejectionReason ? <p className="text-[#6f675c]">{detail.verification.rejectionReason}</p> : null}
+            {detail.verification.reviewHistory?.length ? (
+              <details className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12px] text-[#6f675c]">
+                <summary className="cursor-pointer font-semibold text-[#3f3a33]">Verification history</summary>
+                <ul className="mt-2 space-y-1">
+                  {detail.verification.reviewHistory.slice(0, 10).map((entry, index) => (
+                    <li key={`${entry.action}-${entry.createdAt}-${index}`}>
+                      {entry.action.replace(/^provider\./, '').replace(/_/g, ' ')}
+                      {entry.from || entry.to ? ` · ${entry.from ?? 'not submitted'} → ${entry.to ?? 'not submitted'}` : ''}
+                      {entry.reason ? ` · ${entry.reason}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
             <Link to="/admin/provider-reviews" className={`${adminBtnGhostClass} mt-2 inline-flex`}>Open review queue</Link>
             <p className="text-[12px] text-[#6f675c]">Publishing or restoring a profile never grants verification.</p>
           </div>

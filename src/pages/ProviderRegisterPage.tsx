@@ -1,7 +1,7 @@
 import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Check, UserRound, X } from 'lucide-react';
+import { BadgeCheck, Building2, Check, Clock3, UserRound, X } from 'lucide-react';
 import { authApi, providerApi } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { MARKETPLACE_REGIONS } from '../data/locations';
@@ -261,6 +261,7 @@ export const ProviderRegisterPage: React.FC = () => {
   });
 
   const [identity, setIdentity] = useState({
+    choice: '' as '' | 'verify_identity' | 'verify_later',
     idType: 'Ghana Card',
     idNumber: '',
     idImage: null as File | null,
@@ -376,6 +377,9 @@ export const ProviderRegisterPage: React.FC = () => {
           navigate('/provider/dashboard', { replace: true });
           return;
         }
+        if (data.verification.verificationChoice) {
+          setIdentity((prev) => ({ ...prev, choice: data.verification.verificationChoice ?? '' }));
+        }
         if (!data.progress.emailVerified) {
           setStep('email');
           return;
@@ -385,6 +389,16 @@ export const ProviderRegisterPage: React.FC = () => {
           if (cancelled) return;
           applySavedProfile(saved?.profile ?? null);
           setStep('profile');
+          return;
+        }
+        // Verify Later ends onboarding after the selfie. The provider stays
+        // Unverified and can add an ID later from the workspace.
+        if (
+          data.verification.verificationChoice === 'verify_later' &&
+          data.verification.hasSelfie &&
+          data.verification.status === 'unverified'
+        ) {
+          navigate('/provider/dashboard', { replace: true });
           return;
         }
         if (!data.progress.identitySubmitted) {
@@ -673,22 +687,37 @@ export const ProviderRegisterPage: React.FC = () => {
   const onSubmitIdentity = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!identity.idImage || !identity.selfieImage) {
+    if (!identity.choice) {
+      setError('Choose Verify My Identity or Verify Later.');
+      return;
+    }
+    if (!identity.selfieImage) {
+      setError('Upload a selfie / live photo.');
+      return;
+    }
+    if (identity.choice === 'verify_identity' && !identity.idImage) {
       setError(
         providerType === 'agency'
-          ? 'Upload contact person ID and a selfie / live photo.'
-          : 'Upload both a government ID image and a selfie.',
+          ? 'Upload the contact person’s government ID image.'
+          : 'Upload a government ID image.',
       );
       return;
     }
     setLoading(true);
     try {
       const form = new FormData();
-      form.append('idType', identity.idType);
-      form.append('idNumber', identity.idNumber);
-      form.append('idImage', identity.idImage);
+      form.append('choice', identity.choice);
+      if (identity.choice === 'verify_identity') {
+        form.append('idType', identity.idType);
+        form.append('idNumber', identity.idNumber);
+        form.append('idImage', identity.idImage as File);
+      }
       form.append('selfieImage', identity.selfieImage);
       await providerApi.submitIdentity(form);
+      if (identity.choice === 'verify_later') {
+        navigate('/provider/dashboard', { replace: true });
+        return;
+      }
       const pay = await providerApi.getPayment();
       setMembership({
         feeEnabled: pay.feeEnabled,
@@ -1667,48 +1696,93 @@ export const ProviderRegisterPage: React.FC = () => {
                 ) : null}
 
                 {step === 'identity' ? (
-                  <form onSubmit={onSubmitIdentity} className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <SelectField
-                        label="ID type"
-                        value={identity.idType}
-                        onChange={(e) => setIdentity({ ...identity, idType: e.target.value })}
+                  <form onSubmit={onSubmitIdentity} className="space-y-5">
+                    <div>
+                      <p className="mb-2 text-[13px] font-medium text-zinc-200">
+                        How would you like to verify?
+                      </p>
+                      <div
+                        role="radiogroup"
+                        aria-label="Identity verification choice"
+                        className="grid gap-3 sm:grid-cols-2"
                       >
-                        <option>Ghana Card</option>
-                        <option>Passport</option>
-                        <option>Driver Licence</option>
-                        <option>Voter ID</option>
-                      </SelectField>
-                      <TextField
-                        label="ID number"
-                        hint="Optional"
-                        value={identity.idNumber}
-                        onChange={(e) => setIdentity({ ...identity, idNumber: e.target.value })}
-                      />
+                        <SelectableCard
+                          selected={identity.choice === 'verify_identity'}
+                          title="Verify My Identity"
+                          description="Upload a government ID and selfie now. An admin reviews them before any badge is granted."
+                          icon={<BadgeCheck className="h-5 w-5" aria-hidden />}
+                          onClick={() => setIdentity({ ...identity, choice: 'verify_identity' })}
+                        />
+                        <SelectableCard
+                          selected={identity.choice === 'verify_later'}
+                          title="Verify Later"
+                          description="Upload a selfie only. Your profile stays Unverified, and you can add your ID from your workspace later."
+                          icon={<Clock3 className="h-5 w-5" aria-hidden />}
+                          onClick={() => setIdentity({ ...identity, choice: 'verify_later' })}
+                        />
+                      </div>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    {identity.choice === 'verify_identity' ? (
+                      <>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <SelectField
+                            label="ID type"
+                            value={identity.idType}
+                            onChange={(e) => setIdentity({ ...identity, idType: e.target.value })}
+                          >
+                            <option>Ghana Card</option>
+                            <option>Passport</option>
+                            <option>Driver Licence</option>
+                            <option>Voter ID</option>
+                          </SelectField>
+                          <TextField
+                            label="ID number"
+                            hint="Optional"
+                            value={identity.idNumber}
+                            onChange={(e) => setIdentity({ ...identity, idNumber: e.target.value })}
+                          />
+                        </div>
+                        <FileField
+                          label="Government ID image"
+                          required
+                          file={identity.idImage}
+                          onChange={(file) => setIdentity({ ...identity, idImage: file })}
+                        />
+                      </>
+                    ) : null}
+
+                    {identity.choice === 'verify_later' ? (
+                      <Alert variant="info">
+                        Your profile will show as Unverified. The selfie is stored privately and is not used
+                        as your public profile photo. You can add a government ID from your provider
+                        workspace at any time.
+                      </Alert>
+                    ) : null}
+
+                    {identity.choice ? (
                       <FileField
-                        label="Government ID image"
-                        required
-                        file={identity.idImage}
-                        onChange={(file) => setIdentity({ ...identity, idImage: file })}
-                      />
-                      <FileField
-                        label="Selfie / live photo"
+                        label={identity.choice === 'verify_later' ? 'Selfie / live photo (required)' : 'Selfie / live photo'}
                         required
                         file={identity.selfieImage}
                         onChange={(file) => setIdentity({ ...identity, selfieImage: file })}
                       />
-                    </div>
+                    ) : null}
 
                     <p className="text-[12.5px] leading-relaxed text-zinc-500">
-                      JPG, PNG or WebP. Documents are visible only to the admin review team.
+                      JPG, PNG or WebP. Documents are stored privately and visible only to the admin review
+                      team. Uploading does not grant a Verified badge.
                     </p>
 
                     <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
-                      <Button type="submit" loading={loading} loadingLabel="Submitting" className="w-full sm:w-auto">
-                        Submit identity
+                      <Button
+                        type="submit"
+                        loading={loading}
+                        loadingLabel="Submitting"
+                        disabled={!identity.choice}
+                        className="w-full sm:w-auto"
+                      >
+                        {identity.choice === 'verify_later' ? 'Save selfie and continue' : 'Submit identity'}
                       </Button>
                     </div>
                   </form>

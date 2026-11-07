@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 ds_require_method('POST');
+ds_require_same_origin();
 ds_rate_limit('provider_submit_review', 10, 15 * 60);
 
 $user = ds_require_provider();
@@ -14,6 +15,21 @@ if (!ds_table_exists('provider_verification')) {
 
 $verification = ds_ensure_provider_verification($user['id']);
 $profile = ds_provider_profile_by_user($user['id']);
+
+$currentStatus = (string) ($verification['verification_status'] ?? 'unverified');
+if (in_array($currentStatus, ['pending_review', 'verified'], true)) {
+    ds_error(409, 'ALREADY_SUBMITTED', 'Your application is already with the review team.');
+}
+
+$choice = (string) ($verification['verification_choice'] ?? 'verify_identity');
+if ($choice === 'verify_later') {
+    ds_error(409, 'IDENTITY_REQUIRED', 'Upload a government ID before submitting for identity review.');
+}
+
+$docs = ds_provider_identity_summary($user['id']);
+if (!$docs['hasIdDocument'] || !$docs['hasSelfie']) {
+    ds_error(400, 'INCOMPLETE', 'Upload your government ID and selfie before admin review.');
+}
 
 // Email verification is required; a phone number is contact information, not a gate.
 $emailOk = !empty($user['email_verified_at']) || !empty($verification['email_verified_at']);
@@ -31,11 +47,26 @@ if (!$feeOk) {
 }
 
 $now = ds_now_sql();
+$isAgency = (string) ($profile['provider_type'] ?? 'individual') === 'agency';
 ds_pdo()->prepare(
     'UPDATE provider_verification
-     SET verification_status = \'pending_review\', submitted_for_review_at = ?, updated_at = ?
+     SET verification_status = \'pending_review\',
+         verification_choice = \'verify_identity\',
+         submitted_for_review_at = ?, updated_at = ?
      WHERE provider_user_id = ?'
 )->execute([$now, $now, $user['id']]);
+if ($isAgency) {
+    ds_pdo()->prepare(
+        "UPDATE provider_verification SET business_status = 'pending', updated_at = ?
+         WHERE provider_user_id = ? AND (business_status IS NULL OR business_status IN ('not_submitted','changes_requested','rejected'))"
+    )->execute([$now, $user['id']]);
+}
+
+ds_audit('provider.review_submitted', 'provider', $user['id'], [
+    'choice' => 'verify_identity',
+    'hasId' => true,
+    'hasSelfie' => true,
+], $user['id']);
 
 // Operational notification to info@. The submission itself must not fail if mail fails.
 $notice = ds_send_template(

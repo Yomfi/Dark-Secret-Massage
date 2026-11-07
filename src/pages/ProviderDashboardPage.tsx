@@ -1,7 +1,7 @@
 import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Check, Circle } from 'lucide-react';
+import { BadgeCheck, Check, Circle, Clock3, ShieldAlert } from 'lucide-react';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { providerApi, type ProviderDashboardDto } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
@@ -112,13 +112,34 @@ const ProviderDashboardInner: React.FC = () => {
       ) : (
         <div className={`${surfaceClass('mt-6 p-5')}`}>
           <p className="font-medium text-zinc-100">
-            Complete verification to receive the Massager Studio verified badge.
+            Your profile is currently Unverified. Complete identity verification to receive a Verified badge after approval.
           </p>
-          <p className="mt-1 text-sm text-emerald-300">Membership is currently free.</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            Status: <span className="text-zinc-300">{data.verification.status}</span>
-            {data.verification.rejectionReason ? ` — ${data.verification.rejectionReason}` : ''}
-          </p>
+          {data.verification.status === 'pending_review' ? (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2.5 text-sm text-amber-200">
+              <Clock3 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>Pending Verification — your documents are with the admin review team.</span>
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Link to="/provider/workspace?tab=verification" className={buttonClass()}>
+                Verify My Identity
+              </Link>
+              {data.verification.status === 'rejected' || data.verification.status === 'changes_requested' ? (
+                <span className="inline-flex items-center gap-1.5 text-[12.5px] text-amber-300">
+                  <ShieldAlert className="h-3.5 w-3.5" aria-hidden />
+                  {data.verification.status === 'changes_requested' ? 'Changes requested' : 'Resubmission available'}
+                </span>
+              ) : null}
+            </div>
+          )}
+          {data.verification.verificationChoice === 'verify_later' ? (
+            <p className="mt-2 text-sm text-zinc-500">
+              You chose Verify Later. Your selfie is on file; add a government ID whenever you are ready.
+            </p>
+          ) : null}
+          {data.verification.rejectionReason ? (
+            <p className="mt-2 text-sm text-zinc-400">Reason: {data.verification.rejectionReason}</p>
+          ) : null}
         </div>
       )}
 

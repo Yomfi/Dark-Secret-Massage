@@ -217,6 +217,12 @@ export type ProviderDashboardDto = {
     verifiedAt: string | null;
     rejectionReason: string | null;
     submittedForReviewAt: string | null;
+    verificationChoice?: 'verify_identity' | 'verify_later' | null;
+    businessStatus?: string | null;
+    hasIdDocument?: boolean;
+    hasSelfie?: boolean;
+    identitySubmittedAt?: string | null;
+    selfieSubmittedAt?: string | null;
   };
   membership?: {
     feeEnabled: boolean;
@@ -289,7 +295,13 @@ export const providerApi = {
         payload?.error?.message || 'Identity upload failed.',
       );
     }
-    return payload.data as { submitted: boolean; identityStatus: string; nextStep: string };
+    return payload.data as {
+      submitted: boolean;
+      verificationChoice: string;
+      identityStatus: string;
+      verificationStatus: string;
+      nextStep: string;
+    };
   },
   getPayment: () =>
     apiRequest<{

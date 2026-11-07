@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiRequest } from '../../lib/api';
+import { apiRequest, providerApi } from '../../lib/api';
 import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { WorkspaceShell, type WorkspaceNavItem } from '../../components/workspace/WorkspaceShell';
@@ -14,6 +14,16 @@ type ProfilePayload = {
     publicPhone: boolean; publicWhatsapp: boolean; completed: boolean;
   } | null;
   verificationStatus: string;
+  verification: {
+    status: string;
+    identityStatus: string;
+    verificationChoice: 'verify_identity' | 'verify_later' | null;
+    businessStatus: string | null;
+    rejectionReason: string | null;
+    adminNotes: string | null;
+    hasIdDocument: boolean;
+    hasSelfie: boolean;
+  } | null;
 };
 
 type Service = {
@@ -38,7 +48,9 @@ const td = 'px-3 py-3 align-top text-[13px]';
 
 export const ProviderWorkspacePage: React.FC = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState(() =>
+    new URLSearchParams(window.location.search).get('tab') === 'verification' ? 'verification' : 'overview',
+  );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,6 +62,13 @@ export const ProviderWorkspacePage: React.FC = () => {
   const [isAgency, setIsAgency] = useState(false);
   const [form, setForm] = useState({ displayName: '', city: '', about: '', serviceArea: '', workingDays: '', workingHours: '', startingPrice: 0 });
   const [serviceForm, setServiceForm] = useState({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false });
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyForm, setVerifyForm] = useState({
+    idType: 'Ghana Card',
+    idNumber: '',
+    idImage: null as File | null,
+    selfieImage: null as File | null,
+  });
 
   const run = useCallback(async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -103,12 +122,46 @@ export const ProviderWorkspacePage: React.FC = () => {
   ], [isAgency]);
 
   const verification = profileData?.verificationStatus ?? 'unverified';
+  const verificationInfo = profileData?.verification;
+  const verificationLabel =
+    verification === 'verified'
+      ? 'Verified'
+      : verification === 'pending_review'
+        ? 'Pending Verification'
+        : verification === 'changes_requested'
+          ? 'Changes requested'
+          : verification === 'rejected'
+            ? 'Rejected'
+            : 'Unverified';
   const membershipFree = true;
 
   const act = (fn: () => Promise<void>, message: string) =>
     run(async () => {
       await fn();
       setNotice(message);
+      await load();
+    });
+
+  const submitVerification = () =>
+    run(async () => {
+      if (!verifyForm.idImage || !verifyForm.selfieImage) {
+        throw new Error('Upload a government ID image and a selfie / live photo.');
+      }
+      const form = new FormData();
+      form.append('choice', 'verify_identity');
+      form.append('idType', verifyForm.idType);
+      form.append('idNumber', verifyForm.idNumber);
+      form.append('idImage', verifyForm.idImage);
+      form.append('selfieImage', verifyForm.selfieImage);
+      await providerApi.submitIdentity(form);
+      try {
+        await providerApi.submitReview();
+        setNotice('Identity submitted. Your application is now Pending Verification.');
+      } catch {
+        setNotice('Documents uploaded. Complete your profile, then submit for review from the dashboard.');
+      }
+      setVerifyOpen(false);
+      setVerifyForm({ idType: 'Ghana Card', idNumber: '', idImage: null, selfieImage: null });
       await load();
     });
 
@@ -338,13 +391,125 @@ export const ProviderWorkspacePage: React.FC = () => {
       {tab === 'verification' ? (
         <div className="grid gap-4 lg:grid-cols-2">
           <section className={card}>
-            <h2 className="text-[15px] font-semibold">Review status</h2>
-            <p className="mt-2 text-[13px] capitalize">{verification.replace('_', ' ')}</p>
-            <p className="mt-2 text-[12.5px] leading-relaxed text-[#6b6252]">
-              Identity documents are stored privately. Only authorised admins can open them, and every view is
-              recorded in the audit log.
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-[15px] font-semibold">Identity verification</h2>
+              <span className={`rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${
+                verification === 'verified'
+                  ? 'bg-emerald-50 text-emerald-800'
+                  : verification === 'pending_review'
+                    ? 'bg-amber-50 text-amber-800'
+                    : verification === 'rejected'
+                      ? 'bg-red-50 text-red-800'
+                      : 'bg-[#f2eee4] text-[#6b6252]'
+              }`}>
+                {verificationLabel}
+              </span>
+            </div>
+
+            {verification === 'verified' ? (
+              <p className="mt-3 text-[13px] leading-relaxed text-[#6b6252]">
+                Your identity has been approved. The Verified badge appears beside your name on public profiles.
+              </p>
+            ) : verification === 'pending_review' ? (
+              <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900">
+                Pending Verification. Your documents are with the admin review team. You will stay Unverified publicly until approval.
+              </p>
+            ) : (
+              <>
+                <p className="mt-3 text-[13px] leading-relaxed text-[#6b6252]">
+                  Your profile is currently Unverified. Complete identity verification to receive a Verified badge after approval.
+                </p>
+                {verificationInfo?.verificationChoice === 'verify_later' ? (
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#6b6252]">
+                    You chose Verify Later. Your selfie is on file; add a government ID whenever you are ready.
+                  </p>
+                ) : null}
+                {verificationInfo?.rejectionReason ? (
+                  <p className="mt-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-[12.5px] leading-relaxed text-red-800">
+                    {verification === 'changes_requested' ? 'Changes requested: ' : 'Reason: '}
+                    {verificationInfo.rejectionReason}
+                  </p>
+                ) : null}
+                {verification === 'rejected' || verification === 'changes_requested' ? (
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#6b6252]">
+                    Upload a new government ID and selfie to resubmit. You do not need to repeat registration.
+                  </p>
+                ) : null}
+
+                {!verifyOpen ? (
+                  <button type="button" className={`${btn} mt-4`} onClick={() => setVerifyOpen(true)} disabled={busy}>
+                    Verify My Identity
+                  </button>
+                ) : (
+                  <form
+                    className="mt-4 space-y-3"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      submitVerification();
+                    }}
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block text-[12px] font-medium text-[#6b6252]">
+                        ID type
+                        <select
+                          className={`${input} mt-1`}
+                          value={verifyForm.idType}
+                          onChange={(e) => setVerifyForm({ ...verifyForm, idType: e.target.value })}
+                        >
+                          <option>Ghana Card</option>
+                          <option>Passport</option>
+                          <option>Driver Licence</option>
+                          <option>Voter ID</option>
+                        </select>
+                      </label>
+                      <label className="block text-[12px] font-medium text-[#6b6252]">
+                        ID number (optional)
+                        <input
+                          className={`${input} mt-1`}
+                          value={verifyForm.idNumber}
+                          onChange={(e) => setVerifyForm({ ...verifyForm, idNumber: e.target.value })}
+                        />
+                      </label>
+                    </div>
+                    <label className="block text-[12px] font-medium text-[#6b6252]">
+                      Government ID image
+                      <input
+                        className={`${input} mt-1 py-2.5`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        required
+                        onChange={(e) => setVerifyForm({ ...verifyForm, idImage: e.target.files?.[0] ?? null })}
+                      />
+                    </label>
+                    <label className="block text-[12px] font-medium text-[#6b6252]">
+                      Selfie / live photo
+                      <input
+                        className={`${input} mt-1 py-2.5`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        required
+                        onChange={(e) => setVerifyForm({ ...verifyForm, selfieImage: e.target.files?.[0] ?? null })}
+                      />
+                    </label>
+                    <p className="text-[11.5px] leading-relaxed text-[#6b6252]">
+                      JPG, PNG or WebP under 5MB. These documents are private, separate from your gallery, and visible only to authorised admins. Uploading does not grant a Verified badge.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button className={btn} type="submit" disabled={busy}>
+                        {busy ? 'Submitting…' : 'Submit for verification'}
+                      </button>
+                      <button className={btnGhost} type="button" onClick={() => setVerifyOpen(false)} disabled={busy}>
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+
+            <p className="mt-4 text-[12px] leading-relaxed text-[#6b6252]">
+              Identity documents are stored privately. Only authorised admins can open them, and every view is recorded in the audit log.
             </p>
-            <Link to="/provider/dashboard" className={`${btn} mt-4`}>Open verification steps</Link>
           </section>
           <section className={card}>
             <h2 className="text-[15px] font-semibold">Membership</h2>

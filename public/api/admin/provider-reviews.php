@@ -64,12 +64,26 @@ if ($method === 'GET') {
         $docs = [];
         if (ds_table_exists('provider_identity_documents')) {
             $docStmt = ds_pdo()->prepare(
-                'SELECT id, id_type, status, created_at FROM provider_identity_documents
-                 WHERE provider_user_id = ? ORDER BY created_at DESC LIMIT 5'
+                'SELECT id, id_type, id_image_path, selfie_image_path, status, verification_choice, is_current, created_at
+                 FROM provider_identity_documents
+                 WHERE provider_user_id = ? ORDER BY is_current DESC, created_at DESC, id DESC LIMIT 5'
             );
             $docStmt->execute([$row['provider_user_id']]);
             $docs = $docStmt->fetchAll() ?: [];
         }
+
+        $identityDocuments = array_map(static function (array $d): array {
+            return [
+                'id' => (string) $d['id'],
+                'idType' => (string) $d['id_type'],
+                'status' => (string) $d['status'],
+                'createdAt' => $d['created_at'],
+                'hasId' => trim((string) ($d['id_image_path'] ?? '')) !== '',
+                'hasSelfie' => trim((string) ($d['selfie_image_path'] ?? '')) !== '',
+                'verificationChoice' => $d['verification_choice'] ?? null,
+                // File paths intentionally omitted from list payload.
+            ];
+        }, $docs);
 
         $status = (string) $row['verification_status'];
         $decidedName = trim((string) ($row['decided_first_name'] ?? '') . ' ' . (string) ($row['decided_last_name'] ?? ''));
@@ -92,6 +106,13 @@ if ($method === 'GET') {
             'membershipFeeEnabled' => ds_membership_fee_enabled(),
             'membershipFree' => !ds_membership_fee_enabled(),
             'verificationStatus' => $status,
+            'verificationChoice' => $row['verification_choice'] ?? ($identityDocuments[0]['verificationChoice'] ?? null),
+            'businessStatus' => $row['business_status'] ?? null,
+            'hasIdDocument' => (bool) ($identityDocuments[0]['hasId'] ?? false),
+            'hasSelfie' => (bool) ($identityDocuments[0]['hasSelfie'] ?? false),
+            'latestDocumentId' => $identityDocuments[0]['id'] ?? null,
+            'identitySubmittedAt' => $row['identity_submitted_at'] ?? null,
+            'selfieSubmittedAt' => $row['selfie_submitted_at'] ?? null,
             'canDecide' => $status === 'pending_review',
             'canReopen' => in_array($status, DS_REVIEW_DECIDED, true),
             'submittedAt' => $row['submitted_for_review_at'] ?? $row['created_at'],
@@ -99,15 +120,8 @@ if ($method === 'GET') {
             'decidedBy' => $decidedName !== '' ? $decidedName : null,
             'adminNotes' => $row['admin_notes'],
             'rejectionReason' => $row['rejection_reason'],
-            'identityDocuments' => array_map(static function (array $d): array {
-                return [
-                    'id' => (string) $d['id'],
-                    'idType' => (string) $d['id_type'],
-                    'status' => (string) $d['status'],
-                    'createdAt' => $d['created_at'],
-                    // File paths intentionally omitted from list payload.
-                ];
-            }, $docs),
+            'identityDocuments' => $identityDocuments,
+            'reviewHistory' => ds_provider_review_history((string) $row['provider_user_id']),
         ];
     }, $rows);
 
@@ -151,6 +165,10 @@ if (!$target || !ds_is_provider_role((string) ($target['role'] ?? ''))) {
 
 $verification = ds_ensure_provider_verification($providerUserId);
 $previousStatus = (string) ($verification['verification_status'] ?? 'unverified');
+$profile = ds_provider_profile_by_user($providerUserId);
+$isAgency = (string) ($profile['provider_type'] ?? 'individual') === 'agency';
+$verificationChoice = (string) ($verification['verification_choice'] ?? 'verify_identity');
+$latestDocs = ds_provider_identity_summary($providerUserId);
 $now = ds_now_sql();
 
 if ($action === 'approve' && !in_array($previousStatus, DS_REVIEW_PENDING, true)) {
@@ -161,6 +179,14 @@ if ($action === 'reopen' && !in_array($previousStatus, DS_REVIEW_DECIDED, true))
 }
 if (in_array($action, ['approve', 'reopen'], true) && $notes === '' && $reason !== '') {
     $notes = $reason;
+}
+if ($action === 'approve') {
+    if ($verificationChoice === 'verify_later') {
+        ds_error(409, 'IDENTITY_REQUIRED', 'This provider chose Verify Later. A government ID must be submitted before approval.');
+    }
+    if (!$latestDocs['hasIdDocument'] || !$latestDocs['hasSelfie']) {
+        ds_error(409, 'IDENTITY_REQUIRED', 'Both a government ID and a selfie are required before approval.');
+    }
 }
 if (in_array($action, ['reject', 'request_changes'], true) && mb_strlen($reason) < 3) {
     ds_error(400, 'REASON_REQUIRED', 'Give the provider a clear reason so they can act on it.');
@@ -190,6 +216,10 @@ try {
                  WHERE provider_user_id = ? AND status = 'pending'"
             )->execute([$now, $providerUserId]);
         }
+        if ($isAgency) {
+            $pdo->prepare("UPDATE provider_verification SET business_status = 'approved' WHERE provider_user_id = ?")
+                ->execute([$providerUserId]);
+        }
     } elseif ($action === 'reject') {
         $stmt = $pdo->prepare(
             "UPDATE provider_verification SET
@@ -201,6 +231,16 @@ try {
         if ($stmt->rowCount() === 0) {
             $pdo->rollBack();
             ds_error(409, 'INVALID_REVIEW_STATE', 'This application was already decided. Refresh the queue.');
+        }
+        if (ds_table_exists('provider_identity_documents')) {
+            $pdo->prepare(
+                "UPDATE provider_identity_documents SET status = 'rejected', updated_at = ?
+                 WHERE provider_user_id = ? AND status = 'pending'"
+            )->execute([$now, $providerUserId]);
+        }
+        if ($isAgency) {
+            $pdo->prepare("UPDATE provider_verification SET business_status = 'rejected' WHERE provider_user_id = ?")
+                ->execute([$providerUserId]);
         }
     } elseif ($action === 'request_changes') {
         $stmt = $pdo->prepare(
@@ -214,6 +254,10 @@ try {
             $pdo->rollBack();
             ds_error(409, 'INVALID_REVIEW_STATE', 'This application is no longer pending. Refresh the queue.');
         }
+        if ($isAgency) {
+            $pdo->prepare("UPDATE provider_verification SET business_status = 'changes_requested' WHERE provider_user_id = ?")
+                ->execute([$providerUserId]);
+        }
     } else {
         $stmt = $pdo->prepare(
             "UPDATE provider_verification SET
@@ -225,6 +269,10 @@ try {
         if ($stmt->rowCount() === 0) {
             $pdo->rollBack();
             ds_error(409, 'INVALID_REVIEW_STATE', 'Only a decided application can be reopened.');
+        }
+        if ($isAgency) {
+            $pdo->prepare("UPDATE provider_verification SET business_status = 'pending' WHERE provider_user_id = ?")
+                ->execute([$providerUserId]);
         }
     }
     $pdo->commit();
@@ -247,6 +295,7 @@ ds_audit('provider.review_' . $action, 'provider', $providerUserId, [
     'to' => $newStatus,
     'reason' => $reason,
     'notes' => $notes,
+    'choice' => $verificationChoice,
 ], $admin['id']);
 
 ds_success([
