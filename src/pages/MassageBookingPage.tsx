@@ -81,6 +81,31 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     );
   }, [massageServices, draft.serviceId]);
 
+  // Prefill the customer's saved location for a home visit. Reading it is
+  // optional and never requires a new GPS permission prompt.
+  useEffect(() => {
+    let cancelled = false;
+    customerApi
+      .getLocation()
+      .then(({ location }) => {
+        if (cancelled || !location) return;
+        if (!location.region && !location.city) return;
+        setDraft((prev) => ({
+          ...prev,
+          homeLocation: {
+            ...prev.homeLocation,
+            region: prev.homeLocation.region || location.region || '',
+            cityArea: prev.homeLocation.cityArea || location.city || '',
+            address: prev.homeLocation.address || location.area || '',
+          },
+        }));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
   }, [step, completed, reduceMotion]);
@@ -137,6 +162,14 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
         timeSlot: draft.timeSlotLabel,
         locationType: draft.locationType === 'home' ? 'home' : 'studio',
         address: address || undefined,
+        customerLocation:
+          draft.locationType === 'home'
+            ? {
+                region: draft.homeLocation.region,
+                city: draft.homeLocation.cityArea,
+                area: draft.homeLocation.address,
+              }
+            : null,
         notes:
           [draft.specialRequests, draft.tensionNotes, draft.accessibilityNeeds]
             .filter(Boolean)

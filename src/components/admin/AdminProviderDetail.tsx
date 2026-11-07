@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { StatusBadge } from './StatusBadge';
+import { LocationFields, type LocationValue } from '../location/LocationFields';
 import { adminBtnClass, adminBtnGhostClass, adminBtnCompactClass, adminBtnGhostCompactClass, adminInputClass, FormField } from './FormField';
+import { MARKETPLACE_REGIONS } from '../../data/locations';
 
 type ProviderDetail = {
   provider: {
@@ -27,7 +29,16 @@ type ProviderDetail = {
     displayName: string;
     about: string;
     city: string;
+    region?: string;
+    district?: string | null;
+    area?: string | null;
     serviceArea: string;
+    serviceAreas?: Array<{ region: string; district?: string; city: string; area?: string; radiusKm?: number | null }>;
+    serviceRegions?: string[];
+    latitude?: number | null;
+    longitude?: number | null;
+    offersHomeVisit?: boolean;
+    offersStudio?: boolean;
     workingDays: string;
     workingHours: string;
     primaryImage: string | null;
@@ -58,6 +69,7 @@ type Props = {
 const TABS = [
   'Overview',
   'Profile Information',
+  'Location',
   'Photos & Gallery',
   'Services & Pricing',
   'Verification',
@@ -76,6 +88,9 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
   const [until, setUntil] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [profileForm, setProfileForm] = useState({ displayName: '', city: '', about: '', serviceArea: '', workingDays: '', workingHours: '' });
+  const [locationForm, setLocationForm] = useState<LocationValue>({ country: 'Ghana', region: '', district: '', city: '', area: '', latitude: null, longitude: null });
+  const [serviceAreas, setServiceAreas] = useState<Array<{ region: string; city: string; area: string; radiusKm: string }>>([]);
+  const [serviceRegions, setServiceRegions] = useState('');
 
   const load = async () => {
     setError(null);
@@ -90,8 +105,36 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
         workingDays: data.profile.workingDays || '',
         workingHours: data.profile.workingHours || '',
       });
+      setLocationForm({
+        country: 'Ghana',
+        region: data.profile.region || '',
+        district: data.profile.district || '',
+        city: data.profile.city || '',
+        area: data.profile.area || '',
+        latitude: data.profile.latitude ?? null,
+        longitude: data.profile.longitude ?? null,
+      });
+      setServiceAreas(
+        (data.profile.serviceAreas ?? []).map((area) => ({
+          region: area.region || '',
+          city: area.city || '',
+          area: area.area || '',
+          radiusKm: area.radiusKm != null ? String(area.radiusKm) : '',
+        })),
+      );
+      setServiceRegions((data.profile.serviceRegions ?? []).join(', '));
     }
   };
+
+  const postLocation = (body: Record<string, unknown>, message: string) =>
+    act(async () => {
+      await apiRequest('/admin/locations.php', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'update_provider_location', providerUserId: userId, ...body }),
+      });
+      await load();
+      onChanged();
+    }, message);
 
   useEffect(() => {
     void load().catch((err) => setError(err instanceof Error ? err.message : 'Unable to load provider.'));
@@ -198,6 +241,103 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
               <FormField label="Working hours"><input className={adminInputClass} value={profileForm.workingHours} onChange={(e) => setProfileForm({ ...profileForm, workingHours: e.target.value })} /></FormField>
             </div>
             <button type="submit" className={adminBtnClass} disabled={busy}>Save profile</button>
+          </form>
+        ) : null}
+
+        {tab === 'Location' ? (
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              postLocation(
+                {
+                  country: locationForm.country,
+                  region: locationForm.region,
+                  district: locationForm.district,
+                  city: locationForm.city,
+                  areaNeighbourhood: locationForm.area,
+                  latitude: locationForm.latitude,
+                  longitude: locationForm.longitude,
+                  serviceAreas: serviceAreas
+                    .filter((area) => area.city.trim() !== '' || area.area.trim() !== '')
+                    .map((area) => ({
+                      region: area.region,
+                      city: area.city,
+                      area: area.area,
+                      radiusKm: area.radiusKm ? Number(area.radiusKm) : null,
+                    })),
+                  serviceRegions: serviceRegions
+                    .split(',')
+                    .map((region) => region.trim())
+                    .filter(Boolean),
+                },
+                'Provider location updated.',
+              );
+            }}
+          >
+            <p className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12px] leading-relaxed text-[#6f675c]">
+              The pin is internal and never returned by the public API. Customers see the town, area and published service areas only.
+            </p>
+            <LocationFields value={locationForm} onChange={setLocationForm} theme="light" />
+
+            <div className="space-y-2 border-t border-[#efe8dc] pt-3">
+              <p className="text-[13px] font-semibold">Additional service areas</p>
+              <p className="text-[12px] text-[#6f675c]">Used for coverage eligibility. A provider is never recommended outside these areas.</p>
+              {serviceAreas.map((area, idx) => (
+                <div key={idx} className="rounded-[12px] border border-[#efe8dc] p-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <FormField label="Region">
+                      <select
+                        className={adminInputClass}
+                        value={area.region}
+                        onChange={(e) => {
+                          const next = [...serviceAreas];
+                          next[idx] = { ...area, region: e.target.value };
+                          setServiceAreas(next);
+                        }}
+                      >
+                        <option value="">Select region</option>
+                        {MARKETPLACE_REGIONS.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                      </select>
+                    </FormField>
+                    <FormField label="City / Town">
+                      <input className={adminInputClass} value={area.city} onChange={(e) => {
+                        const next = [...serviceAreas];
+                        next[idx] = { ...area, city: e.target.value };
+                        setServiceAreas(next);
+                      }} />
+                    </FormField>
+                    <FormField label="Area">
+                      <input className={adminInputClass} value={area.area} onChange={(e) => {
+                        const next = [...serviceAreas];
+                        next[idx] = { ...area, area: e.target.value };
+                        setServiceAreas(next);
+                      }} />
+                    </FormField>
+                    <FormField label="Radius km">
+                      <input className={adminInputClass} type="number" min={1} max={500} value={area.radiusKm} onChange={(e) => {
+                        const next = [...serviceAreas];
+                        next[idx] = { ...area, radiusKm: e.target.value };
+                        setServiceAreas(next);
+                      }} />
+                    </FormField>
+                  </div>
+                  <button type="button" className={`${adminBtnGhostCompactClass} mt-1.5`} onClick={() => setServiceAreas(serviceAreas.filter((_, i) => i !== idx))}>Remove area</button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className={adminBtnGhostCompactClass}
+                onClick={() => setServiceAreas([...serviceAreas, { region: locationForm.region, city: '', area: '', radiusKm: '' }])}
+              >
+                Add service area
+              </button>
+            </div>
+
+            <FormField label="Additional regions served (comma separated)">
+              <input className={adminInputClass} value={serviceRegions} onChange={(e) => setServiceRegions(e.target.value)} placeholder="Greater Accra, Eastern" />
+            </FormField>
+            <button type="submit" className={adminBtnClass} disabled={busy}>Save location & service areas</button>
           </form>
         ) : null}
 

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 require_once dirname(__DIR__) . '/config/actions.php';
+require_once dirname(__DIR__) . '/config/locations.php';
 
 $admin = ds_require_permission('providers.read');
 if (!ds_cms_ready()) {
@@ -23,6 +24,17 @@ if ($method === 'GET') {
 
     $where = ["u.role = 'massage_provider'"];
     $params = [];
+    $locationRegion = trim((string) ($_GET['region'] ?? ''));
+    $locationCity = trim((string) ($_GET['city'] ?? ''));
+    if ($locationRegion !== '') {
+        $where[] = 'p.region = ?';
+        $params[] = $locationRegion;
+    }
+    if ($locationCity !== '') {
+        $where[] = '(p.city = ? OR p.area_neighbourhood = ?)';
+        $params[] = $locationCity;
+        $params[] = $locationCity;
+    }
     if (in_array($kind, ['individual', 'agency'], true) && ds_column_exists('provider_profiles', 'provider_type')) {
         $where[] = 'p.provider_type = ?';
         $params[] = $kind;
@@ -38,7 +50,7 @@ if ($method === 'GET') {
         $stmt = ds_pdo()->prepare(
             'SELECT u.id AS user_id, u.email, u.phone, u.account_status, u.email_verified_at, u.created_at,
                     u.suspend_reason, u.suspended_until, u.block_reason,
-                    p.id AS profile_id, p.slug, p.display_name, p.provider_type, p.city, p.is_published, p.published_at,
+                    p.id AS profile_id, p.slug, p.display_name, p.provider_type, p.city, p.region, p.is_published, p.published_at,
                     p.removed_at, p.primary_image, p.cover_image,
                     v.verification_status, v.identity_status, v.rejection_reason, v.submitted_for_review_at
              FROM users u
@@ -418,6 +430,9 @@ function ds_admin_provider_list_dto(array $row): array
         'phone' => (string) ($row['phone'] ?? ''),
         'kind' => (string) ($row['provider_type'] ?? 'individual'),
         'city' => (string) ($row['city'] ?? ''),
+        'region' => (string) ($row['region'] ?? ''),
+        'district' => isset($row['district']) && $row['district'] !== null ? (string) $row['district'] : null,
+        'area' => isset($row['area_neighbourhood']) && $row['area_neighbourhood'] !== null ? (string) $row['area_neighbourhood'] : null,
         'slug' => $row['slug'] !== null ? (string) $row['slug'] : null,
         'accountStatus' => $account,
         'listingStatus' => $removed ? 'removed' : (((int) ($row['is_published'] ?? 0) === 1) ? 'published' : 'unpublished'),
@@ -528,6 +543,9 @@ function ds_admin_provider_detail(string $userId): void
         'display_name' => $profile['display_name'] ?? null,
         'provider_type' => $profile['provider_type'] ?? 'individual',
         'city' => $profile['city'] ?? '',
+        'region' => $profile['region'] ?? '',
+        'district' => $profile['district'] ?? null,
+        'area_neighbourhood' => $profile['area_neighbourhood'] ?? null,
         'is_published' => $profile['is_published'] ?? 0,
         'published_at' => $profile['published_at'] ?? null,
         'removed_at' => $profile['removed_at'] ?? null,
@@ -548,7 +566,18 @@ function ds_admin_provider_detail(string $userId): void
             'businessName' => $profile['business_name'] ?? null,
             'about' => $profile['about'] ?? '',
             'city' => $profile['city'] ?? '',
+            'region' => $profile['region'] ?? '',
+            'district' => $profile['district'] ?? null,
+            'area' => $profile['area_neighbourhood'] ?? null,
             'serviceArea' => $profile['service_area'] ?? '',
+            'serviceAreas' => ds_provider_service_areas($profile),
+            'serviceRegions' => array_values(array_map('strval', ds_json_decode_field($profile['service_regions_json'] ?? null))),
+            'offersHomeVisit' => ds_provider_offers_home_visit($profile),
+            'offersStudio' => ds_provider_offers_studio($profile),
+            'latitude' => ds_user_has_permission($admin, 'providers.write') && isset($profile['latitude']) && $profile['latitude'] !== null
+                ? (float) $profile['latitude'] : null,
+            'longitude' => ds_user_has_permission($admin, 'providers.write') && isset($profile['longitude']) && $profile['longitude'] !== null
+                ? (float) $profile['longitude'] : null,
             'workingDays' => $profile['working_days'] ?? '',
             'workingHours' => $profile['working_hours'] ?? '',
             'startingPrice' => isset($profile['starting_price']) ? (float) $profile['starting_price'] : null,

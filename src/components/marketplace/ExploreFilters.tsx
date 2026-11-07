@@ -1,22 +1,29 @@
 import React, { useRef, useState } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { LocateFixed, Search, SlidersHorizontal, X } from 'lucide-react';
 import { MASSAGE_SERVICE_OPTIONS } from '../../data/serviceCategories';
 import type { MarketplaceAvailability } from '../../data/marketplaceProfiles';
 import type {
   MarketplaceFilters,
   MarketplaceGenderFilter,
+  MarketplaceModeFilter,
   MarketplaceProviderTypeFilter,
   MarketplaceSort,
 } from '../../lib/marketplace';
 import { CitySearch, type CitySearchHandle } from './CitySearch';
 import { Button } from '../ui/Button';
 import { SelectField, TextField } from '../ui/Field';
+import { MARKETPLACE_REGIONS, findCityBySlug } from '../../data/locations';
 
 type Props = {
   citySlug: string;
   filters: MarketplaceFilters;
   onChange: (next: MarketplaceFilters) => void;
   onCityChange: (slug: string) => void;
+  onRegionChange?: (regionId: string) => void;
+  onUseCurrentLocation?: () => void;
+  locating?: boolean;
+  locationLabel?: string | null;
+  hasCoordinates?: boolean;
 };
 
 const PROVIDER_TYPES: { value: MarketplaceProviderTypeFilter; label: string }[] = [
@@ -38,20 +45,49 @@ const AVAILABILITY: { value: MarketplaceAvailability | 'any'; label: string }[] 
   { value: 'flexible', label: 'Flexible' },
 ];
 
+const MODES: { value: MarketplaceModeFilter; label: string }[] = [
+  { value: 'any', label: 'Any setting' },
+  { value: 'studio', label: 'In-studio' },
+  { value: 'home', label: 'Home visits' },
+];
+
 const SORTS: { value: MarketplaceSort; label: string }[] = [
+  { value: 'nearest', label: 'Nearest first' },
   { value: 'recommended', label: 'Recommended' },
   { value: 'recent', label: 'Recently added' },
   { value: 'price_asc', label: 'Price: low to high' },
   { value: 'price_desc', label: 'Price: high to low' },
 ];
 
-function FilterFields({ filters, onChange, citySlug, onCityChange, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
+const RADIUS_PRESETS = [5, 10, 20, 50];
+
+function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChange, onUseCurrentLocation, locating, locationLabel, hasCoordinates, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
   const citySearchRef = useRef<CitySearchHandle>(null);
   const isSheet = layout === 'sheet';
+  const city = findCityBySlug(citySlug);
+  const [customOpen, setCustomOpen] = useState(
+    filters.radiusKm != null && !RADIUS_PRESETS.includes(filters.radiusKm),
+  );
+  const radiusValue =
+    filters.radiusKm == null ? '' : RADIUS_PRESETS.includes(filters.radiusKm) ? String(filters.radiusKm) : 'custom';
 
   return (
     <div className={isSheet ? 'flex flex-col gap-3.5' : 'space-y-3'}>
       <div className={isSheet ? '' : 'flex flex-col gap-3 sm:flex-row sm:items-end'}>
+        <div className="min-w-0 flex-1">
+          <SelectField
+            label="Region"
+            value={city?.regionId ?? ''}
+            onChange={(e) => onRegionChange?.(e.target.value)}
+          >
+            <option value="">All regions</option>
+            {MARKETPLACE_REGIONS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </SelectField>
+        </div>
         <div className="min-w-0 flex-1">
           <label className="mb-1.5 block text-[12px] font-medium text-zinc-400">Location</label>
           <CitySearch
@@ -69,6 +105,27 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, layout }: Pro
         >
           Search
         </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2">
+        <p className="text-[12px] text-zinc-400">
+          {locationLabel ? (
+            <span className="inline-flex items-center gap-1.5 text-zinc-300">
+              <LocateFixed className="h-3.5 w-3.5 text-brand-gold-light" aria-hidden /> {locationLabel}
+            </span>
+          ) : (
+            'General results — set a town or share your location for nearest-first matching.'
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={onUseCurrentLocation}
+          disabled={locating}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-brand-gold/40 px-3 text-[12px] font-semibold text-brand-gold-light hover:bg-brand-gold/10 disabled:opacity-60"
+        >
+          <LocateFixed className="h-3.5 w-3.5" aria-hidden />
+          {locating ? 'Locating…' : 'Use current location'}
+        </button>
       </div>
 
       <div className={isSheet ? 'flex flex-col gap-3.5' : 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'}>
@@ -110,6 +167,58 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, layout }: Pro
             </option>
           ))}
         </SelectField>
+
+        <SelectField
+          label="Setting"
+          value={filters.mode || 'any'}
+          onChange={(e) => onChange({ ...filters, mode: e.target.value as MarketplaceModeFilter })}
+        >
+          {MODES.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </SelectField>
+
+        <SelectField
+          label="Distance"
+          value={radiusValue}
+          onChange={(e) => {
+            const next = e.target.value;
+            if (next === '') {
+              setCustomOpen(false);
+              onChange({ ...filters, radiusKm: null });
+            } else if (next === 'custom') {
+              setCustomOpen(true);
+              onChange({ ...filters, radiusKm: filters.radiusKm ?? 10 });
+            } else {
+              setCustomOpen(false);
+              onChange({ ...filters, radiusKm: Number(next) });
+            }
+          }}
+        >
+          <option value="">Any distance</option>
+          {RADIUS_PRESETS.map((km) => (
+            <option key={km} value={km}>
+              Within {km} km
+            </option>
+          ))}
+          <option value="custom">Custom…</option>
+        </SelectField>
+
+        {(customOpen || radiusValue === 'custom') && filters.radiusKm != null ? (
+          <TextField
+            label="Custom radius (km)"
+            type="number"
+            min={1}
+            max={500}
+            value={filters.radiusKm}
+            onChange={(e) =>
+              onChange({ ...filters, radiusKm: e.target.value === '' ? null : Number(e.target.value) })
+            }
+            hint={hasCoordinates ? undefined : 'Exact distances need a town pin or current location.'}
+          />
+        ) : null}
 
         <SelectField
           label="Availability"

@@ -1,7 +1,9 @@
 import type { MarketplaceAvailability, MarketplaceProfile } from '../data/marketplaceProfiles';
 import { profileOffersService } from '../data/serviceCategories';
 
-export type MarketplaceSort = 'recommended' | 'recent' | 'price_asc' | 'price_desc';
+export type MarketplaceSort = 'recommended' | 'nearest' | 'recent' | 'price_asc' | 'price_desc';
+
+export type MarketplaceModeFilter = 'any' | 'studio' | 'home';
 
 export type MarketplaceGenderFilter = 'all' | 'women' | 'men';
 export type MarketplaceProviderTypeFilter = 'all' | 'individuals' | 'agencies';
@@ -15,6 +17,8 @@ export type MarketplaceFilters = {
   maxPrice?: number | null;
   availability?: MarketplaceAvailability | 'any' | null;
   sort?: MarketplaceSort;
+  radiusKm?: number | null;
+  mode?: MarketplaceModeFilter | null;
 };
 
 export function formatPrice(amount: number | null | undefined, currency: string): string | null {
@@ -109,7 +113,15 @@ export function filterAndSortProfiles(
     result = result.filter((p) => p.availability === filters.availability);
   }
 
+  if (filters.mode === 'home') {
+    result = result.filter((p) => p.offersHomeVisit === true || p.serviceSetting.includes('home_visit'));
+  } else if (filters.mode === 'studio') {
+    result = result.filter((p) => p.offersStudio !== false || p.serviceSetting.includes('studio'));
+  }
+
   const sort = filters.sort || 'recommended';
+  // Discovery results already arrive nearest-first; keep that order.
+  if (sort === 'nearest') return result;
   result.sort((a, b) => {
     switch (sort) {
       case 'recent':
@@ -151,6 +163,8 @@ export function parseExploreSearchParams(params: URLSearchParams): MarketplaceFi
     maxPrice: max ? Number(max) : null,
     availability: (params.get('availability') as MarketplaceAvailability | 'any' | null) || null,
     sort: (params.get('sort') as MarketplaceSort | null) || 'recommended',
+    radiusKm: params.get('radius') ? Number(params.get('radius')) : null,
+    mode: (params.get('mode') as MarketplaceModeFilter | null) || 'any',
   };
 }
 
@@ -163,5 +177,7 @@ export function buildExploreSearchParams(filters: MarketplaceFilters): URLSearch
   if (filters.maxPrice != null && !Number.isNaN(filters.maxPrice)) p.set('max', String(filters.maxPrice));
   if (filters.availability && filters.availability !== 'any') p.set('availability', filters.availability);
   if (filters.sort && filters.sort !== 'recommended') p.set('sort', filters.sort);
+  if (filters.radiusKm != null && !Number.isNaN(filters.radiusKm)) p.set('radius', String(filters.radiusKm));
+  if (filters.mode && filters.mode !== 'any') p.set('mode', filters.mode);
   return p;
 }

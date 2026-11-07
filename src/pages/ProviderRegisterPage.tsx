@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Building2, Check, UserRound, X } from 'lucide-react';
 import { authApi, providerApi } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
-import { MARKETPLACE_CITIES } from '../data/locations';
+import { MARKETPLACE_REGIONS } from '../data/locations';
+import { LocationFields } from '../components/location/LocationFields';
 import {
   MASSAGE_SERVICE_OPTIONS,
   SERVICE_SETTING_OPTIONS,
@@ -159,6 +160,16 @@ function validateAccountStep(account: {
   return null;
 }
 
+type ServiceAreaDraft = {
+  region: string;
+  district: string;
+  city: string;
+  area: string;
+  radiusKm: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
 type TeamDraft = {
   displayName: string;
   gender: ProviderGender | '';
@@ -214,6 +225,10 @@ export const ProviderRegisterPage: React.FC = () => {
     region: 'Greater Accra',
     country: 'Ghana',
     areaNeighbourhood: '',
+    district: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
+    serviceAreas: [] as ServiceAreaDraft[],
     businessAddress: '',
     serviceArea: '',
     serviceRadiusKm: '',
@@ -294,6 +309,20 @@ export const ProviderRegisterPage: React.FC = () => {
           region: text(raw.region) || prev.region,
           country: text(raw.country) || prev.country,
           areaNeighbourhood: text(raw.areaNeighbourhood),
+          district: text(raw.district),
+          latitude: raw.latitude !== null && raw.latitude !== undefined ? Number(raw.latitude) : null,
+          longitude: raw.longitude !== null && raw.longitude !== undefined ? Number(raw.longitude) : null,
+          serviceAreas: Array.isArray(raw.serviceAreas)
+            ? (raw.serviceAreas as Array<Record<string, unknown>>).map((area) => ({
+                region: text(area.region),
+                district: text(area.district),
+                city: text(area.city),
+                area: text(area.area),
+                radiusKm: area.radiusKm !== null && area.radiusKm !== undefined ? String(area.radiusKm) : '',
+                latitude: area.latitude !== null && area.latitude !== undefined ? Number(area.latitude) : null,
+                longitude: area.longitude !== null && area.longitude !== undefined ? Number(area.longitude) : null,
+              }))
+            : [],
           businessAddress: text(raw.businessAddress),
           serviceArea: text(raw.serviceArea),
           serviceRadiusKm: numeric(raw.serviceRadiusKm),
@@ -389,7 +418,7 @@ export const ProviderRegisterPage: React.FC = () => {
 
   const STEPS = useMemo(() => stepsFor(providerType), [providerType]);
   const stepIndex = STEPS.findIndex((s) => s.id === step);
-  const cities = useMemo(() => MARKETPLACE_CITIES.map((c) => c.name), []);
+
 
   const localCompletion = useMemo(
     () =>
@@ -551,7 +580,22 @@ export const ProviderRegisterPage: React.FC = () => {
         city: profile.city,
         region: profile.region,
         country: profile.country,
+        district: profile.district,
         areaNeighbourhood: profile.areaNeighbourhood,
+        latitude: profile.latitude,
+        longitude: profile.longitude,
+        serviceAreas: profile.serviceAreas.map((area) => ({
+          region: area.region,
+          district: area.district,
+          city: area.city,
+          area: area.area,
+          radiusKm: area.radiusKm ? Number(area.radiusKm) : null,
+          latitude: area.latitude,
+          longitude: area.longitude,
+        })),
+        serviceRegions: Array.from(
+          new Set([profile.region, ...profile.serviceAreas.map((a) => a.region)].filter(Boolean)),
+        ),
         businessAddress: profile.businessAddress,
         serviceArea: profile.serviceArea,
         serviceRadiusKm: profile.serviceRadiusKm ? Number(profile.serviceRadiusKm) : null,
@@ -1102,63 +1146,151 @@ export const ProviderRegisterPage: React.FC = () => {
                       onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
                     />
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <SelectField
-                        label="City"
-                        value={profile.city}
-                        onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                      >
-                        {cities.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </SelectField>
-                      <TextField
-                        label="Region"
-                        value={profile.region}
-                        onChange={(e) => setProfile({ ...profile, region: e.target.value })}
+                    <fieldset className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                      <legend className="px-1 text-[13px] font-medium text-zinc-200">
+                        Location &amp; service areas
+                      </legend>
+                      <p className="text-[12px] leading-relaxed text-zinc-500">
+                        Your primary location powers nearest-first discovery. Your exact pin is never shown
+                        publicly; customers only see the town, area and the service areas you publish.
+                      </p>
+                      <LocationFields
+                        theme="dark"
+                        value={{
+                          country: profile.country,
+                          region: profile.region,
+                          district: profile.district,
+                          city: profile.city,
+                          area: profile.areaNeighbourhood,
+                          latitude: profile.latitude,
+                          longitude: profile.longitude,
+                        }}
+                        onChange={(next) =>
+                          setProfile({
+                            ...profile,
+                            country: next.country,
+                            region: next.region,
+                            district: next.district,
+                            city: next.city,
+                            areaNeighbourhood: next.area,
+                            latitude: next.latitude,
+                            longitude: next.longitude,
+                          })
+                        }
                       />
-                    </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <TextField
-                        label="Country"
-                        value={profile.country}
-                        onChange={(e) => setProfile({ ...profile, country: e.target.value })}
-                      />
-                      <TextField
-                        label="Area / neighbourhood"
-                        value={profile.areaNeighbourhood}
-                        onChange={(e) => setProfile({ ...profile, areaNeighbourhood: e.target.value })}
-                      />
-                    </div>
-
-                    {providerType === 'agency' ? (
-                      <TextField
-                        label="Business address"
-                        value={profile.businessAddress}
-                        onChange={(e) => setProfile({ ...profile, businessAddress: e.target.value })}
-                      />
-                    ) : null}
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <TextField
-                        label="Service area"
-                        value={profile.serviceArea}
-                        onChange={(e) => setProfile({ ...profile, serviceArea: e.target.value })}
-                      />
-                      {providerType === 'individual' ? (
+                      {providerType === 'agency' ? (
                         <TextField
-                          label="Service radius (km)"
+                          label="Public business / studio address (optional)"
+                          hint="Only add an address you are happy for customers to see."
+                          value={profile.businessAddress}
+                          onChange={(e) => setProfile({ ...profile, businessAddress: e.target.value })}
+                        />
+                      ) : null}
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <TextField
+                          label="Service area summary"
+                          hint="Optional short text shown on your profile."
+                          value={profile.serviceArea}
+                          onChange={(e) => setProfile({ ...profile, serviceArea: e.target.value })}
+                        />
+                        <TextField
+                          label="Maximum home-visit radius (km)"
                           type="number"
                           min={0}
-                          hint="Optional"
+                          hint="Optional. Used with your exact pin."
                           value={profile.serviceRadiusKm}
                           onChange={(e) => setProfile({ ...profile, serviceRadiusKm: e.target.value })}
                         />
-                      ) : null}
-                    </div>
+                      </div>
+
+                      <div className="space-y-3 border-t border-white/10 pt-3">
+                        <div>
+                          <p className="text-[12.5px] font-semibold text-zinc-200">Additional service areas</p>
+                          <p className="text-[11.5px] leading-relaxed text-zinc-500">
+                            Add nearby towns or neighbourhoods you travel to. Each area can have its own radius.
+                          </p>
+                        </div>
+                        {profile.serviceAreas.map((area, idx) => (
+                          <div key={`${area.city}-${idx}`} className="rounded-xl border border-white/10 p-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <SelectField
+                                label="Region"
+                                value={area.region}
+                                onChange={(e) => {
+                                  const next = [...profile.serviceAreas];
+                                  next[idx] = { ...area, region: e.target.value };
+                                  setProfile({ ...profile, serviceAreas: next });
+                                }}
+                              >
+                                <option value="">Select region</option>
+                                {MARKETPLACE_REGIONS.map((r) => (
+                                  <option key={r.id} value={r.name}>{r.name}</option>
+                                ))}
+                              </SelectField>
+                              <TextField
+                                label="City / Town"
+                                value={area.city}
+                                onChange={(e) => {
+                                  const next = [...profile.serviceAreas];
+                                  next[idx] = { ...area, city: e.target.value };
+                                  setProfile({ ...profile, serviceAreas: next });
+                                }}
+                              />
+                              <TextField
+                                label="Area / neighbourhood"
+                                value={area.area}
+                                onChange={(e) => {
+                                  const next = [...profile.serviceAreas];
+                                  next[idx] = { ...area, area: e.target.value };
+                                  setProfile({ ...profile, serviceAreas: next });
+                                }}
+                              />
+                              <TextField
+                                label="Radius (km)"
+                                type="number"
+                                min={1}
+                                max={500}
+                                value={area.radiusKm}
+                                onChange={(e) => {
+                                  const next = [...profile.serviceAreas];
+                                  next[idx] = { ...area, radiusKm: e.target.value };
+                                  setProfile({ ...profile, serviceAreas: next });
+                                }}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setProfile({
+                                  ...profile,
+                                  serviceAreas: profile.serviceAreas.filter((_, i) => i !== idx),
+                                })
+                              }
+                              className="mt-2 inline-flex min-h-9 items-center gap-1.5 text-[12px] font-semibold text-rose-300 hover:text-rose-200"
+                            >
+                              <X className="h-3.5 w-3.5" aria-hidden /> Remove this area
+                            </button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() =>
+                            setProfile({
+                              ...profile,
+                              serviceAreas: [
+                                ...profile.serviceAreas,
+                                { region: profile.region, district: '', city: '', area: '', radiusKm: '', latitude: null, longitude: null },
+                              ],
+                            })
+                          }
+                        >
+                          Add service area
+                        </Button>
+                      </div>
+                    </fieldset>
 
                     <TextAreaField
                       label={providerType === 'agency' ? 'About the agency' : 'About you'}

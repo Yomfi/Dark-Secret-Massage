@@ -61,8 +61,19 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
               </div>
               <p className="mt-1 flex items-center gap-1.5 text-[13px] text-zinc-400">
                 <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-gold-light" aria-hidden />
-                {profile.city}, {profile.country}
+                {[profile.area, profile.city, profile.region].filter(Boolean).join(', ') || profile.country}
               </p>
+              {profile.distanceKm != null ? (
+                <p className="mt-1 text-[11.5px] text-brand-gold-light/90">
+                  ~{profile.distanceKm} km straight-line · approximate, not travel distance
+                </p>
+              ) : profile.distancePrecision && profile.distancePrecision !== 'none' ? (
+                <p className="mt-1 text-[11.5px] text-zinc-500">
+                  {profile.distancePrecision === 'service_area' || profile.distancePrecision === 'city'
+                    ? `Serves ${profile.matchedArea || profile.city}`
+                    : `Serves ${profile.region}`}
+                </p>
+              ) : null}
               <div className="mt-2">
                 <VerifiedBadge verified={profile.verified} />
               </div>

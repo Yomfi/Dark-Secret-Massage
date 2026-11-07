@@ -333,8 +333,13 @@ php api/tools/migrate.php \
 ```
 
 Expect `MIGRATION_OK` and unchanged `preserve_before` / `preserve_after` row counts for
-`users`, `bookings`, `cms_pages`, `cms_faqs`, `services`, `media_assets`. A second run
-must also print `MIGRATION_OK` (idempotent).
+`users`, `bookings`, `cms_pages`, `cms_faqs`, `services`, `media_assets` and the three
+assignment tables (`provider_assignments`, `provider_assignment_events`,
+`admin_reversible_actions`). A second run must also print `MIGRATION_OK` (idempotent).
+
+Assignment endpoints no longer create these tables during a request in production. Until
+this migration runs on the host, those areas return `SCHEMA_NOT_MIGRATED` instead of
+writing schema lazily.
 
 Do **not** run apply without `--backup=` pointing at a real non-empty dump. Do **not**
 expose `api/tools/*` over HTTP (already forbidden).

@@ -38,7 +38,9 @@ function ds_reversible_record(
     if (!isset($columns[$table])) {
         return null;
     }
-    ds_ensure_assignments_schema();
+    // Undo is a convenience: a missing assignment table must never block the
+    // audited action that already succeeded.
+    ds_ensure_assignments_schema(false, true);
 
     $safeBefore = [];
     $safeAfter = [];

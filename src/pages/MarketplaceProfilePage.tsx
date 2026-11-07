@@ -515,8 +515,13 @@ export const MarketplaceProfilePage: React.FC = () => {
               </div>
               <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-400">
                 <MapPin className="w-4 h-4 text-brand-gold-light shrink-0" />
-                {profile.city}, {profile.country}
+                {[profile.area, profile.city, profile.region].filter(Boolean).join(', ') || profile.country}
               </p>
+              {profile.distanceKm != null ? (
+                <p className="mt-1 text-xs text-brand-gold-light/90">
+                  ~{profile.distanceKm} km straight-line from your saved location · approximate, not travel distance
+                </p>
+              ) : null}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {profile.services.map((tag) => (
                   <span
@@ -569,6 +574,7 @@ export const MarketplaceProfilePage: React.FC = () => {
               )}
               <DetailRow label="Age" value={profile.age} />
               <DetailRow label="City" value={profile.city} />
+              <DetailRow label="District" value={profile.district} />
               <DetailRow label="Country" value={profile.country} />
               <DetailRow label="Languages" value={profile.languages?.join(', ')} />
               <DetailRow label="Massage services" value={profile.services.join(', ')} />
@@ -578,6 +584,13 @@ export const MarketplaceProfilePage: React.FC = () => {
               <DetailRow label="Opening hours" value={profile.workingHours} />
               <DetailRow label="Service setting" value={serviceSettingLabel(profile.serviceSetting)} />
               <DetailRow label="Service area" value={profile.serviceArea} />
+              <DetailRow
+                label="Areas served"
+                value={(profile.serviceAreas ?? []).length > 0
+                  ? (profile.serviceAreas ?? []).map((area) => [area.area, area.city, area.region].filter(Boolean).join(', ')).join(' · ')
+                  : null}
+              />
+              <DetailRow label="Offers home visits" value={profile.offersHomeVisit ? 'Yes, within published service areas' : 'In-studio only'} />
               <DetailRow
                 label="Rates"
                 value={formatPrice(profile.startingPrice, profile.currency)}

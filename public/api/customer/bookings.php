@@ -11,6 +11,7 @@ declare(strict_types=1);
  */
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
+require_once dirname(__DIR__) . '/config/discovery.php';
 
 $user = ds_require_user();
 if (!ds_cms_ready()) {
@@ -107,19 +108,53 @@ if ($action === 'create') {
         $providerProfileId = (string) $service['provider_profile_id'];
     }
 
+    $providerProfileRow = null;
     if ($providerProfileId !== '') {
         $publishedClause = ds_column_exists('provider_profiles', 'is_published') ? ' AND p.is_published = 1' : '';
         $removedClause = ds_column_exists('provider_profiles', 'removed_at') ? ' AND p.removed_at IS NULL' : '';
         $stmt = $pdo->prepare(
-            "SELECT p.id, p.user_id FROM provider_profiles p
+            "SELECT p.* FROM provider_profiles p
              INNER JOIN users u ON u.id = p.user_id
              INNER JOIN provider_verification v ON v.provider_user_id = p.user_id
              WHERE p.id = ? AND v.verification_status = 'verified' AND u.account_status = 'active'"
             . $publishedClause . $removedClause . ' LIMIT 1'
         );
         $stmt->execute([$providerProfileId]);
-        if (!$stmt->fetch()) {
+        $providerProfileRow = $stmt->fetch() ?: null;
+        if (!$providerProfileRow) {
             ds_error(409, 'PROVIDER_UNAVAILABLE', 'That provider is not accepting bookings.');
+        }
+
+        // Location and service-mode checks happen before any booking row is written.
+        if ($locationType === 'home' && !ds_provider_offers_home_visit($providerProfileRow)) {
+            $settings = ds_json_decode_field($providerProfileRow['service_setting_json'] ?? null);
+            if (is_array($settings) && $settings !== []) {
+                ds_error(409, 'HOME_VISIT_UNSUPPORTED', 'This provider does not offer home visits. Choose an in-studio session or another provider.');
+            }
+        }
+        if ($locationType === 'studio' && !ds_provider_offers_studio($providerProfileRow)) {
+            ds_error(409, 'STUDIO_UNSUPPORTED', 'This provider does not offer in-studio sessions.');
+        }
+        if ($locationType === 'home') {
+            $target = null;
+            if (isset($body['customerLocation']) && is_array($body['customerLocation'])) {
+                $target = ds_location_search_target($body['customerLocation']);
+            }
+            if ($target === null) {
+                ds_location_ensure_schema(false, true);
+                $target = ds_discovery_target_from_customer_row(ds_customer_location((string) $user['id']));
+            }
+            if ($target !== null) {
+                $coverage = ds_provider_location_match($providerProfileRow, $target);
+                if (empty($coverage['eligible'])) {
+                    ds_error(
+                        409,
+                        'OUTSIDE_SERVICE_AREA',
+                        'This provider does not cover the selected home-visit location. Choose another provider or an in-studio session.'
+                    );
+                }
+                $address = $address !== '' ? $address : trim((string) ($target['area'] ?? '') . ', ' . (string) ($target['city'] ?? ''));
+            }
         }
     }
 

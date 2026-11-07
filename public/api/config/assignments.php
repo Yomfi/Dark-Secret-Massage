@@ -34,13 +34,32 @@ function ds_assignment_transitions(): array
 }
 
 /** Idempotent additive schema creation for deployments that have not run the CLI migration yet. */
-function ds_ensure_assignments_schema(): void
+function ds_ensure_assignments_schema(bool $force = false, bool $optional = false): void
 {
     static $done = false;
-    if ($done) {
+    if ($done && !$force) {
         return;
     }
-    $done = true;
+
+    // Ordinary requests must never create schema in production. The CLI
+    // migration passes $force=true after a verified backup; until it runs, a
+    // missing table is reported instead of being created silently.
+    if (!$force && ds_is_prod()) {
+        foreach (['provider_assignments', 'provider_assignment_events', 'admin_reversible_actions'] as $table) {
+            if (!ds_table_exists($table)) {
+                if ($optional) {
+                    return;
+                }
+                ds_error(
+                    503,
+                    'SCHEMA_NOT_MIGRATED',
+                    'Assignments need the database migration. Run the CLI migration before using this area.'
+                );
+            }
+        }
+        $done = true;
+        return;
+    }
 
     $pdo = ds_pdo();
     $statements = [
@@ -100,13 +119,41 @@ function ds_ensure_assignments_schema(): void
         )',
     ];
 
-    foreach ($statements as $sql) {
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $sqliteIndexes = [];
+    if ($driver === 'sqlite') {
+        // SQLite rejects MySQL's inline KEY clauses; move them to separate
+        // CREATE INDEX statements so local/CLI validation exercises the same
+        // additive migration as production.
+        foreach ($statements as $i => $sql) {
+            $sql = preg_replace('/^[ \t]*KEY [^\n]*\n/m', '', $sql) ?? $sql;
+            $statements[$i] = preg_replace('/,\s*\n(\s*\))/', "\n$1", $sql) ?? $sql;
+        }
+        $sqliteIndexes = [
+            'CREATE INDEX IF NOT EXISTS provider_assignments_customer_idx ON provider_assignments (customer_user_id)',
+            'CREATE INDEX IF NOT EXISTS provider_assignments_provider_idx ON provider_assignments (provider_profile_id)',
+            'CREATE INDEX IF NOT EXISTS provider_assignments_status_idx ON provider_assignments (status)',
+            'CREATE INDEX IF NOT EXISTS provider_assignments_preferred_idx ON provider_assignments (preferred_at)',
+            'CREATE INDEX IF NOT EXISTS provider_assignment_events_assignment_idx ON provider_assignment_events (assignment_id)',
+            'CREATE INDEX IF NOT EXISTS provider_assignment_events_created_idx ON provider_assignment_events (created_at)',
+            'CREATE INDEX IF NOT EXISTS admin_reversible_actor_idx ON admin_reversible_actions (actor_user_id)',
+            'CREATE INDEX IF NOT EXISTS admin_reversible_entity_idx ON admin_reversible_actions (entity_table, entity_id)',
+            'CREATE INDEX IF NOT EXISTS admin_reversible_created_idx ON admin_reversible_actions (created_at)',
+        ];
+    }
+
+    foreach (array_merge($statements, $sqliteIndexes) as $sql) {
         try {
             $pdo->exec($sql);
         } catch (Throwable $e) {
-            // A concurrent request may have created it first.
+            // A concurrent request may have created it first, but the migration
+            // itself must fail loudly rather than report a false success.
+            if ($force) {
+                throw $e;
+            }
         }
     }
+    $done = true;
 }
 
 /** @return array<string, mixed>|null */

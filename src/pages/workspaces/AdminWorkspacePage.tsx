@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ClipboardList,
   Inbox,
+  MapPin,
   Sparkles,
   UserRound,
   Users,
@@ -13,6 +14,7 @@ import { apiRequest } from '../../lib/api';
 import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { userHasPermission } from '../../lib/workspaceHome';
+import { MARKETPLACE_REGIONS } from '../../data/locations';
 import {
   AdminAssignmentsPanel,
   AdminCard,
@@ -63,16 +65,48 @@ type Customer = {
   emailVerified: boolean; createdAt: string | null; bookings: number; completedBookings: number;
 };
 
+type CustomerLocation = {
+  country: string;
+  region: string | null;
+  district: string | null;
+  city: string | null;
+  area: string | null;
+  description: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+type NearbyProvider = {
+  providerProfileId: string;
+  providerUserId: string;
+  displayName: string;
+  providerKind: string;
+  region: string | null;
+  city: string | null;
+  area: string | null;
+  distanceKm: number | null;
+  distancePrecision: string;
+  matchedArea: string | null;
+  offersHomeVisit: boolean;
+  offersStudio: boolean;
+  services: string[];
+  reasons: string[];
+};
+
 type CustomerDetail = {
   customer: Customer & { firstName: string; lastName: string; updatedAt: string | null; isQa?: boolean };
+  location?: CustomerLocation | null;
   bookings: Booking[];
   notes: Array<{ id: string; body: string; createdAt: string | null; author: string }>;
   privacyRequests: Array<{ id: string; type: string; status: string; notes: string | null; createdAt: string | null; resolvedAt: string | null }>;
+  activity?: Array<{ id: string; action: string; meta: Record<string, unknown> | null; actor: string | null; createdAt: string | null }>;
+  paymentNote?: string;
 };
 
 type Provider = {
   userId: string; profileId: string | null; displayName: string; email: string; phone: string;
-  kind: string; city: string; slug: string | null; accountStatus: string; emailVerified: boolean;
+  kind: string; city: string; region?: string; district?: string | null; area?: string | null;
+  slug: string | null; accountStatus: string; emailVerified: boolean;
   verificationStatus: string; identityStatus: string; rejectionReason: string | null;
   published: boolean; submittedAt: string | null; removed?: boolean; listingStatus?: string;
 };
@@ -87,6 +121,7 @@ type Booking = {
   scheduledAt: string | null; timeSlot: string | null; locationType: string | null;
   address?: string | null; customerName: string | null; customerEmail: string | null; customerPhone?: string | null;
   providerName?: string | null; teamMemberName?: string | null; notes?: string | null; createdAt: string | null;
+  cancellationReason?: string | null; paymentNote?: string | null;
   events?: Array<{ event: string; fromStatus: string | null; toStatus: string | null; note: string | null; createdAt: string | null }>;
 };
 
@@ -268,9 +303,20 @@ export const AdminWorkspacePage: React.FC = () => {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
+  const [customerTab, setCustomerTab] = useState('overview');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [customerNote, setCustomerNote] = useState('');
   const [customerProfile, setCustomerProfile] = useState({ firstName: '', lastName: '', phone: '' });
+  const [customerLocation, setCustomerLocation] = useState<CustomerLocation | null>(null);
+  const [customerLocationForm, setCustomerLocationForm] = useState({
+    region: '', district: '', city: '', area: '', description: '', latitude: '', longitude: '',
+  });
+  const [nearbyProviders, setNearbyProviders] = useState<NearbyProvider[]>([]);
+  const [nearbyRadius, setNearbyRadius] = useState('20');
+  const [nearbyNote, setNearbyNote] = useState<string | null>(null);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [locationRegion, setLocationRegion] = useState('');
+  const [locationCity, setLocationCity] = useState('');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<ReversibleAction | null>(null);
@@ -279,7 +325,10 @@ export const AdminWorkspacePage: React.FC = () => {
   const [customerAssignments, setCustomerAssignments] = useState<AssignmentRow[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingSearch, setBookingSearch] = useState('');
   const [bookingDetail, setBookingDetail] = useState<Booking | null>(null);
+  const [bookingProviders, setBookingProviders] = useState<Provider[]>([]);
+  const [bookingProviderId, setBookingProviderId] = useState('');
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [content, setContent] = useState<ContentPayload | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -371,8 +420,38 @@ export const AdminWorkspacePage: React.FC = () => {
       lastName: data.customer.lastName,
       phone: data.customer.phone,
     });
+    const location = data.location ?? null;
+    setCustomerLocation(location);
+    setCustomerLocationForm({
+      region: location?.region ?? '',
+      district: location?.district ?? '',
+      city: location?.city ?? '',
+      area: location?.area ?? '',
+      description: location?.description ?? '',
+      latitude: location?.latitude != null ? String(location.latitude) : '',
+      longitude: location?.longitude != null ? String(location.longitude) : '',
+    });
+    setNearbyProviders([]);
+    setNearbyNote(null);
     setCustomerNote('');
   }, []);
+
+  const loadNearby = async (customerId: string, radius: string) => {
+    setNearbyLoading(true);
+    setNearbyNote(null);
+    try {
+      const data = await apiRequest<{ recommendations: NearbyProvider[]; note: string | null }>(
+        `/admin/locations.php?customerId=${encodeURIComponent(customerId)}&nearby=1&radiusKm=${encodeURIComponent(radius)}`,
+      );
+      setNearbyProviders(data.recommendations ?? []);
+      setNearbyNote(data.note ?? null);
+    } catch (err) {
+      setNearbyProviders([]);
+      setNearbyNote(err instanceof Error ? err.message : 'Unable to load nearby providers.');
+    } finally {
+      setNearbyLoading(false);
+    }
+  };
 
   const loadBookingDetail = useCallback(async (id: string) => {
     const data = await apiRequest<{ booking: Booking }>(`/admin/bookings.php?id=${encodeURIComponent(id)}`);
@@ -385,14 +464,16 @@ export const AdminWorkspacePage: React.FC = () => {
       return;
     }
     if (tab === 'customers') {
-      const data = await apiRequest<{ customers: Customer[] }>(`/admin/customers.php?q=${encodeURIComponent(search)}`);
+      const locationQuery = `&region=${encodeURIComponent(locationRegion)}&city=${encodeURIComponent(locationCity)}`;
+      const data = await apiRequest<{ customers: Customer[] }>(`/admin/customers.php?q=${encodeURIComponent(search)}${locationQuery}`);
       setCustomers(data.customers);
       if (selectedCustomerId) await loadCustomerDetail(selectedCustomerId);
       return;
     }
     if (tab === 'providers' || tab === 'agencies') {
       const effectiveKind = tab === 'agencies' ? 'agency' : kind;
-      const data = await apiRequest<{ providers: Provider[] }>(`/admin/providers.php?kind=${effectiveKind}&q=${encodeURIComponent(search)}`);
+      const locationQuery = `&region=${encodeURIComponent(locationRegion)}&city=${encodeURIComponent(locationCity)}`;
+      const data = await apiRequest<{ providers: Provider[] }>(`/admin/providers.php?kind=${effectiveKind}&q=${encodeURIComponent(search)}${locationQuery}`);
       setProviders(data.providers);
       return;
     }
@@ -401,7 +482,7 @@ export const AdminWorkspacePage: React.FC = () => {
       return;
     }
     if (tab === 'bookings') {
-      const data = await apiRequest<{ bookings: Booking[] }>(`/admin/bookings.php?status=${status}`);
+      const data = await apiRequest<{ bookings: Booking[] }>(`/admin/bookings.php?status=${encodeURIComponent(status)}&q=${encodeURIComponent(bookingSearch)}`);
       setBookings(data.bookings);
       if (selectedBookingId) await loadBookingDetail(selectedBookingId);
       return;
@@ -454,7 +535,7 @@ export const AdminWorkspacePage: React.FC = () => {
     if (tab === 'audit') {
       setAudit((await apiRequest<{ entries: AuditEntry[] }>('/admin/audit.php')).entries);
     }
-  }, [tab, search, kind, status, selectedCustomerId, selectedBookingId, loadCustomerDetail, loadBookingDetail]);
+  }, [tab, search, kind, status, bookingSearch, selectedCustomerId, selectedBookingId, loadCustomerDetail, loadBookingDetail, locationRegion, locationCity]);
 
   useEffect(() => {
     run(load);
@@ -475,12 +556,19 @@ export const AdminWorkspacePage: React.FC = () => {
 
   const openCustomer = (id: string) => {
     setNotice(null);
+    setCustomerTab('overview');
     setSelectedCustomerId(id);
   };
 
   const openBooking = (id: string) => {
     setNotice(null);
+    setBookingProviderId('');
     setSelectedBookingId(id);
+    if (bookingProviders.length === 0) {
+      void apiRequest<{ providers: Provider[] }>('/admin/providers.php')
+        .then((data) => setBookingProviders(data.providers))
+        .catch(() => setBookingProviders([]));
+    }
   };
 
   const visibleProviders = providers.filter((p) => {
@@ -658,6 +746,11 @@ export const AdminWorkspacePage: React.FC = () => {
           <AdminCard padding={false} className="min-w-0 max-w-full overflow-hidden">
             <div className="flex flex-wrap gap-2 border-b border-[#efe8dc] p-4">
               <SearchInput className="min-w-0 flex-1 basis-[180px]" value={search} onChange={setSearch} placeholder="Search name, email or phone" onSubmit={() => run(load)} />
+              <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Customer region" value={locationRegion} onChange={(e) => setLocationRegion(e.target.value)}>
+                <option value="">All regions</option>
+                {MARKETPLACE_REGIONS.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+              </select>
+              <input className={`${adminInputClass} w-[140px] shrink-0`} aria-label="Customer city" placeholder="City / town" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} />
               <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Search</button>
             </div>
             <DataTable
@@ -741,144 +834,388 @@ export const AdminWorkspacePage: React.FC = () => {
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge status={customerDetail.customer.status} />
                   {customerDetail.customer.emailVerified ? <StatusBadge status="verified" label="Email verified" /> : null}
+                  {customerDetail.customer.isQa ? <StatusBadge status="pending" label="QA account" /> : null}
                 </div>
                 <p className="truncate text-[13px] text-[#6f675c]" title={customerDetail.customer.email}>{customerDetail.customer.email}</p>
 
-                <div className="flex flex-wrap gap-2 border-t border-[#efe8dc] pt-4">
-                  <button
-                    type="button"
-                    className={adminBtnClass}
-                    disabled={busy || customerDetail.customer.status !== 'active'}
-                    onClick={() => {
-                      setAssignCustomerId(customerDetail.customer.id);
-                      setSelectedCustomerId(null);
-                      setCustomerDetail(null);
-                      setTab('assignments');
-                    }}
-                  >
-                    Assign provider
-                  </button>
-                  <span className="self-center text-[12px] text-[#6f675c]">Assignments never create a booking or payment.</span>
+                <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-[#efe8dc] pb-2" role="tablist" aria-label="Customer sections">
+                  {[
+                    ['overview', 'Overview'],
+                    ['profile', 'Customer Profile'],
+                    ['location', 'Location'],
+                    ['bookings', 'Bookings'],
+                    ['assigned', 'Assigned Providers'],
+                    ['payments', 'Payments'],
+                    ['notes', 'Internal Notes'],
+                    ['account', 'Account Actions'],
+                    ['activity', 'Activity History'],
+                  ].map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      aria-selected={customerTab === key}
+                      onClick={() => setCustomerTab(key)}
+                      className={`min-h-9 shrink-0 rounded-[10px] px-3 text-[12.5px] font-medium ${customerTab === key ? 'bg-[#161616] text-[#F7F4EF]' : 'text-[#6f675c] hover:bg-[#faf7f2]'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
-                <div className="border-t border-[#efe8dc] pt-4">
-                  <p className="text-[13px] font-semibold">Assigned providers</p>
-                  {customerAssignments.length === 0 ? (
-                    <p className="mt-2 text-[12.5px] text-[#6f675c]">No assignments yet.</p>
-                  ) : (
-                    <ul className="mt-2 space-y-2">
-                      {customerAssignments.slice(0, 6).map((a) => (
-                        <li key={a.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12.5px]">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate font-medium">{a.providerName || 'Provider'}</span>
-                            <StatusBadge status={a.status} label={a.statusLabel} />
-                          </div>
-                          <p className="truncate text-[11.5px] text-[#6f675c]">
-                            {a.providerType === 'agency' ? 'Agency' : 'Individual'}
-                            {a.teamMemberName ? ` · ${a.teamMemberName}` : ''}
-                            {a.serviceName ? ` · ${a.serviceName}` : ''}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                {customerTab === 'overview' ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2 text-[12.5px]">
+                      <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2">
+                        <p className="text-[11px] uppercase tracking-wide text-[#8a7a52]">Bookings</p>
+                        <p className="mt-1 text-[18px] font-semibold">{customerDetail.bookings.length}</p>
+                      </div>
+                      <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2">
+                        <p className="text-[11px] uppercase tracking-wide text-[#8a7a52]">Assigned providers</p>
+                        <p className="mt-1 text-[18px] font-semibold">{customerAssignments.length}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className={adminBtnClass}
+                        disabled={busy || customerDetail.customer.status !== 'active'}
+                        onClick={() => {
+                          setAssignCustomerId(customerDetail.customer.id);
+                          setSelectedCustomerId(null);
+                          setCustomerDetail(null);
+                          setTab('assignments');
+                        }}
+                      >
+                        Assign provider
+                      </button>
+                      <span className="self-center text-[12px] text-[#6f675c]">Assignments never create a booking or payment.</span>
+                    </div>
+                    <p className="text-[12.5px] text-[#6f675c]">
+                      Joined {customerDetail.customer.createdAt ? formatScheduledDate(customerDetail.customer.createdAt) : '—'} · Phone {customerDetail.customer.phone || '—'}
+                    </p>
+                  </div>
+                ) : null}
 
-                <form className="space-y-2 border-t border-[#efe8dc] pt-4" onSubmit={(e) => {
-                  e.preventDefault();
-                  act(async () => {
-                    await apiRequest('/admin/customers.php', {
-                      method: 'POST',
-                      body: JSON.stringify({ userId: customerDetail.customer.id, action: 'update_profile', ...customerProfile }),
-                    });
-                  }, 'Profile updated.');
-                }}>
-                  <p className="text-[13px] font-semibold">Profile</p>
-                  <FormField label="First name"><input className={adminInputClass} value={customerProfile.firstName} onChange={(e) => setCustomerProfile({ ...customerProfile, firstName: e.target.value })} required /></FormField>
-                  <FormField label="Last name"><input className={adminInputClass} value={customerProfile.lastName} onChange={(e) => setCustomerProfile({ ...customerProfile, lastName: e.target.value })} /></FormField>
-                  <FormField label="Phone"><input className={adminInputClass} value={customerProfile.phone} onChange={(e) => setCustomerProfile({ ...customerProfile, phone: e.target.value })} /></FormField>
-                  <button className={adminBtnClass} type="submit" disabled={busy}>Save profile</button>
-                </form>
-
-                <div className="border-t border-[#efe8dc] pt-4">
-                  <p className="text-[13px] font-semibold">Notes</p>
-                  <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto">
-                    {customerDetail.notes.length === 0 ? (
-                      <li className="text-[12.5px] text-[#6f675c]">No notes yet.</li>
-                    ) : customerDetail.notes.map((n) => (
-                      <li key={n.id} className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px]">
-                        <p>{n.body}</p>
-                        <p className="mt-1 text-[11px] text-[#8a7a52]">{n.author} · {n.createdAt}</p>
-                      </li>
-                    ))}
-                  </ul>
-                  <form className="mt-3 space-y-2" onSubmit={(e) => {
+                {customerTab === 'profile' ? (
+                  <form className="space-y-2" onSubmit={(e) => {
                     e.preventDefault();
-                    if (!customerNote.trim()) return;
                     act(async () => {
                       await apiRequest('/admin/customers.php', {
                         method: 'POST',
-                        body: JSON.stringify({ userId: customerDetail.customer.id, action: 'add_note', body: customerNote.trim() }),
+                        body: JSON.stringify({ userId: customerDetail.customer.id, action: 'update_profile', ...customerProfile }),
                       });
-                      setCustomerNote('');
-                    }, 'Note added.');
+                    }, 'Profile updated.');
                   }}>
-                    <FormField label="Internal note">
-                      <textarea className={`${adminInputClass} h-24 py-2`} value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
-                    </FormField>
-                    <button className={adminBtnGhostClass} type="submit" disabled={busy || !customerNote.trim()}>Add note</button>
+                    <p className="text-[13px] font-semibold">Customer profile</p>
+                    <FormField label="First name"><input className={adminInputClass} value={customerProfile.firstName} onChange={(e) => setCustomerProfile({ ...customerProfile, firstName: e.target.value })} required /></FormField>
+                    <FormField label="Last name"><input className={adminInputClass} value={customerProfile.lastName} onChange={(e) => setCustomerProfile({ ...customerProfile, lastName: e.target.value })} /></FormField>
+                    <FormField label="Phone"><input className={adminInputClass} value={customerProfile.phone} onChange={(e) => setCustomerProfile({ ...customerProfile, phone: e.target.value })} /></FormField>
+                    <p className="text-[12px] text-[#6f675c]">Email changes stay with the customer verification flow.</p>
+                    <button className={adminBtnClass} type="submit" disabled={busy}>Save profile</button>
                   </form>
-                </div>
+                ) : null}
 
-                <div className="border-t border-[#efe8dc] pt-4">
-                  <p className="text-[13px] font-semibold">Recent bookings</p>
-                  <ul className="mt-2 max-h-36 space-y-2 overflow-y-auto text-[12.5px]">
-                    {customerDetail.bookings.length === 0 ? (
-                      <li className="text-[#6f675c]">No bookings.</li>
-                    ) : customerDetail.bookings.slice(0, 8).map((b) => (
-                      <li key={b.id} className="flex items-center justify-between gap-2">
-                        <span className="truncate">{b.serviceName}</span>
-                        <StatusBadge status={b.status} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {customerTab === 'location' ? (
+                  <div className="space-y-4">
+                    <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
+                      <p className="inline-flex items-center gap-1.5 font-semibold text-[#161616]">
+                        <MapPin className="h-3.5 w-3.5 text-[#8F6D35]" aria-hidden /> Saved location
+                      </p>
+                      <p className="mt-1">
+                        {customerLocation
+                          ? [customerLocation.area, customerLocation.city, customerLocation.district, customerLocation.region].filter(Boolean).join(', ') || 'Region and town not set'
+                          : 'No saved location yet.'}
+                      </p>
+                      {customerLocation?.latitude != null && customerLocation?.longitude != null ? (
+                        <p className="mt-1 text-[11.5px] text-[#8a7a52]">Exact pin on file. Only staff with customer-write permission can see it here.</p>
+                      ) : null}
+                    </div>
 
-                <div className="flex flex-wrap gap-2 border-t border-[#efe8dc] pt-4">
-                  <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
-                    await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'export' }) });
-                  }, 'Export privacy request logged.')}>Request export</button>
-                  <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
-                    await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'deletion' }) });
-                  }, 'Deletion privacy request logged.')}>Request deletion</button>
-                  <button
-                    className={adminBtnGhostClass}
-                    disabled={busy || customerDetail.customer.status === 'deleted'}
-                    onClick={() => {
-                      if (!window.confirm('Close this customer account?')) return;
-                      act(async () => {
+                    <form className="space-y-2" onSubmit={(e) => {
+                      e.preventDefault();
+                      const latitude = customerLocationForm.latitude.trim() === '' ? null : Number(customerLocationForm.latitude);
+                      const longitude = customerLocationForm.longitude.trim() === '' ? null : Number(customerLocationForm.longitude);
+                      void act(async () => {
                         await apiRequest('/admin/customers.php', {
                           method: 'POST',
-                          body: JSON.stringify({ userId: customerDetail.customer.id, action: 'close_account', confirm: 'CLOSE' }),
+                          body: JSON.stringify({
+                            userId: customerDetail.customer.id,
+                            action: 'update_location',
+                            country: 'Ghana',
+                            region: customerLocationForm.region,
+                            district: customerLocationForm.district,
+                            city: customerLocationForm.city,
+                            area: customerLocationForm.area,
+                            description: customerLocationForm.description,
+                            latitude,
+                            longitude,
+                          }),
                         });
-                      }, 'Account closed.');
-                    }}
-                  >
-                    Close account
-                  </button>
-                </div>
+                      }, 'Customer location updated.');
+                    }}>
+                      <p className="text-[13px] font-semibold">Update location</p>
+                      <FormField label="Region">
+                        <select className={adminInputClass} value={customerLocationForm.region} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, region: e.target.value, district: '', city: '' })}>
+                          <option value="">Select region</option>
+                          {MARKETPLACE_REGIONS.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                        </select>
+                      </FormField>
+                      <FormField label="District / Municipality">
+                        <input className={adminInputClass} value={customerLocationForm.district} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, district: e.target.value })} />
+                      </FormField>
+                      <FormField label="City / Town">
+                        <input className={adminInputClass} value={customerLocationForm.city} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, city: e.target.value })} required />
+                      </FormField>
+                      <FormField label="Area / Neighbourhood">
+                        <input className={adminInputClass} value={customerLocationForm.area} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, area: e.target.value })} />
+                      </FormField>
+                      <FormField label="Location note (private)">
+                        <textarea className={`${adminInputClass} h-20 py-2`} maxLength={500} value={customerLocationForm.description} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, description: e.target.value })} />
+                      </FormField>
+                      <div className="grid grid-cols-2 gap-2">
+                        <FormField label="Latitude (optional)">
+                          <input className={adminInputClass} inputMode="decimal" value={customerLocationForm.latitude} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, latitude: e.target.value })} />
+                        </FormField>
+                        <FormField label="Longitude (optional)">
+                          <input className={adminInputClass} inputMode="decimal" value={customerLocationForm.longitude} onChange={(e) => setCustomerLocationForm({ ...customerLocationForm, longitude: e.target.value })} />
+                        </FormField>
+                      </div>
+                      <p className="text-[11.5px] text-[#8a7a52]">Clearing the coordinates removes the pin. Changes are audited without storing the exact pin in the audit log.</p>
+                      <button className={adminBtnClass} type="submit" disabled={busy}>Save location</button>
+                    </form>
 
-                {customerDetail.privacyRequests.length > 0 ? (
-                  <div className="border-t border-[#efe8dc] pt-4">
-                    <p className="text-[13px] font-semibold">Privacy requests</p>
-                    <ul className="mt-2 space-y-1 text-[12.5px]">
-                      {customerDetail.privacyRequests.map((p) => (
-                        <li key={p.id} className="flex items-center justify-between gap-2">
-                          <span>{p.type}</span>
-                          <StatusBadge status={p.status} />
+                    <div className="space-y-2 border-t border-[#efe8dc] pt-3">
+                      <p className="text-[13px] font-semibold">Assign nearest provider</p>
+                      <p className="text-[12px] text-[#6f675c]">Recommendations use service coverage, verification, publication and availability. You still review and confirm in Assignments.</p>
+                      <div className="flex flex-wrap gap-2">
+                        <select className={`${adminInputClass} w-[150px]`} aria-label="Search radius" value={nearbyRadius} onChange={(e) => setNearbyRadius(e.target.value)}>
+                          {['5', '10', '20', '50', '100'].map((km) => <option key={km} value={km}>Within {km} km</option>)}
+                        </select>
+                        <button className={adminBtnGhostClass} type="button" disabled={nearbyLoading || busy || !customerLocation} onClick={() => void loadNearby(customerDetail.customer.id, nearbyRadius)}>
+                          {nearbyLoading ? 'Finding…' : 'Find eligible providers'}
+                        </button>
+                      </div>
+                      {!customerLocation ? <p className="text-[12px] text-[#8a7a52]">Save a customer location first.</p> : null}
+                      {nearbyNote ? <p className="text-[12px] text-[#6f675c]">{nearbyNote}</p> : null}
+                      {nearbyProviders.length > 0 ? (
+                        <ul className="space-y-2">
+                          {nearbyProviders.map((provider) => (
+                            <li key={provider.providerProfileId} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12.5px]">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="truncate font-semibold">{provider.displayName} <span className="font-normal capitalize text-[#8a7a52]">· {provider.providerKind}</span></p>
+                                  <p className="truncate text-[11.5px] text-[#6f675c]">{[provider.area, provider.city, provider.region].filter(Boolean).join(', ')}</p>
+                                  <p className="mt-1 text-[11.5px] text-[#8a7a52]">
+                                    {provider.distanceKm != null ? `~${provider.distanceKm} km · ` : ''}
+                                    {provider.reasons.join(' · ')}
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  className={adminBtnGhostCompactClass}
+                                  disabled={busy}
+                                  onClick={() => {
+                                    setAssignCustomerId(customerDetail.customer.id);
+                                    setSelectedCustomerId(null);
+                                    setCustomerDetail(null);
+                                    setTab('assignments');
+                                  }}
+                                >
+                                  Assign
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {customerTab === 'bookings' ? (
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-semibold">Bookings</p>
+                    {customerDetail.bookings.length === 0 ? (
+                      <p className="text-[12.5px] text-[#6f675c]">No bookings.</p>
+                    ) : (
+                      <ul className="max-h-[420px] space-y-2 overflow-y-auto text-[12.5px]">
+                        {customerDetail.bookings.map((b) => (
+                          <li key={b.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="min-w-0 truncate font-medium">{b.serviceName}</span>
+                              <StatusBadge status={b.status} />
+                            </div>
+                            <p className="truncate text-[11.5px] text-[#6f675c]">
+                              {b.scheduledAt ? formatScheduledDate(b.scheduledAt) : 'No date'} · {b.reference ?? b.id}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : null}
+
+                {customerTab === 'assigned' ? (
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-semibold">Assigned providers</p>
+                    {customerAssignments.length === 0 ? (
+                      <p className="text-[12.5px] text-[#6f675c]">No assignments yet.</p>
+                    ) : (
+                      <ul className="max-h-[420px] space-y-2 overflow-y-auto">
+                        {customerAssignments.map((a) => (
+                          <li key={a.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2 text-[12.5px]">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="truncate font-medium">{a.providerName || 'Provider'}</span>
+                              <StatusBadge status={a.status} label={a.statusLabel} />
+                            </div>
+                            <p className="truncate text-[11.5px] text-[#6f675c]">
+                              {a.providerType === 'agency' ? 'Agency' : 'Individual'}
+                              {a.teamMemberName ? ` · ${a.teamMemberName}` : ''}
+                              {a.serviceName ? ` · ${a.serviceName}` : ''}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-[11.5px] text-[#8a7a52]">Assignments are operational intents, not paid bookings.</p>
+                  </div>
+                ) : null}
+
+                {customerTab === 'payments' ? (
+                  <div className="space-y-3">
+                    <p className="text-[13px] font-semibold">Payments</p>
+                    <div className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px] text-[#6f675c]">
+                      {customerDetail.paymentNote ?? 'No booking payment ledger is recorded here.'}
+                    </div>
+                    <ul className="space-y-2 text-[12.5px]">
+                      {customerDetail.bookings.length === 0 ? (
+                        <li className="text-[#6f675c]">No bookings to price.</li>
+                      ) : customerDetail.bookings.slice(0, 12).map((b) => (
+                        <li key={b.id} className="flex items-center justify-between gap-3 rounded-[12px] border border-[#efe8dc] px-3 py-2">
+                          <span className="min-w-0 truncate">{b.serviceName}</span>
+                          <span className="shrink-0 font-semibold">{b.currency} {b.price.toLocaleString()}</span>
                         </li>
                       ))}
                     </ul>
+                  </div>
+                ) : null}
+
+                {customerTab === 'notes' ? (
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-semibold">Internal notes</p>
+                    <ul className="max-h-64 space-y-2 overflow-y-auto">
+                      {customerDetail.notes.length === 0 ? (
+                        <li className="text-[12.5px] text-[#6f675c]">No notes yet.</li>
+                      ) : customerDetail.notes.map((n) => (
+                        <li key={n.id} className="rounded-[12px] bg-[#faf7f2] px-3 py-2 text-[12.5px]">
+                          <p>{n.body}</p>
+                          <p className="mt-1 text-[11px] text-[#8a7a52]">{n.author} · {n.createdAt}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    <form className="space-y-2" onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!customerNote.trim()) return;
+                      act(async () => {
+                        await apiRequest('/admin/customers.php', {
+                          method: 'POST',
+                          body: JSON.stringify({ userId: customerDetail.customer.id, action: 'add_note', body: customerNote.trim() }),
+                        });
+                        setCustomerNote('');
+                      }, 'Note added.');
+                    }}>
+                      <FormField label="Internal note">
+                        <textarea className={`${adminInputClass} h-24 py-2`} value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
+                      </FormField>
+                      <button className={adminBtnGhostClass} type="submit" disabled={busy || !customerNote.trim()}>Add note</button>
+                    </form>
+                  </div>
+                ) : null}
+
+                {customerTab === 'account' ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <button className={adminBtnGhostClass} disabled={busy || customerDetail.customer.status === 'deleted'} onClick={() => act(async () => {
+                        await apiRequest('/admin/customers.php', {
+                          method: 'POST',
+                          body: JSON.stringify({ userId: customerDetail.customer.id, action: customerDetail.customer.status === 'suspended' ? 'activate' : 'suspend' }),
+                        });
+                      }, customerDetail.customer.status === 'suspended' ? 'Customer reactivated.' : 'Customer suspended.')}>
+                        {customerDetail.customer.status === 'suspended' ? 'Reactivate account' : 'Suspend account'}
+                      </button>
+                      <button className={adminBtnGhostClass} disabled={busy || customerDetail.customer.status === 'deleted'} onClick={() => {
+                        const banned = customerDetail.customer.status === 'banned';
+                        const reason = window.prompt(banned ? 'Unblock note (optional)' : 'Block reason (required)') ?? '';
+                        if (!banned && reason.trim() === '') return;
+                        act(async () => {
+                          await apiRequest('/admin/customers.php', {
+                            method: 'POST',
+                            body: JSON.stringify({ userId: customerDetail.customer.id, action: banned ? 'unblock' : 'block', reason: reason.trim() }),
+                          });
+                        }, banned ? 'Customer unblocked.' : 'Customer blocked.');
+                      }}>
+                        {customerDetail.customer.status === 'banned' ? 'Unblock account' : 'Block account'}
+                      </button>
+                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'export' }) });
+                      }, 'Export privacy request logged.')}>Request export</button>
+                      <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                        await apiRequest('/admin/customers.php', { method: 'POST', body: JSON.stringify({ userId: customerDetail.customer.id, action: 'privacy_request', requestType: 'deletion' }) });
+                      }, 'Deletion privacy request logged.')}>Request deletion</button>
+                      <button
+                        className={adminBtnGhostClass}
+                        disabled={busy || customerDetail.customer.status === 'deleted'}
+                        onClick={() => {
+                          if (!window.confirm('Close this customer account?')) return;
+                          act(async () => {
+                            await apiRequest('/admin/customers.php', {
+                              method: 'POST',
+                              body: JSON.stringify({ userId: customerDetail.customer.id, action: 'close_account', confirm: 'CLOSE' }),
+                            });
+                          }, 'Account closed.');
+                        }}
+                      >
+                        Close account
+                      </button>
+                    </div>
+
+                    {customerDetail.privacyRequests.length > 0 ? (
+                      <div className="border-t border-[#efe8dc] pt-3">
+                        <p className="text-[13px] font-semibold">Privacy requests</p>
+                        <ul className="mt-2 space-y-1 text-[12.5px]">
+                          {customerDetail.privacyRequests.map((p) => (
+                            <li key={p.id} className="flex items-center justify-between gap-2">
+                              <span>{p.type}</span>
+                              <StatusBadge status={p.status} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {customerTab === 'activity' ? (
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-semibold">Activity history</p>
+                    {(customerDetail.activity ?? []).length === 0 ? (
+                      <p className="text-[12.5px] text-[#6f675c]">No admin activity recorded yet.</p>
+                    ) : (
+                      <ul className="max-h-[420px] space-y-2 overflow-y-auto text-[12.5px]">
+                        {(customerDetail.activity ?? []).map((entry) => (
+                          <li key={entry.id} className="rounded-[12px] border border-[#efe8dc] px-3 py-2">
+                            <p className="font-medium capitalize">{entry.action.replace(/[._]/g, ' ')}</p>
+                            <p className="text-[11.5px] text-[#8a7a52]">{entry.actor ?? 'Staff'} · {entry.createdAt ? formatScheduledDate(entry.createdAt) : '—'}</p>
+                            {entry.meta ? (
+                              <p className="mt-1 text-[11.5px] text-[#6f675c]">
+                                {Object.entries(entry.meta).slice(0, 3).map(([k, v]) => `${k}: ${String(v)}`).join(' · ')}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -918,6 +1255,11 @@ export const AdminWorkspacePage: React.FC = () => {
                 <option value="suspended">Suspended</option>
                 <option value="banned">Blocked</option>
               </select>
+              <select className={`${adminInputClass} w-[150px] shrink-0`} aria-label="Provider region" value={locationRegion} onChange={(e) => setLocationRegion(e.target.value)}>
+                <option value="">All regions</option>
+                {MARKETPLACE_REGIONS.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+              </select>
+              <input className={`${adminInputClass} w-[130px] shrink-0`} aria-label="Provider city" placeholder="City / town" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} />
               <SearchInput className="min-w-0 flex-1 basis-[180px]" value={search} onChange={setSearch} placeholder="Search providers" onSubmit={() => run(load)} />
               <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
             </div>
@@ -939,8 +1281,8 @@ export const AdminWorkspacePage: React.FC = () => {
                       </span>
                       <div className="min-w-0">
                         <p className="truncate font-semibold hover:underline">{p.displayName}</p>
-                        <p className="truncate text-[12px] text-[#6f675c]" title={`${p.email} · ${p.city || '—'}`}>
-                          {p.email} · {p.city || '—'}
+                        <p className="truncate text-[12px] text-[#6f675c]" title={`${p.email} · ${[p.area, p.city, p.region].filter(Boolean).join(', ') || '—'}`}>
+                          {p.email} · {[p.area, p.city, p.region].filter(Boolean).join(', ') || '—'}
                         </p>
                       </div>
                     </button>
@@ -1218,6 +1560,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
                 ))}
               </select>
+              <SearchInput className="min-w-0 flex-1 basis-[180px]" value={bookingSearch} onChange={setBookingSearch} placeholder="Search reference, customer or service" onSubmit={() => run(load)} />
               <button className={adminBtnClass} onClick={() => run(load)} disabled={busy}>Apply</button>
             </div>
             <DataTable
@@ -1257,8 +1600,11 @@ export const AdminWorkspacePage: React.FC = () => {
                         onChange={(e) => {
                           const next = e.target.value;
                           if (!next) return;
+                          const needsReason = ['cancelled', 'no_show'].includes(next);
+                          const note = needsReason ? window.prompt('Reason for this status change') ?? '' : '';
+                          if (needsReason && note.trim().length < 3) return;
                           act(async () => {
-                            await apiRequest('/admin/bookings.php', { method: 'POST', body: JSON.stringify({ bookingId: b.id, action: 'status', status: next }) });
+                            await apiRequest('/admin/bookings.php', { method: 'POST', body: JSON.stringify({ bookingId: b.id, action: 'status', status: next, note }) });
                           }, 'Booking status updated.');
                         }}
                       >
@@ -1292,7 +1638,41 @@ export const AdminWorkspacePage: React.FC = () => {
                   <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Location</dt><dd className="mt-1">{bookingDetail.locationType || '—'}{bookingDetail.address ? ` · ${bookingDetail.address}` : ''}</dd></div>
                   <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Provider</dt><dd className="mt-1">{bookingDetail.providerName ?? 'Unassigned'}{bookingDetail.teamMemberName ? ` · ${bookingDetail.teamMemberName}` : ''}</dd></div>
                   <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Price</dt><dd className="mt-1">{bookingDetail.currency} {bookingDetail.price.toLocaleString()}</dd></div>
+                  <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Payment</dt><dd className="mt-1 text-[12px] text-[#6f675c]">{bookingDetail.paymentNote ?? 'No payment ledger is recorded for this booking.'}</dd></div>
+                  {bookingDetail.cancellationReason ? (
+                    <div><dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a7a52]">Cancellation reason</dt><dd className="mt-1 text-[12px] text-[#6f675c]">{bookingDetail.cancellationReason}</dd></div>
+                  ) : null}
                 </dl>
+                {['pending', 'confirmed', 'reschedule_requested'].includes(bookingDetail.status) ? (
+                  <div className="space-y-2 border-t border-[#efe8dc] pt-3">
+                    <p className="text-[13px] font-semibold">Assign verified provider</p>
+                    <select className={adminInputClass} value={bookingProviderId} onChange={(e) => setBookingProviderId(e.target.value)}>
+                      <option value="">Select provider</option>
+                      {bookingProviders
+                        .filter((p) => p.profileId && p.verificationStatus === 'verified' && !p.removed)
+                        .map((p) => (
+                          <option key={p.userId} value={p.profileId ?? ''}>{p.displayName} · {p.kind} · {p.city || '—'}</option>
+                        ))}
+                    </select>
+                    <button
+                      className={adminBtnClass}
+                      disabled={busy || !bookingProviderId}
+                      onClick={() => run(async () => {
+                        await apiRequest('/admin/bookings.php', {
+                          method: 'POST',
+                          body: JSON.stringify({ bookingId: bookingDetail.id, action: 'assign', providerProfileId: bookingProviderId }),
+                        });
+                        setNotice('Provider assigned to booking.');
+                        setBookingProviderId('');
+                        await loadBookingDetail(bookingDetail.id);
+                        await load();
+                      })}
+                    >
+                      Assign provider
+                    </button>
+                    <p className="text-[11.5px] text-[#8a7a52]">Only verified providers. Assigning does not create or mark a payment.</p>
+                  </div>
+                ) : null}
                 {bookingDetail.events && bookingDetail.events.length > 0 ? (
                   <div className="border-t border-[#efe8dc] pt-3">
                     <p className="text-[13px] font-semibold">Timeline</p>

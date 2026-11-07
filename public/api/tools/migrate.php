@@ -103,13 +103,17 @@ echo 'backup verified: ' . $backup . ' (' . filesize($backup) . " bytes)\n";
 
 // Snapshot counts before schema writes so we can prove data preservation.
 $preserve = [];
-foreach (['users', 'bookings', 'cms_pages', 'cms_faqs', 'services', 'media_assets'] as $table) {
+foreach (['users', 'bookings', 'cms_pages', 'cms_faqs', 'services', 'media_assets', 'provider_assignments', 'provider_assignment_events', 'admin_reversible_actions', 'customer_locations'] as $table) {
     if (ds_table_exists($table)) {
         try {
             $preserve[$table] = (int) $pdo->query('SELECT COUNT(*) AS c FROM `' . str_replace('`', '``', $table) . '`')->fetch()['c'];
         } catch (Throwable $e) {
             $preserve[$table] = -1;
         }
+    } else {
+        // New additive tables start empty; comparing 0 to 0 proves the migration
+        // did not invent rows while still covering pre-existing assignment data.
+        $preserve[$table] = 0;
     }
 }
 $roleCounts = [];
@@ -142,12 +146,25 @@ if (ds_table_exists('qa_accounts')) {
     $problems[] = 'qa_accounts is missing';
 }
 
-foreach (['staff_profiles', 'staff_invitations', 'customer_notes', 'privacy_requests', 'cms_announcements', 'provider_gallery_images', 'provider_moderation_events'] as $table) {
+foreach (['staff_profiles', 'staff_invitations', 'customer_notes', 'privacy_requests', 'cms_announcements', 'provider_gallery_images', 'provider_moderation_events', 'provider_assignments', 'provider_assignment_events', 'admin_reversible_actions'] as $table) {
     if (!ds_table_exists($table)) {
         $problems[] = "{$table} is missing";
     } else {
         echo "{$table}: ok\n";
     }
+}
+if (!ds_table_exists('customer_locations')) {
+    $problems[] = 'customer_locations is missing';
+} else {
+    echo "customer_locations: ok\n";
+}
+if (ds_table_exists('provider_profiles')) {
+    foreach (['district', 'latitude', 'longitude', 'service_areas_json', 'service_regions_json'] as $column) {
+        if (!ds_column_exists('provider_profiles', $column)) {
+            $problems[] = "provider_profiles.{$column} is missing";
+        }
+    }
+    echo "provider_profiles location columns: " . ($problems === [] ? 'ok' : 'check output') . "\n";
 }
 if (ds_table_exists('users') && !ds_column_exists('users', 'auth_epoch')) {
     $problems[] = 'users.auth_epoch is missing';

@@ -338,6 +338,15 @@ function ds_cms_migrate(): void
     if (function_exists('ds_ensure_provider_moderation_schema')) {
         ds_ensure_provider_moderation_schema();
     }
+
+    // Assignment / reversible-action tables are part of the CLI migration, not
+    // request-time schema creation. $force allows this migration path to write
+    // them in production after the operator verified a backup.
+    require_once __DIR__ . '/assignments.php';
+    ds_ensure_assignments_schema(true);
+
+    require_once __DIR__ . '/locations.php';
+    ds_location_ensure_schema(true);
 }
 
 /** Read one CMS setting. Values are stored as plain strings. */

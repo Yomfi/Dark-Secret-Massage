@@ -53,8 +53,17 @@ export type MarketplaceProfile = {
   gender?: MarketplaceGender | null;
   citySlug: string;
   city: string;
+  district?: string | null;
+  area?: string | null;
   region: string;
   country: string;
+  distanceKm?: number | null;
+  distancePrecision?: 'coordinates' | 'service_area' | 'city' | 'region' | 'none';
+  matchedArea?: string | null;
+  offersHomeVisit?: boolean;
+  offersStudio?: boolean;
+  serviceAreas?: Array<{ region: string; district?: string; city: string; area?: string }>;
+  serviceRegions?: string[];
   shortBio: string;
   about: string;
   services: string[];
@@ -170,8 +179,24 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
     gender: (raw.gender as MarketplaceGender | null) ?? null,
     citySlug: String(raw.citySlug ?? 'accra'),
     city: String(raw.city ?? ''),
+    district: raw.district ? String(raw.district) : null,
+    area: raw.area ? String(raw.area) : null,
     region: String(raw.region ?? ''),
     country: String(raw.country ?? 'Ghana'),
+    distanceKm: raw.distanceKm != null ? Number(raw.distanceKm) : null,
+    distancePrecision: (raw.distancePrecision as MarketplaceProfile['distancePrecision']) ?? 'none',
+    matchedArea: raw.matchedArea ? String(raw.matchedArea) : null,
+    offersHomeVisit: Boolean(raw.offersHomeVisit),
+    offersStudio: raw.offersStudio !== false,
+    serviceAreas: Array.isArray(raw.serviceAreas)
+      ? (raw.serviceAreas as Array<Record<string, unknown>>).map((area) => ({
+          region: String(area.region ?? ''),
+          district: area.district ? String(area.district) : undefined,
+          city: String(area.city ?? ''),
+          area: area.area ? String(area.area) : undefined,
+        }))
+      : [],
+    serviceRegions: Array.isArray(raw.serviceRegions) ? (raw.serviceRegions as string[]) : [],
     shortBio: String(raw.shortBio ?? ''),
     about: String(raw.about ?? ''),
     services,
@@ -199,6 +224,48 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
     yearsExperience: raw.yearsExperience != null ? Number(raw.yearsExperience) : null,
     isDemo: false,
     createdAt: raw.createdAt ? String(raw.createdAt) : null,
+  };
+}
+
+export type DiscoveryTarget = {
+  source: 'saved' | 'manual' | 'none';
+  region: string | null;
+  district: string | null;
+  city: string | null;
+  area: string | null;
+  hasCoordinates: boolean;
+  radiusKm: number | null;
+};
+
+/** Location-aware search used by Explore. Coordinates are POSTed, never put in a URL. */
+export async function searchMarketplaceProviders(
+  body: Record<string, unknown>,
+): Promise<{ providers: MarketplaceProfile[]; target: DiscoveryTarget; distanceNote?: string }> {
+  const res = await fetch('/api/public/discovery.php', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    throw new Error(payload?.error?.message || 'Unable to load providers.');
+  }
+  const providers = Array.isArray(payload.data?.providers) ? payload.data.providers : [];
+  const mapped = providers.map((p: Record<string, unknown>) => mapApiProvider(p));
+  setMarketplaceProfiles(mapped);
+  return {
+    providers: mapped,
+    target: payload.data?.target ?? {
+      source: 'none',
+      region: null,
+      district: null,
+      city: null,
+      area: null,
+      hasCoordinates: false,
+      radiusKm: null,
+    },
+    distanceNote: payload.data?.distanceNote,
   };
 }
 

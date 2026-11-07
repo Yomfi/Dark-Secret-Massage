@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 require_once dirname(__DIR__) . '/config/actions.php';
+require_once dirname(__DIR__) . '/config/locations.php';
 
 $admin = ds_require_permission('customers.read');
 if (!ds_cms_ready()) {
@@ -92,7 +93,33 @@ if ($method === 'GET') {
             }, $p->fetchAll() ?: []);
         }
 
+        $activity = [];
+        if (ds_table_exists('admin_audit_log')) {
+            $a = $pdo->prepare(
+                "SELECT a.id, a.action, a.entity_type, a.meta_json, a.created_at, u.email AS actor_email
+                 FROM admin_audit_log a
+                 LEFT JOIN users u ON CAST(u.id AS BINARY) = CAST(a.actor_user_id AS BINARY)
+                 WHERE a.entity_type = 'user' AND a.entity_id = ?
+                 ORDER BY a.created_at DESC LIMIT 40"
+            );
+            $a->execute([$detailId]);
+            $activity = array_map(static function (array $entry): array {
+                $meta = json_decode((string) ($entry['meta_json'] ?? ''), true);
+                return [
+                    'id' => (string) $entry['id'],
+                    'action' => (string) $entry['action'],
+                    'meta' => is_array($meta) ? $meta : null,
+                    'actor' => $entry['actor_email'] ?? null,
+                    'createdAt' => $entry['created_at'] ?? null,
+                ];
+            }, $a->fetchAll() ?: []);
+        }
+
+        ds_location_ensure_schema(false, true);
+        $customerLocation = ds_customer_location($detailId);
+
         ds_success([
+            'location' => ds_customer_location_dto($customerLocation, true),
             'customer' => [
                 'id' => (string) $row['id'],
                 'name' => trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')),
@@ -109,6 +136,8 @@ if ($method === 'GET') {
             'bookings' => $bookings,
             'notes' => $notes,
             'privacyRequests' => $privacy,
+            'activity' => $activity,
+            'paymentNote' => 'No booking payment ledger is recorded here. Completed bookings are operational only and do not mean the customer paid.',
         ]);
     }
 
@@ -123,6 +152,19 @@ if ($method === 'GET') {
         $where[] = '(email LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR phone LIKE ?)';
         $like = '%' . $search . '%';
         array_push($params, $like, $like, $like, $like);
+    }
+    $locationRegion = trim((string) ($_GET['region'] ?? ''));
+    $locationCity = trim((string) ($_GET['city'] ?? ''));
+    if (($locationRegion !== '' || $locationCity !== '') && ds_table_exists('customer_locations')) {
+        if ($locationRegion !== '') {
+            $where[] = 'EXISTS (SELECT 1 FROM customer_locations cl WHERE CAST(cl.user_id AS BINARY) = CAST(users.id AS BINARY) AND cl.region = ?)';
+            $params[] = $locationRegion;
+        }
+        if ($locationCity !== '') {
+            $where[] = 'EXISTS (SELECT 1 FROM customer_locations cl WHERE CAST(cl.user_id AS BINARY) = CAST(users.id AS BINARY) AND (cl.city = ? OR cl.area = ?))';
+            $params[] = $locationCity;
+            $params[] = $locationCity;
+        }
     }
     $whereSql = 'WHERE ' . implode(' AND ', $where);
 
@@ -164,8 +206,23 @@ if ($method === 'GET') {
         }
     }
 
+    $locationByUser = [];
+    if ($list !== [] && ds_table_exists('customer_locations')) {
+        $ids = array_values(array_map(static fn (array $row): string => (string) $row['id'], $list));
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        try {
+            $loc = $pdo->prepare("SELECT * FROM customer_locations WHERE user_id IN ($in)");
+            $loc->execute($ids);
+            foreach ($loc->fetchAll() ?: [] as $locRow) {
+                $locationByUser[(string) $locRow['user_id']] = ds_customer_location_dto($locRow, false);
+            }
+        } catch (Throwable $e) {
+            $locationByUser = [];
+        }
+    }
+
     ds_success([
-        'customers' => array_map(static function (array $row) use ($bookingCounts): array {
+        'customers' => array_map(static function (array $row) use ($bookingCounts, $locationByUser): array {
             $stats = $bookingCounts[(string) $row['id']] ?? ['total' => 0, 'completed' => 0];
             return [
                 'id' => (string) $row['id'],
@@ -178,6 +235,7 @@ if ($method === 'GET') {
                 'createdAt' => $row['created_at'] ?? null,
                 'bookings' => $stats['total'],
                 'completedBookings' => $stats['completed'],
+                'location' => $locationByUser[(string) $row['id']] ?? null,
             ];
         }, $list),
         'page' => $page,
@@ -239,6 +297,28 @@ if ($action === 'update_profile') {
         'lastName' => $lastName,
     ], $admin['id']);
     ds_success(['userId' => $userId, 'updated' => true]);
+}
+
+if ($action === 'update_location') {
+    if ($userId === '') {
+        ds_error(400, 'VALIDATION_ERROR', 'userId is required.');
+    }
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ? AND role = 'user' LIMIT 1");
+    $stmt->execute([$userId]);
+    if (!$stmt->fetch()) {
+        ds_error(404, 'NOT_FOUND', 'Customer not found.');
+    }
+    ds_location_ensure_schema();
+    $location = ds_location_validate($body, true);
+    $saved = ds_save_customer_location($userId, $location);
+    ds_audit('customer.location_updated', 'user', $userId, [
+        'byStaff' => true,
+        'region' => $location['region'],
+        'city' => $location['city'],
+        'area' => $location['area'],
+        'coordinatesPresent' => $location['latitude'] !== null,
+    ], $admin['id']);
+    ds_success(['location' => ds_customer_location_dto($saved, true)]);
 }
 
 if ($action === 'privacy_request') {

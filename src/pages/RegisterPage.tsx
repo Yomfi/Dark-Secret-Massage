@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { AuthLayout } from '../components/layout/AuthLayout';
-import { Alert, Button, CheckboxField, TextField } from '../components/ui';
+import { Alert, Button, CheckboxField, SelectField, TextField } from '../components/ui';
+import { MARKETPLACE_REGIONS } from '../data/locations';
+import { customerApi } from '../lib/customerApi';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -12,6 +14,8 @@ export const RegisterPage: React.FC = () => {
     lastName: '',
     email: '',
     phone: '',
+    region: '',
+    city: '',
     password: '',
     confirmPassword: '',
     termsAccepted: false,
@@ -43,6 +47,19 @@ export const RegisterPage: React.FC = () => {
         confirmPassword: form.confirmPassword,
         termsAccepted: true,
       });
+      // Location is optional at registration and can always be changed later in
+      // account settings. Never block account creation if it cannot be saved.
+      if (form.region.trim() !== '' && form.city.trim() !== '') {
+        await customerApi
+          .saveLocation({
+            country: 'Ghana',
+            region: form.region.trim(),
+            district: '',
+            city: form.city.trim(),
+            area: '',
+          })
+          .catch(() => undefined);
+      }
       // Email verification is the registration gate; the phone is contact info only.
       navigate(result.verificationEmailSent ? '/verify-email?sent=1' : '/verify-email?sent=0', {
         replace: true,
@@ -110,6 +127,33 @@ export const RegisterPage: React.FC = () => {
           value={form.phone}
           onChange={(e) => patch({ phone: e.target.value })}
         />
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-brand-gold-light">
+            Location (optional)
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-zinc-400">
+            Used only to show nearby providers. Your town is not shown publicly and your exact pin is never shared.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <SelectField
+              label="Region"
+              value={form.region}
+              onChange={(e) => patch({ region: e.target.value })}
+            >
+              <option value="">Select region</option>
+              {MARKETPLACE_REGIONS.map((r) => (
+                <option key={r.id} value={r.name}>{r.name}</option>
+              ))}
+            </SelectField>
+            <TextField
+              label="City / Town"
+              value={form.city}
+              onChange={(e) => patch({ city: e.target.value })}
+              placeholder="e.g. Kumasi"
+            />
+          </div>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField

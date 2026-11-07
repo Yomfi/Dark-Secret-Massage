@@ -11,6 +11,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { LocationFields, emptyLocation, type LocationValue } from './location/LocationFields';
 import { apiRequest } from '../lib/api';
 import { formatScheduledDate } from '../lib/dates';
 
@@ -41,6 +42,31 @@ type ProfilePayload = {
   accountStatus: string;
 };
 
+type CustomerLocation = {
+  country: string;
+  region: string | null;
+  district: string | null;
+  city: string | null;
+  area: string | null;
+  description: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  updatedAt?: string | null;
+};
+
+function toLocationValue(location: CustomerLocation | null): LocationValue {
+  if (!location) return { ...emptyLocation };
+  return {
+    country: location.country || 'Ghana',
+    region: location.region || '',
+    district: location.district || '',
+    city: location.city || '',
+    area: location.area || '',
+    latitude: location.latitude ?? null,
+    longitude: location.longitude ?? null,
+  };
+}
+
 const surface = 'rounded-2xl border border-[#e6dfd2] bg-white p-5 shadow-[0_1px_2px_rgba(24,20,12,0.04)]';
 const statusTone: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-800 border-amber-200',
@@ -57,10 +83,14 @@ export const ClientDashboard: React.FC<{
   userBookings?: unknown[];
 }> = ({ onBackToHome, onOpenBooking }) => {
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'profile' ? 'profile' : 'bookings';
-  const [tab, setTab] = useState<'bookings' | 'profile'>(initialTab);
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'profile' ? 'profile' : tabParam === 'location' ? 'location' : 'bookings';
+  const [tab, setTab] = useState<'bookings' | 'profile' | 'location'>(initialTab);
   const [data, setData] = useState<CustomerPayload | null>(null);
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [location, setLocation] = useState<CustomerLocation | null>(null);
+  const [locationForm, setLocationForm] = useState<LocationValue>({ ...emptyLocation });
+  const [locationDescription, setLocationDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -70,10 +100,14 @@ export const ClientDashboard: React.FC<{
     Promise.all([
       apiRequest<CustomerPayload>('/customer/bookings.php'),
       apiRequest<ProfilePayload>('/customer/profile.php'),
+      apiRequest<{ location: CustomerLocation | null }>('/customer/location.php').catch(() => ({ location: null })),
     ])
-      .then(([bookings, me]) => {
+      .then(([bookings, me, savedLocation]) => {
         setData(bookings);
         setProfile(me);
+        setLocation(savedLocation.location);
+        setLocationForm(toLocationValue(savedLocation.location));
+        setLocationDescription(savedLocation.location?.description ?? '');
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Unable to load your account.'));
   };
@@ -92,6 +126,53 @@ export const ClientDashboard: React.FC<{
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to cancel this booking.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveLocation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!locationForm.region || !locationForm.city.trim()) {
+      setError('Choose your region and town so providers can be matched.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await apiRequest<{ location: CustomerLocation; message?: string }>('/customer/location.php', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'save',
+          ...locationForm,
+          description: locationDescription,
+        }),
+      });
+      setLocation(result.location);
+      setLocationForm(toLocationValue(result.location));
+      setLocationDescription(result.location.description ?? '');
+      setNotice(result.message ?? 'Location saved.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save your location.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const clearLocation = async () => {
+    if (!window.confirm('Remove your saved location? Discovery will ask for a location next time.')) return;
+    setBusy(true);
+    try {
+      await apiRequest('/customer/location.php', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'clear' }),
+      });
+      setLocation(null);
+      setLocationForm({ ...emptyLocation });
+      setLocationDescription('');
+      setNotice('Saved location removed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to remove your location.');
     } finally {
       setBusy(false);
     }
@@ -152,6 +233,7 @@ export const ClientDashboard: React.FC<{
         <nav className="mb-6 flex gap-2 border-b border-[#e6dfd2] pb-3" aria-label="Account sections">
           {[
             { id: 'bookings' as const, label: 'Bookings', icon: Calendar },
+            { id: 'location' as const, label: 'Location', icon: MapPin },
             { id: 'profile' as const, label: 'Profile', icon: UserIcon },
           ].map(({ id, label, icon: Icon }) => (
             <button
@@ -299,6 +381,72 @@ export const ClientDashboard: React.FC<{
               Receipts list completed bookings only. No online payment gateway is integrated, so no card
               transactions are recorded.
             </p>
+          </section>
+        ) : null}
+
+        {tab === 'location' ? (
+          <section className={surface}>
+            <h2 className="text-[15px] font-semibold">Your location</h2>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#6b6252]">
+              Explore uses this to show nearby, eligible providers first. Your exact pin and home address
+              are private and are never shown to providers or other customers.
+            </p>
+
+            {location?.region || location?.city ? (
+              <div className="mt-4 rounded-xl border border-[#eee7d9] bg-[#fbf8f1] px-3 py-2.5 text-[13px]">
+                <p className="font-semibold text-[#221f19]">
+                  {[location.area, location.city, location.district, location.region].filter(Boolean).join(', ')}
+                </p>
+                <p className="mt-0.5 text-[11.5px] text-[#8a7a52]">
+                  {location.latitude != null && location.longitude != null
+                    ? 'Exact pin saved — distances use approximate straight-line measurement.'
+                    : 'No exact pin saved — matching uses your town and region.'}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-dashed border-[#d9cfba] px-3 py-3 text-[13px] text-[#6b6252]">
+                No saved location yet. You can still browse Explore, but nearest-first results need a town.
+              </p>
+            )}
+
+            <form onSubmit={saveLocation} className="mt-4 space-y-4">
+              <LocationFields value={locationForm} onChange={setLocationForm} disabled={busy} />
+              <label className="block">
+                <span className="text-[12px] font-medium text-[#6b6252]">Location note (optional)</span>
+                <textarea
+                  className="mt-1.5 min-h-24 w-full rounded-xl border border-[#d9cfba] bg-white px-3 py-2.5 text-[14px] text-[#221f19] outline-none focus:border-[#b8862f] focus:ring-2 focus:ring-[#b8862f]/25"
+                  maxLength={500}
+                  value={locationDescription}
+                  onChange={(e) => setLocationDescription(e.target.value)}
+                  placeholder="Landmark or directions that help a provider, kept private."
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="inline-flex h-12 items-center rounded-xl bg-[#221f19] px-5 text-[13.5px] font-semibold text-white hover:bg-[#3a342a] disabled:opacity-60"
+                >
+                  {busy ? 'Saving…' : 'Save location'}
+                </button>
+                {location ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={clearLocation}
+                    className="inline-flex h-12 items-center rounded-xl border border-[#d9cfba] px-4 text-[13px] font-semibold text-[#6b6252] hover:bg-[#f2eee4] disabled:opacity-60"
+                  >
+                    Remove saved location
+                  </button>
+                ) : null}
+                <Link
+                  to="/explore/accra"
+                  className="inline-flex h-12 items-center rounded-xl border border-[#d9cfba] px-4 text-[13px] font-semibold text-[#221f19] hover:bg-[#f2eee4]"
+                >
+                  Find nearby providers
+                </Link>
+              </div>
+            </form>
           </section>
         ) : null}
 

@@ -33,6 +33,9 @@ $fileMap = [
     '/auth/resend-verification' => __DIR__ . '/auth/resend-verification.php',
     '/auth/verify-phone' => __DIR__ . '/auth/verify-phone.php',
     '/auth/onboarding' => __DIR__ . '/auth/onboarding.php',
+    '/customer/location' => __DIR__ . '/customer/location.php',
+    '/public/discovery' => __DIR__ . '/public/discovery.php',
+    '/admin/locations' => __DIR__ . '/admin/locations.php',
 ];
 
 $normalized = rtrim($uri, '/') ?: '/';

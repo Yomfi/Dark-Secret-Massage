@@ -8,9 +8,29 @@ export type CreateBookingBody = {
   timeSlot: string;
   locationType: 'studio' | 'home';
   address?: string;
+  customerLocation?: {
+    region?: string;
+    district?: string;
+    city?: string;
+    area?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
   notes?: string;
   customerName?: string;
   customerPhone?: string;
+};
+
+export type CustomerLocationDto = {
+  country: string;
+  region: string | null;
+  district: string | null;
+  city: string | null;
+  area: string | null;
+  description: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  updatedAt?: string | null;
 };
 
 export type CustomerBookingDto = {
@@ -69,5 +89,17 @@ export const customerApi = {
     apiRequest<{ saved: boolean }>('/customer/profile.php', {
       method: 'POST',
       body: JSON.stringify(body),
+    }),
+  getLocation: () =>
+    apiRequest<{ location: CustomerLocationDto | null; country: string }>('/customer/location.php'),
+  saveLocation: (body: Record<string, unknown>) =>
+    apiRequest<{ saved: boolean; location: CustomerLocationDto; message?: string }>(
+      '/customer/location.php',
+      { method: 'POST', body: JSON.stringify({ action: 'save', ...body }) },
+    ),
+  clearLocation: () =>
+    apiRequest<{ cleared: boolean }>('/customer/location.php', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'clear' }),
     }),
 };

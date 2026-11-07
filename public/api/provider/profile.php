@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
+require_once dirname(__DIR__) . '/config/locations.php';
 
 $user = ds_require_provider();
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -25,10 +26,17 @@ function ds_profile_row_to_api(?array $profile): ?array
         'age' => isset($profile['age']) ? (int) $profile['age'] : null,
         'whatsappNumber' => $profile['whatsapp_number'] ?? null,
         'city' => $profile['city'],
+        'district' => $profile['district'] ?? null,
         'areaNeighbourhood' => $profile['area_neighbourhood'] ?? null,
         'businessAddress' => $profile['business_address'] ?? null,
         'serviceArea' => $profile['service_area'] ?? null,
         'serviceRadiusKm' => isset($profile['service_radius_km']) ? (float) $profile['service_radius_km'] : null,
+        'latitude' => isset($profile['latitude']) && $profile['latitude'] !== null ? (float) $profile['latitude'] : null,
+        'longitude' => isset($profile['longitude']) && $profile['longitude'] !== null ? (float) $profile['longitude'] : null,
+        'serviceAreas' => ds_provider_service_areas($profile),
+        'serviceRegions' => array_values(array_map('strval', ds_json_decode_field($profile['service_regions_json'] ?? null))),
+        'offersHomeVisit' => ds_provider_offers_home_visit($profile),
+        'offersStudio' => ds_provider_offers_studio($profile),
         'region' => $profile['region'],
         'country' => $profile['country'],
         'about' => $profile['about'],
@@ -60,6 +68,7 @@ function ds_profile_row_to_api(?array $profile): ?array
 
 if ($method === 'GET') {
     ds_require_method('GET');
+    ds_location_ensure_schema(false, true);
     $profile = ds_provider_profile_by_user($user['id']);
     $verification = ds_table_exists('provider_verification')
         ? ds_ensure_provider_verification($user['id'])
@@ -197,6 +206,11 @@ if ($dateOfBirth !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateOfBirth)) {
 $now = ds_now_sql();
 $pdo = ds_pdo();
 $existing = ds_provider_profile_by_user($user['id']);
+
+ds_location_ensure_schema(false, true);
+$locationFields = ds_column_exists('provider_profiles', 'district')
+    ? ds_location_provider_fields($body, $existing)
+    : null;
 
 $servicesJson = json_encode(array_values($services));
 $settingJson = json_encode(array_values($serviceSetting));
@@ -400,6 +414,22 @@ if ($existing) {
             $now,
         ]);
     }
+}
+
+if ($locationFields !== null) {
+    $pdo->prepare(
+        'UPDATE provider_profiles SET district = ?, latitude = ?, longitude = ?,
+            service_areas_json = ?, service_regions_json = ?, updated_at = ? WHERE user_id = ?'
+    )->execute([
+        $locationFields['district'],
+        $locationFields['latitude'],
+        $locationFields['longitude'],
+        $locationFields['service_areas_json'],
+        $locationFields['service_regions_json'],
+        $now,
+        $user['id'],
+    ]);
+    ds_flush_table_columns('provider_profiles');
 }
 
 $saved = ds_provider_profile_by_user($user['id']);

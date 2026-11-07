@@ -99,7 +99,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       {locationType === 'home' && (
         <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-5">
           <p className="text-sm text-zinc-300 font-normal">
-            Address details are private and used only for session logistics.
+            Address details are private and used only for session logistics. Home visits are only available
+            when the selected provider publishes coverage for your area; unsupported requests are blocked at checkout.
           </p>
 
           <Field
