@@ -91,19 +91,31 @@ function ds_discovery_search(array $params, ?array $target = null): array
     $bind = [];
 
     $region = ds_location_clean((string) ($params['region'] ?? ''), 120);
+    $city = ds_location_clean((string) ($params['city'] ?? ''), 160);
     if ($region !== '') {
-        $clause = 'LOWER(p.region) = ?';
+        $clause = '(LOWER(TRIM(p.region)) = ?';
         $bind[] = strtolower($region);
         if ($hasRegions) {
-            $clause = '(' . $clause . ' OR p.service_regions_json LIKE ?)';
+            $clause .= ' OR p.service_regions_json LIKE ?';
             $bind[] = '%"' . str_replace(['%', '_'], ['\\%', '\\_'], $region) . '"%';
         }
-        $where[] = $clause;
+        // A genuine city match is valid coverage even when the legacy region
+        // field is blank. This does not admit providers from another region:
+        // both the city and service-area values must match the requested city.
+        if ($city !== '') {
+            $clause .= ' OR LOWER(TRIM(p.city)) = ? OR LOWER(TRIM(p.area_neighbourhood)) = ?';
+            $bind[] = strtolower($city);
+            $bind[] = strtolower($city);
+            if ($hasAreas) {
+                $clause .= ' OR p.service_areas_json LIKE ?';
+                $bind[] = '%' . $city . '%';
+            }
+        }
+        $where[] = $clause . ')';
     }
 
-    $city = ds_location_clean((string) ($params['city'] ?? ''), 160);
     if ($city !== '') {
-        $clause = '(LOWER(p.city) = ? OR LOWER(p.area_neighbourhood) = ?';
+        $clause = '(LOWER(TRIM(p.city)) = ? OR LOWER(TRIM(p.area_neighbourhood)) = ?';
         $bind[] = strtolower($city);
         $bind[] = strtolower($city);
         if ($hasAreas) {

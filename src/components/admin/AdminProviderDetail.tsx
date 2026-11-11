@@ -206,6 +206,10 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
   }
 
   const p = detail.provider;
+  const bookingEligible = p.verificationStatus === 'verified'
+    && p.published
+    && p.accountStatus === 'active'
+    && !p.removed;
 
   return (
     <aside className="min-w-0 max-w-full overflow-hidden rounded-[16px] border border-[#e5d9f2] bg-white shadow-[0_8px_30px_rgba(22,22,22,0.06)] xl:sticky xl:top-24">
@@ -250,8 +254,16 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
           <div className="space-y-3 text-[13px]">
             <p><span className="text-[#7e22ce]">City</span> · {p.city || '—'}</p>
             <p><span className="text-[#7e22ce]">Verification</span> · {p.verificationStatus.replace(/_/g, ' ')}</p>
-            <p><span className="text-[#7e22ce]">Listing</span> · {p.listingStatus}</p>
+            <p><span className="text-[#7e22ce]">Booking</span> · {bookingEligible ? 'Eligible' : 'Ineligible'}</p>
+            <p><span className="text-[#7e22ce]">Identity</span> · {p.verificationStatus.replace(/_/g, ' ')}</p>
+            <p><span className="text-[#7e22ce]">Publication</span> · {p.published ? 'Published' : 'Unpublished'}</p>
             <p><span className="text-[#7e22ce]">Account</span> · {p.accountStatus}</p>
+            <p><span className="text-[#7e22ce]">Booking</span> · {bookingEligible ? 'Eligible' : 'Ineligible'}</p>
+            {p.verificationStatus === 'verified' && !p.published ? (
+              <p role="status" className="rounded-[12px] border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                Identity verified but unpublished. This profile is hidden from Explore and cannot be booked until an admin publishes it.
+              </p>
+            ) : null}
             {p.slug ? <Link to={`/profile/${p.slug}`} className="font-semibold text-[#6d28d9] hover:underline">Open public profile</Link> : null}
             {p.kind === 'agency' ? (
               <div className="border-t border-[#ede4f7] pt-4">

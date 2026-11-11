@@ -1293,6 +1293,9 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataCell>
                     <StatusBadge status={p.verificationStatus} />
                     <p className="mt-1 truncate text-[12px] text-[#6b6275]">ID: {p.identityStatus.replace(/_/g, ' ')}</p>
+                    <p className="mt-1 truncate text-[12px] text-[#6b6275]">
+                      Booking: {p.verificationStatus === 'verified' && p.published && p.accountStatus === 'active' && !p.removed ? 'eligible' : 'ineligible'}
+                    </p>
                   </DataCell>
                   <DataCell>
                     <StatusBadge

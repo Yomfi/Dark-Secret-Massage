@@ -276,9 +276,13 @@ function ds_provider_location_match(array $profile, ?array $target, ?float $radi
     $primaryMatch = $targetRegion !== ''
         && strtolower(trim((string) $location['region'])) === $targetRegion;
     $regions = array_map(static fn ($r): string => strtolower(trim((string) $r)), $location['serviceRegions']);
-    $cityOnlyMatch = $targetRegion === '' && $targetCity !== ''
+    $cityDirectMatch = $targetCity !== ''
         && strtolower(trim((string) $location['city'])) === $targetCity;
-    $regionServed = $primaryMatch || $cityOnlyMatch
+    $areaDirectMatch = $targetCity !== '' && $targetArea !== ''
+        && strtolower(trim((string) $location['area'])) === $targetArea;
+    // A structured city match is valid coverage even if the legacy region
+    // field is blank. It must not be used to pull in a different city.
+    $regionServed = $primaryMatch || $cityDirectMatch || $areaDirectMatch
         || ($targetRegion !== '' && in_array($targetRegion, $regions, true));
 
     $areas = $location['serviceAreas'];

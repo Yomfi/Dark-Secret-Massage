@@ -111,8 +111,9 @@ export const ExplorePage: React.FC = () => {
         longitude: null,
       };
     }
-    if (viewAll) return null;
-    if (savedLocation) return savedLocation;
+    // An explicit /explore/<city> URL must always win over a saved location.
+    // Otherwise a customer saved in Kumasi visiting /explore/accra silently
+    // sees Kumasi results under an Accra heading.
     if (city) {
       return {
         region: regionNameForCity(city),
@@ -122,6 +123,8 @@ export const ExplorePage: React.FC = () => {
         longitude: null,
       };
     }
+    if (viewAll) return null;
+    if (savedLocation) return savedLocation;
     return null;
   }, [override, region, savedLocation, city, viewAll]);
 
@@ -217,6 +220,32 @@ export const ExplorePage: React.FC = () => {
   const updateFilters = (next: MarketplaceFilters) => {
     setSearchParams(buildExploreSearchParams(next), { replace: true });
   };
+
+  const clearFilters = () => {
+    updateFilters({
+      service: null,
+      gender: 'all',
+      providerType: 'all',
+      minPrice: null,
+      maxPrice: null,
+      availability: 'any',
+      sort: 'recommended',
+      radiusKm: null,
+      mode: 'any',
+    });
+  };
+
+  const hasActiveFilters = Boolean(
+    filters.service ||
+    (filters.gender && filters.gender !== 'all') ||
+    (filters.providerType && filters.providerType !== 'all') ||
+    filters.minPrice != null ||
+    filters.maxPrice != null ||
+    (filters.availability && filters.availability !== 'any') ||
+    (filters.mode && filters.mode !== 'any') ||
+    (filters.sort && filters.sort !== 'recommended') ||
+    filters.radiusKm != null,
+  );
 
   const onCityChange = (slug: string) => {
     const picked = findCityBySlug(slug);
@@ -325,6 +354,15 @@ export const ExplorePage: React.FC = () => {
               {filters.providerType && filters.providerType !== 'all' ? ` · ${filters.providerType}` : ''}
               {filters.service ? ` · ${filters.service}` : ''}
               {filters.gender && filters.gender !== 'all' ? ` · ${filters.gender}` : ''}
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="ml-2 font-semibold text-brand-purple-light underline-offset-2 hover:underline"
+                >
+                  Clear filters
+                </button>
+              ) : null}
             </p>
             {geoMessage ? (
               <p role="status" className="mt-2 text-[12px] text-brand-purple-light">{geoMessage}</p>
@@ -393,7 +431,7 @@ export const ExplorePage: React.FC = () => {
                   </div>
                 ) : null}
                 <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-                  <Button variant="secondary" onClick={() => updateFilters({ sort: 'recommended' })}>
+                  <Button variant="secondary" onClick={clearFilters}>
                     Clear filters
                   </Button>
                   <Link to="/explore/all" className={buttonClass({ variant: 'secondary' })}>
