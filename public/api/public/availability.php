@@ -49,14 +49,23 @@ if ($providerProfileId !== '') {
     $publishedClause = ds_column_exists('provider_profiles', 'is_published') ? ' AND p.is_published = 1' : '';
     $publishedClause .= ds_column_exists('provider_profiles', 'removed_at') ? ' AND p.removed_at IS NULL' : '';
     $stmt = ds_pdo()->prepare(
-        "SELECT p.id, p.display_name FROM provider_profiles p
+        "SELECT p.id, p.display_name, COALESCE(v.verification_status, 'unverified') AS verification_status
+         FROM provider_profiles p
          INNER JOIN users u ON u.id = p.user_id
+         LEFT JOIN provider_verification v ON v.provider_user_id = p.user_id
          WHERE p.id = ? AND u.account_status = 'active'" . $publishedClause . ' LIMIT 1'
     );
     $stmt->execute([$providerProfileId]);
     $provider = $stmt->fetch();
     if (!$provider) {
         ds_error(404, 'NOT_FOUND', 'That provider is not accepting bookings.');
+    }
+    if ((string) ($provider['verification_status'] ?? 'unverified') !== 'verified') {
+        ds_error(
+            409,
+            'PROVIDER_NOT_VERIFIED',
+            'This provider has not completed identity verification and is not currently accepting bookings.'
+        );
     }
     $providerName = (string) $provider['display_name'];
 }

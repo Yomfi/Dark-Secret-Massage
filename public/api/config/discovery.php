@@ -65,12 +65,17 @@ function ds_discovery_search(array $params, ?array $target = null): array
     $hasPublished = ds_column_exists('provider_profiles', 'is_published');
     $hasRemoved = ds_column_exists('provider_profiles', 'removed_at');
 
-    $sql = "SELECT p.*, u.email_verified_at, u.account_status, v.verification_status, v.verified_at
+    // Publication controls public visibility. Identity verification controls
+    // the badge and booking eligibility, not whether a published profile can
+    // be browsed. Left join keeps legacy profiles without a verification row
+    // visible as Unverified once an admin publishes them.
+    $sql = "SELECT p.*, u.email_verified_at, u.account_status,
+                   COALESCE(v.verification_status, 'unverified') AS verification_status,
+                   v.verified_at
             FROM provider_profiles p
             INNER JOIN users u ON u.id = p.user_id
-            INNER JOIN provider_verification v ON v.provider_user_id = p.user_id
-            WHERE v.verification_status = 'verified'
-              AND u.account_status = 'active'
+            LEFT JOIN provider_verification v ON v.provider_user_id = p.user_id
+            WHERE u.account_status = 'active'
               AND u.email_verified_at IS NOT NULL";
     if ($hasPublished) {
         $sql .= ' AND p.is_published = 1';
@@ -300,6 +305,9 @@ function ds_discovery_provider_dto(array $row, array $offerings, array $match): 
     $rates = ds_json_decode_field($row['rates_json'] ?? null);
     $location = ds_discovery_public_location($row);
 
+    $verificationStatus = (string) ($row['verification_status'] ?? 'unverified');
+    $verified = $verificationStatus === 'verified';
+
     $starting = $row['starting_price'] !== null ? (float) $row['starting_price'] : null;
     if ($starting === null && $offerings !== []) {
         $prices = array_map(static fn (array $s): float => (float) $s['price'], $offerings);
@@ -355,7 +363,9 @@ function ds_discovery_provider_dto(array $row, array $offerings, array $match): 
         'languages' => is_array($languages) ? $languages : [],
         'yearsExperience' => isset($row['years_experience']) ? (int) $row['years_experience'] : null,
         'teamMembers' => $kind === 'agency' ? ds_agency_team_members($profileId, true) : [],
-        'verified' => true,
+        'verified' => $verified,
+        'bookable' => $verified,
+        'verificationStatus' => $verificationStatus,
         'featured' => false,
         'isDemo' => false,
         'createdAt' => $row['created_at'] ?? null,

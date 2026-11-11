@@ -51,6 +51,9 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
     undefined;
 
   const { massageServices, therapists, loading, error, reload } = usePublicCatalogue();
+  // Unverified profiles are discoverable, but they cannot be selected for a
+  // paid booking. The API enforces the same rule at write time.
+  const bookableTherapists = useMemo(() => therapists.filter((therapist) => therapist.verified), [therapists]);
   const { settings } = useSite();
   const bookingNotice = (settings.booking_notice ?? '').trim();
 
@@ -268,7 +271,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
         </div>
 
         <div className="mb-6 lg:hidden">
-          <BookingSummary draft={draft} services={massageServices} providers={therapists} compact />
+          <BookingSummary draft={draft} services={massageServices} providers={bookableTherapists} compact />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
@@ -346,7 +349,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                       tensionNotes={draft.tensionNotes}
                       accessibilityNeeds={draft.accessibilityNeeds}
                       errors={errors}
-                      providers={therapists}
+                      providers={bookableTherapists}
                       providersLoading={loading}
                       onChange={(patch) => patchDraft(patch as Partial<MassageBookingDraft>)}
                       onProviderPreference={(providerPreference: ProviderPreference) =>
@@ -362,7 +365,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
                     <BookingReview
                       draft={draft}
                       services={massageServices}
-                      providers={therapists}
+                      providers={bookableTherapists}
                       onEditStep={goToStep}
                     />
                   )}
@@ -413,7 +416,7 @@ export const MassageBookingPage: React.FC<MassageBookingPageProps> = ({
           </div>
 
           <div className="hidden lg:block lg:col-span-5 xl:col-span-4">
-            <BookingSummary draft={draft} services={massageServices} providers={therapists} showEdit={step === 5} onEditStep={goToStep} />
+            <BookingSummary draft={draft} services={massageServices} providers={bookableTherapists} showEdit={step === 5} onEditStep={goToStep} />
           </div>
         </div>
       </Container>

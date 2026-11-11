@@ -318,12 +318,8 @@ if ($action === 'publish' || $action === 'unpublish') {
         if (empty($target['email_verified_at'])) {
             ds_error(409, 'NOT_ELIGIBLE', 'Email confirmation is required before publishing.');
         }
-        $v = ds_pdo()->prepare('SELECT verification_status FROM provider_verification WHERE provider_user_id = ? LIMIT 1');
-        $v->execute([$userId]);
-        $vrow = $v->fetch();
-        if (!$vrow || (string) $vrow['verification_status'] !== 'verified') {
-            ds_error(409, 'NOT_ELIGIBLE', 'Only verified providers can be published. Verification is separate from publication.');
-        }
+        // Publication is an editorial decision independent of identity review.
+        // It never changes verification_status and never grants booking access.
         ds_pdo()->prepare('UPDATE provider_profiles SET is_published = 1, published_at = ?, updated_at = ? WHERE user_id = ?')
             ->execute([$now, $now, $userId]);
         ds_moderation_log($userId, 'publish', $admin['id']);

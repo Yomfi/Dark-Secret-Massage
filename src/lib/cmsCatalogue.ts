@@ -29,6 +29,8 @@ export type CmsProvider = {
   primaryImage: string | null;
   serviceSetting: string[];
   yearsExperience: number | null;
+  verified: boolean;
+  bookable: boolean;
 };
 
 export type PublicFaq = { id: string; question: string; answer: string };
@@ -89,7 +91,8 @@ export function mapCmsProvider(row: CmsProvider): MassageTherapist {
     reviewCount: 0,
     hourlyRateGHS: row.startingPrice ?? 0,
     bio: row.shortBio,
-    verified: true,
+    verified: row.verified === true,
+    bookable: row.bookable === true,
     studioAvailable: settings.length === 0 || settings.includes('studio'),
     homeVisitAvailable: settings.includes('home'),
   };

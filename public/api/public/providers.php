@@ -4,9 +4,12 @@ declare(strict_types=1);
 /**
  * Public provider listings and location-aware directory search.
  *
- * Only providers that are admin-approved (verification_status = verified) AND
- * published by an admin are returned. There is no demo fallback: an empty
- * directory returns an empty list so the UI can show a real empty state.
+ * Only profiles published by an admin, attached to active accounts with a
+ * confirmed email, and not removed are returned. Verified and Unverified
+ * profiles are both listed; verification is exposed as a badge and controls
+ * booking eligibility, never public visibility. There is no demo fallback:
+ * an empty directory returns an empty list so the UI can show a real empty
+ * state.
  */
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';

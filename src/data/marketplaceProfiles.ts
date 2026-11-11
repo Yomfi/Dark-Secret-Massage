@@ -3,9 +3,11 @@ import type { ServiceCategoryId } from './serviceCategories';
 /**
  * Marketplace listing types plus a small runtime cache.
  *
- * Listings are sourced from `/api/public/providers.php`, which returns only
- * admin-approved, published providers. There is intentionally no demo data and
- * no fallback fixtures: an empty directory renders a real empty state.
+ * Listings are sourced from `/api/public/providers.php`, which returns active,
+ * admin-published profiles that have not been removed. Both Verified and
+ * Unverified profiles are listed; `verified` controls the badge and
+ * `bookable` controls paid booking eligibility. There is intentionally no demo
+ * data and no fallback fixtures: an empty directory renders a real empty state.
  */
 
 export type MarketplaceProfileType = 'massage_provider' | 'wellness_provider';
@@ -82,6 +84,7 @@ export type MarketplaceProfile = {
   whatsapp?: string;
   publicContactEnabled: boolean;
   verified: boolean;
+  bookable?: boolean;
   featured: boolean;
   languages?: string[];
   teamMembers?: AgencyTeamMember[];
@@ -217,6 +220,7 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
     gallery,
     publicContactEnabled: Boolean(raw.publicContactEnabled),
     verified: Boolean(raw.verified),
+    bookable: Boolean(raw.bookable),
     featured: false,
     languages: Array.isArray(raw.languages) ? (raw.languages as string[]) : [],
     teamMembers: team,

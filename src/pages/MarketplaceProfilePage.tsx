@@ -168,7 +168,7 @@ function ContactPanel({
           )}
           {!profile.verified && (
             <p className="mt-2 text-xs text-amber-200/80">
-              Unverified Profile — a caution notice appears before contact.
+              Unverified profile — browsing and enquiries are available; paid bookings are disabled.
             </p>
           )}
           {!profile.publicContactEnabled && (
@@ -534,6 +534,17 @@ export const MarketplaceProfilePage: React.FC = () => {
               </div>
               <p className="mt-4 text-sm text-zinc-400 leading-relaxed">{profile.shortBio}</p>
             </header>
+
+            {!profile.verified ? (
+              <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-950/30 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                  Unverified provider
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-100">
+                  This provider has not completed identity verification and is not currently accepting bookings.
+                </p>
+              </div>
+            ) : null}
 
             <div className="hidden lg:block">
               <ContactPanel profile={profile} />

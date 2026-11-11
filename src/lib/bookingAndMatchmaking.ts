@@ -27,6 +27,7 @@ export interface MassageTherapist {
   hourlyRateGHS: number;
   bio: string;
   verified: boolean;
+  bookable?: boolean;
   studioAvailable: boolean;
   homeVisitAvailable: boolean;
 }

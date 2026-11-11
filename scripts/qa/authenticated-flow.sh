@@ -27,12 +27,22 @@ echo "admin_role=$ADMIN_ROLE"
 # Pick a real day where both the create and reschedule slots are free, so a
 # previous QA run cannot make this run fail for the wrong reason.
 DATE=$(php -r '
-for ($i = 1; $i <= 21; $i++) {
+require "public/api/config/bootstrap.php";
+$u = ds_pdo()->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+$u->execute(["qa-customer@local.test"]);
+$uid = $u->fetchColumn();
+for ($i = 1; $i <= 60; $i++) {
     $d = date("Y-m-d", strtotime("+{$i} day"));
     $url = "http://127.0.0.1:8791/api/public/availability.php?date={$d}&serviceId=qa-studio-60&durationMinutes=60";
     $j = json_decode((string) @file_get_contents($url), true);
-    $ids = array_column($j["data"]["slots"] ?? [], "id");
-    if (in_array("slot-0900", $ids, true) && in_array("slot-1400", $ids, true)) { echo $d; break; }
+    $open = [];
+    foreach (($j["data"]["slots"] ?? []) as $slot) {
+        if (!empty($slot["available"])) { $open[] = $slot["id"]; }
+    }
+    if (!in_array("slot-0900", $open, true) || !in_array("slot-1400", $open, true)) { continue; }
+    $busy = ds_pdo()->prepare("SELECT COUNT(*) FROM bookings WHERE customer_user_id = ? AND DATE(scheduled_at) = ? AND slot_id IN (?, ?)");
+    $busy->execute([$uid, $d, "slot-0900", "slot-1400"]);
+    if ((int) $busy->fetchColumn() === 0) { echo $d; break; }
 }')
 if [ -z "$DATE" ]; then echo "no free QA date found"; exit 1; fi
 IND=$(json individual); AGENCY=$(json agencyProfile); TEAM=$(json teamMember)
