@@ -13,6 +13,7 @@ if ($method === 'GET') {
         'user' => ds_user_dto($user),
         'emailVerified' => !empty($user['email_verified_at']),
         'accountStatus' => (string) $user['account_status'],
+        'avatarUrl' => ds_customer_avatar_url((string) $user['id']),
     ]);
 }
 

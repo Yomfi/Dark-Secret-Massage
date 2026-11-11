@@ -13,6 +13,7 @@ import {
 import { BrandLogo } from './BrandLogo';
 import { LocationFields, emptyLocation, type LocationValue } from './location/LocationFields';
 import { apiRequest } from '../lib/api';
+import { PhotoUploadField } from './media/PhotoUploadField';
 import { formatScheduledDate } from '../lib/dates';
 import { fetchAvailability, todayISO, type AvailabilityResponse } from '../lib/bookingAvailability';
 
@@ -44,6 +45,7 @@ type ProfilePayload = {
   user: { firstName: string; lastName: string; email: string; phone: string; role: string };
   emailVerified: boolean;
   accountStatus: string;
+  avatarUrl?: string | null;
 };
 
 type CustomerLocation = {
@@ -105,6 +107,8 @@ export const ClientDashboard: React.FC<{
   const [rescheduleAvailability, setRescheduleAvailability] = useState<AvailabilityResponse | null>(null);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
 
   const load = () => {
     setError(null);
@@ -167,6 +171,43 @@ export const ClientDashboard: React.FC<{
       setError(err instanceof Error ? err.message : 'Unable to save your location.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const saveAvatar = async () => {
+    if (!avatarFile) return;
+    setAvatarBusy(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append('file', avatarFile);
+      const result = await apiRequest<{ avatarUrl: string }>('/customer/avatar.php', {
+        method: 'POST',
+        body: form,
+      });
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: result.avatarUrl } : prev));
+      setAvatarFile(null);
+      setNotice('Profile photo saved.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save your profile photo.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    if (!window.confirm('Remove your profile photo?')) return;
+    setAvatarBusy(true);
+    setError(null);
+    try {
+      await apiRequest('/customer/avatar.php', { method: 'DELETE' });
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: null } : prev));
+      setAvatarFile(null);
+      setNotice('Profile photo removed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to remove your profile photo.');
+    } finally {
+      setAvatarBusy(false);
     }
   };
 
@@ -519,6 +560,51 @@ export const ClientDashboard: React.FC<{
           <div className="grid gap-4 md:grid-cols-2">
             <section className={surface}>
               <h2 className="text-[15px] font-semibold">Account details</h2>
+              <div className="mt-4 rounded-xl border border-[#ece3f6] bg-[#faf7ff] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7e22ce]">Profile photo</p>
+                <div className="mt-2 flex items-center gap-3">
+                  {profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Your profile" className="h-16 w-16 rounded-full border border-[#d8c7ea] object-cover" />
+                  ) : (
+                    <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[#1a1424] text-[20px] font-semibold text-[#c084fc]">
+                      {profile.user.firstName?.[0] ?? 'M'}
+                    </span>
+                  )}
+                  <p className="text-[12px] leading-relaxed text-[#675f73]">
+                    This photo appears on your account. It is not identity verification.
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <PhotoUploadField
+                    theme="light"
+                    label="Customer profile photo"
+                    file={avatarFile}
+                    onChange={setAvatarFile}
+                    disabled={avatarBusy}
+                    hint="Take a selfie, choose a phone gallery image, or pick a file on desktop."
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={!avatarFile || avatarBusy}
+                    onClick={saveAvatar}
+                    className="inline-flex h-11 items-center rounded-lg bg-[#6d28d9] px-4 text-[12.5px] font-semibold text-white hover:bg-[#9333ea] disabled:opacity-50"
+                  >
+                    {avatarBusy ? 'Saving…' : 'Save photo'}
+                  </button>
+                  {profile.avatarUrl ? (
+                    <button
+                      type="button"
+                      disabled={avatarBusy}
+                      onClick={removeAvatar}
+                      className="inline-flex h-11 items-center rounded-lg border border-red-200 px-4 text-[12.5px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                    >
+                      Remove photo
+                    </button>
+                  ) : null}
+                </div>
+              </div>
               <dl className="mt-3 space-y-3 text-[13px]">
                 <div>
                   <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Name</dt>

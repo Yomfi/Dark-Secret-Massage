@@ -550,13 +550,39 @@ function ds_save_uploaded_image(array $file, string $subdir, int $maxBytes = 524
     if (!isset($allowed[$mime])) {
         ds_error(400, 'UPLOAD_ERROR', 'Only JPEG, PNG or WebP images are allowed.');
     }
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        ds_error(400, 'UPLOAD_ERROR', 'Invalid upload.');
+    }
+    $info = @getimagesize($tmp);
+    if ($info === false || empty($info[0]) || empty($info[1])) {
+        ds_error(400, 'UPLOAD_ERROR', 'File is not a valid image.');
+    }
+    if ((int) $info[0] < 80 || (int) $info[1] < 80) {
+        ds_error(400, 'UPLOAD_ERROR', 'Image is too small (minimum 80x80).');
+    }
+    if ((int) $info[0] > 8000 || (int) $info[1] > 8000) {
+        ds_error(400, 'UPLOAD_ERROR', 'Image dimensions are too large.');
+    }
 
+    $src = ds_image_create_from_file($tmp, $mime);
+    if (!$src) {
+        ds_error(400, 'UPLOAD_ERROR', 'Unable to read image data.');
+    }
+    $oriented = ds_image_apply_exif_orientation($src, $tmp, $mime);
+    $src = $oriented['im'];
+    // Re-encode rather than move the original: strips EXIF/GPS metadata and normalises orientation.
+    $safe = ds_image_resize_contain($src, $oriented['width'], $oriented['height'], 2400, 2400);
     $dir = ds_private_storage_dir($subdir);
     $name = ds_new_id() . '.' . $allowed[$mime];
     $dest = $dir . '/' . $name;
-    if (!move_uploaded_file($file['tmp_name'], $dest)) {
+    $written = ds_image_write($safe['im'], $dest, $mime);
+    imagedestroy($src);
+    imagedestroy($safe['im']);
+    if (!$written) {
         ds_error(500, 'UPLOAD_ERROR', 'Unable to store uploaded file.');
     }
-    // Relative private path — never expose via public profile APIs.
+    @chmod($dest, 0640);
+    // Relative private path - never expose via public profile APIs.
     return 'private/' . trim($subdir, '/') . '/' . $name;
 }

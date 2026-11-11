@@ -44,7 +44,7 @@ if ($method === 'GET') {
     }
 
     $stmt = $pdo->prepare(
-        'SELECT v.*, u.first_name, u.last_name, u.email, u.phone,
+        'SELECT v.*, u.first_name, u.last_name, u.email, u.phone, u.account_status,
                 u.phone_verified_at AS user_phone_verified_at,
                 u.email_verified_at AS user_email_verified_at,
                 p.display_name, p.slug, p.city, p.provider_type, p.profile_completed_at,
@@ -99,6 +99,7 @@ if ($method === 'GET') {
             'slug' => $row['slug'],
             'city' => (string) ($row['city'] ?? ''),
             'providerType' => (string) ($row['provider_type'] ?? 'individual'),
+            'accountStatus' => (string) ($row['account_status'] ?? 'active'),
             'phoneVerified' => !empty($row['phone_verified_at']) || !empty($row['user_phone_verified_at']),
             'emailVerified' => !empty($row['email_verified_at']) || !empty($row['user_email_verified_at']),
             'identityStatus' => (string) $row['identity_status'],
@@ -154,13 +155,41 @@ $action = strtolower(trim((string) ($body['action'] ?? '')));
 $notes = trim((string) ($body['notes'] ?? ''));
 $reason = trim((string) ($body['rejectionReason'] ?? ''));
 
-if ($providerUserId === '' || !in_array($action, ['approve', 'reject', 'request_changes', 'reopen'], true)) {
+if ($providerUserId === '' || !in_array($action, ['approve', 'approve_account', 'reject', 'request_changes', 'reopen'], true)) {
     ds_error(400, 'VALIDATION_ERROR', 'Invalid review action.');
 }
 
 $target = ds_find_user_by_id($providerUserId);
 if (!$target || !ds_is_provider_role((string) ($target['role'] ?? ''))) {
     ds_error(404, 'NOT_FOUND', 'Provider account not found.');
+}
+
+if ($action === 'approve_account') {
+    $accountStatus = (string) ($target['account_status'] ?? 'active');
+    if ($accountStatus === 'active') {
+        ds_error(409, 'INVALID_ACCOUNT_STATE', 'This account is already approved.');
+    }
+    if (!in_array($accountStatus, ['pending_verification', 'pending'], true)) {
+        ds_error(409, 'INVALID_ACCOUNT_STATE', 'Suspended or blocked accounts cannot be approved here; restore them from Provider Management.');
+    }
+    $stmt = $pdo->prepare(
+        "UPDATE users SET account_status = 'active', updated_at = ? WHERE id = ? AND account_status IN ('pending_verification','pending')"
+    );
+    $stmt->execute([ds_now_sql(), $providerUserId]);
+    if ($stmt->rowCount() === 0) {
+        ds_error(409, 'INVALID_ACCOUNT_STATE', 'This account was already updated. Refresh the queue.');
+    }
+    ds_audit('provider.account_approve', 'provider', $providerUserId, [
+        'from' => $accountStatus,
+        'to' => 'active',
+        'identityVerificationChanged' => false,
+        'notes' => $notes,
+    ], $admin['id']);
+    ds_success([
+        'accountStatus' => 'active',
+        'verificationStatus' => (string) (ds_ensure_provider_verification($providerUserId)['verification_status'] ?? 'unverified'),
+        'message' => 'Account approved. Identity verification was not changed.',
+    ]);
 }
 
 $verification = ds_ensure_provider_verification($providerUserId);
@@ -284,6 +313,7 @@ try {
 }
 
 $newStatus = [
+    'approve_account' => 'active',
     'approve' => 'verified',
     'reject' => 'rejected',
     'request_changes' => 'changes_requested',

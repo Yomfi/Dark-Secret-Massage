@@ -25,6 +25,7 @@ type Row = {
   phone: string;
   city?: string;
   providerType?: string;
+  accountStatus?: string;
   phoneVerified: boolean;
   emailVerified: boolean;
   identityStatus: string;
@@ -336,7 +337,10 @@ const Inner: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <StatusBadge status={row.verificationStatus} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={row.accountStatus ?? 'active'} label={`Account: ${(row.accountStatus ?? 'active').replace(/_/g, ' ')}`} />
+                  <StatusBadge status={row.verificationStatus} label={`Identity: ${row.verificationStatus.replace(/_/g, ' ')}`} />
+                </div>
               </div>
 
               <dl className="mt-4 grid gap-2 text-[12.5px] text-[#6b6275] sm:grid-cols-2 lg:grid-cols-4">
@@ -445,14 +449,38 @@ const Inner: React.FC = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {canWrite && row.canDecide ? (
                   <>
+                    {row.accountStatus !== 'active' ? (
+                      <button
+                        type="button"
+                        className={adminBtnGhostClass}
+                        disabled={busy === row.providerUserId}
+                        onClick={async () => {
+                          setBusy(row.providerUserId);
+                          try {
+                            await apiRequest('/admin/provider-reviews.php', {
+                              method: 'POST',
+                              body: JSON.stringify({ providerUserId: row.providerUserId, action: 'approve_account', notes: 'Account approved independently of identity verification.' }),
+                            });
+                            setNotice(`${row.displayName}: account approved. Identity verification was not changed.`);
+                            await load(true);
+                          } catch (err) {
+                            setError(getAuthErrorMessage(err));
+                          } finally {
+                            setBusy(null);
+                          }
+                        }}
+                      >
+                        Approve account only
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className={adminBtnClass}
                       disabled={busy === row.providerUserId || !row.hasIdDocument || row.verificationChoice === 'verify_later'}
-                      title={!row.hasIdDocument ? 'A government ID is required before approval' : undefined}
+                      title={!row.hasIdDocument ? 'A government ID is required before identity approval' : undefined}
                       onClick={() => openDecision(row, 'approve')}
                     >
-                      Approve
+                      Approve identity
                     </button>
                     <button
                       type="button"

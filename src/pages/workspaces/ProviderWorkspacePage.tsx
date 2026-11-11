@@ -5,6 +5,7 @@ import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { WorkspaceShell, type WorkspaceNavItem } from '../../components/workspace/WorkspaceShell';
 import { ProviderGalleryManager } from '../../components/provider/ProviderGalleryManager';
+import { PhotoUploadField } from '../../components/media/PhotoUploadField';
 import { LocationFields, emptyLocation, type LocationValue } from '../../components/location/LocationFields';
 
 type ProfilePayload = {
@@ -16,6 +17,7 @@ type ProfilePayload = {
     startingPrice: number | null; currency: string; primaryImage: string | null;
     publicPhone: boolean; publicWhatsapp: boolean; completed: boolean;
   } | null;
+  accountStatus?: string;
   verificationStatus: string;
   verification: {
     status: string;
@@ -199,8 +201,9 @@ export const ProviderWorkspacePage: React.FC = () => {
         <div className="grid gap-4 lg:grid-cols-3">
           <section className={`${card} lg:col-span-2`}>
             <h2 className="text-[15px] font-semibold">Your workspace</h2>
-            <dl className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div><dt className={label}>Verification</dt><dd className="mt-1 text-[14px] font-semibold capitalize">{verification.replace('_', ' ')}</dd></div>
+            <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div><dt className={label}>Account</dt><dd className="mt-1 text-[14px] font-semibold capitalize">{(profileData?.accountStatus ?? 'active').replace(/_/g, ' ')}</dd></div>
+              <div><dt className={label}>Identity</dt><dd className="mt-1 text-[14px] font-semibold capitalize">{verification.replace('_', ' ')}</dd></div>
               <div><dt className={label}>Services</dt><dd className="mt-1 text-[14px] font-semibold">{services.length}</dd></div>
               <div><dt className={label}>Bookings</dt><dd className="mt-1 text-[14px] font-semibold">{bookings.length}</dd></div>
             </dl>
@@ -511,26 +514,29 @@ export const ProviderWorkspacePage: React.FC = () => {
                         />
                       </label>
                     </div>
-                    <label className="block text-[12px] font-medium text-[#675f73]">
-                      Government ID image
-                      <input
-                        className={`${input} mt-1 py-2.5`}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
+                    <div className="rounded-xl border border-[#ece3f6] bg-[#faf7ff] p-3">
+                      <PhotoUploadField
+                        theme="light"
+                        label="Government ID image"
+                        file={verifyForm.idImage}
+                        onChange={(file) => setVerifyForm({ ...verifyForm, idImage: file })}
                         required
-                        onChange={(e) => setVerifyForm({ ...verifyForm, idImage: e.target.files?.[0] ?? null })}
+                        disabled={busy}
+                        cameraFacing="environment"
+                        hint="Photograph the ID or choose an existing image. It stays private."
                       />
-                    </label>
-                    <label className="block text-[12px] font-medium text-[#675f73]">
-                      Selfie / live photo
-                      <input
-                        className={`${input} mt-1 py-2.5`}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
+                    </div>
+                    <div className="rounded-xl border border-[#ece3f6] bg-[#faf7ff] p-3">
+                      <PhotoUploadField
+                        theme="light"
+                        label="Selfie / live photo"
+                        file={verifyForm.selfieImage}
+                        onChange={(file) => setVerifyForm({ ...verifyForm, selfieImage: file })}
                         required
-                        onChange={(e) => setVerifyForm({ ...verifyForm, selfieImage: e.target.files?.[0] ?? null })}
+                        disabled={busy}
+                        hint="Take a selfie or choose one from your gallery. It is never public."
                       />
-                    </label>
+                    </div>
                     <p className="text-[11.5px] leading-relaxed text-[#675f73]">
                       JPG, PNG or WebP under 5MB. These documents are private, separate from your gallery, and visible only to authorised admins. Uploading does not grant a Verified badge.
                     </p>

@@ -75,6 +75,7 @@ if ($method === 'GET') {
         : null;
     ds_success([
         'profile' => ds_profile_row_to_api($profile),
+        'accountStatus' => (string) ($user['account_status'] ?? 'active'),
         'verificationStatus' => $verification['verification_status'] ?? 'unverified',
         'verification' => $verification
             ? ds_provider_verification_summary($verification, $user['id'])

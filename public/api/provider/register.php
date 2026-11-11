@@ -84,7 +84,9 @@ if (isset($cols['role'])) {
 }
 if (isset($cols['account_status'])) {
     $fields[] = 'account_status';
-    $values[] = 'active';
+    // New registrations wait for an explicit admin account decision.
+    // This is independent of identity verification and publication.
+    $values[] = 'pending_verification';
 }
 if (isset($cols['terms_accepted_at'])) {
     $fields[] = 'terms_accepted_at';

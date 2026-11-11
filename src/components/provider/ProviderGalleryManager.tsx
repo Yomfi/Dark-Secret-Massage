@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiRequest } from '../../lib/api';
+import { PhotoUploadField } from '../media/PhotoUploadField';
 
 export type GalleryImage = {
   id: string;
@@ -181,15 +182,14 @@ export const ProviderGalleryManager: React.FC<Props> = ({ mode, onChanged }) => 
                 </select>
               </label>
             ) : null}
-            <label className="block text-[12px] font-medium text-[#675f73]">
-              File
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="mt-1 block w-full text-[13px]"
-                onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-              />
-            </label>
+            <PhotoUploadField
+              theme="light"
+              label={kind === 'team' ? 'Team member photo' : 'Photo'}
+              file={file}
+              onChange={onFile}
+              disabled={busy}
+              hint="Take a photo or choose an existing image. Progress and result are shown below."
+            />
             <label className="block text-[12px] font-medium text-[#675f73]">
               Alt text
               <input className="mt-1 h-11 w-full rounded-xl border border-[#d8c7ea] px-3 text-[13px]" value={altText} onChange={(e) => setAltText(e.target.value)} placeholder="Describe the image" />

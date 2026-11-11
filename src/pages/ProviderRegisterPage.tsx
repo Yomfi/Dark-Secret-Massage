@@ -2,7 +2,8 @@ import { BrandLogo } from '../components/BrandLogo';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BadgeCheck, Building2, Check, Clock3, UserRound, X } from 'lucide-react';
-import { authApi, providerApi } from '../lib/api';
+import { apiRequest, authApi, providerApi } from '../lib/api';
+import { PhotoUploadField } from '../components/media/PhotoUploadField';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { MARKETPLACE_REGIONS } from '../data/locations';
 import { LocationFields } from '../components/location/LocationFields';
@@ -180,6 +181,7 @@ type TeamDraft = {
   availability: string;
   ratesNote: string;
   status: 'active' | 'inactive';
+  photoFile: File | null;
 };
 
 export const ProviderRegisterPage: React.FC = () => {
@@ -203,6 +205,7 @@ export const ProviderRegisterPage: React.FC = () => {
   });
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [savedTeam, setSavedTeam] = useState<Array<Record<string, unknown>>>([]);
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
   const [account, setAccount] = useState({
     firstName: '',
@@ -243,7 +246,7 @@ export const ProviderRegisterPage: React.FC = () => {
     yearsExperience: '',
     serviceSetting: ['studio'] as string[],
     languages: 'English, Twi',
-    primaryImage: '/profiles/demo-ama-k.jpg',
+    primaryImage: '',
     coverImage: '',
     publicPhone: true,
     publicWhatsapp: true,
@@ -259,6 +262,7 @@ export const ProviderRegisterPage: React.FC = () => {
     availability: 'flexible',
     ratesNote: '',
     status: 'active',
+    photoFile: null,
   });
 
   const [identity, setIdentity] = useState({
@@ -637,6 +641,14 @@ export const ProviderRegisterPage: React.FC = () => {
       } else {
         setProfileCompletion(localCompletion);
       }
+      if (profilePhoto) {
+        const image = new FormData();
+        image.append('file', profilePhoto);
+        image.append('kind', providerType === 'agency' ? 'logo' : 'profile');
+        image.append('altText', `${profile.displayName || account.displayName || 'Provider'} profile photo`);
+        await apiRequest('/provider/gallery.php', { method: 'POST', body: image });
+        setProfilePhoto(null);
+      }
       setStep(providerType === 'agency' ? 'team' : 'identity');
     } catch (err) {
       setError(profileFormError(err));
@@ -666,8 +678,15 @@ export const ProviderRegisterPage: React.FC = () => {
           : [],
         inheritAgencyRate: !teamDraft.ratesNote.trim(),
         status: teamDraft.status,
-        profileImage: '/profiles/demo-ama-k.jpg',
       });
+      if (teamDraft.photoFile && res.id) {
+        const image = new FormData();
+        image.append('file', teamDraft.photoFile);
+        image.append('kind', 'team');
+        image.append('teamMemberId', res.id);
+        image.append('altText', `${teamDraft.displayName.trim()} team photo`);
+        await apiRequest('/provider/gallery.php', { method: 'POST', body: image });
+      }
       setSavedTeam(res.teamMembers || []);
       setTeamDraft({
         displayName: '',
@@ -678,6 +697,7 @@ export const ProviderRegisterPage: React.FC = () => {
         availability: 'flexible',
         ratesNote: '',
         status: 'active',
+        photoFile: null,
       });
     } catch (err) {
       setError(profileFormError(err));
@@ -1489,22 +1509,12 @@ export const ProviderRegisterPage: React.FC = () => {
                       </div>
                     </fieldset>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <TextField
-                        label="Main photo URL"
-                        hint="Temporary until photo upload is available."
-                        value={profile.primaryImage}
-                        onChange={(e) => setProfile({ ...profile, primaryImage: e.target.value })}
-                      />
-                      {providerType === 'agency' ? (
-                        <TextField
-                          label="Cover / logo image URL"
-                          hint="Optional"
-                          value={profile.coverImage}
-                          onChange={(e) => setProfile({ ...profile, coverImage: e.target.value })}
-                        />
-                      ) : null}
-                    </div>
+                    <PhotoUploadField
+                      label={providerType === 'agency' ? 'Agency logo' : 'Public profile photo'}
+                      file={profilePhoto}
+                      onChange={setProfilePhoto}
+                      hint="This is public. Add more gallery, cover and facility photos from your workspace after registration."
+                    />
 
                     <fieldset>
                       <legend className="mb-1 text-[13px] font-medium text-zinc-200">
@@ -1698,6 +1708,13 @@ export const ProviderRegisterPage: React.FC = () => {
                         </div>
                       </div>
 
+                      <PhotoUploadField
+                        label="Team member photo"
+                        file={teamDraft.photoFile}
+                        onChange={(file) => setTeamDraft({ ...teamDraft, photoFile: file })}
+                        hint="Optional. This photo appears on the agency team member profile."
+                      />
+
                       <Button
                         type="submit"
                         variant="secondary"
@@ -1765,11 +1782,13 @@ export const ProviderRegisterPage: React.FC = () => {
                             onChange={(e) => setIdentity({ ...identity, idNumber: e.target.value })}
                           />
                         </div>
-                        <FileField
+                        <PhotoUploadField
                           label="Government ID image"
                           required
                           file={identity.idImage}
+                          cameraFacing="environment"
                           onChange={(file) => setIdentity({ ...identity, idImage: file })}
+                          hint="Photograph the ID or choose an existing image. Stored privately for authorised review only."
                         />
                       </>
                     ) : null}
@@ -1783,11 +1802,12 @@ export const ProviderRegisterPage: React.FC = () => {
                     ) : null}
 
                     {identity.choice ? (
-                      <FileField
+                      <PhotoUploadField
                         label={identity.choice === 'verify_later' ? 'Selfie / live photo (required)' : 'Selfie / live photo'}
                         required
                         file={identity.selfieImage}
                         onChange={(file) => setIdentity({ ...identity, selfieImage: file })}
+                        hint="Take a new selfie or choose one from your gallery. It is private and never used as your public profile photo."
                       />
                     ) : null}
 
@@ -1915,41 +1935,3 @@ export const ProviderRegisterPage: React.FC = () => {
     </div>
   );
 };
-
-function FileField({
-  label,
-  required,
-  file,
-  onChange,
-}: {
-  label: string;
-  required?: boolean;
-  file: File | null;
-  onChange: (file: File | null) => void;
-}) {
-  return (
-    <div>
-      <p className="mb-1.5 flex items-center gap-1 text-[13px] font-medium text-zinc-200">
-        {label}
-        {required ? (
-          <span className="text-brand-purple-light" aria-hidden>
-            *
-          </span>
-        ) : null}
-      </p>
-      <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/12 bg-[#100d17] px-3.5 text-[13px] text-zinc-400 transition-colors hover:border-white/25 focus-within:border-brand-purple/60 focus-within:ring-2 focus-within:ring-brand-purple/20">
-        <span className="truncate">{file ? file.name : 'Choose file'}</span>
-        <span className="shrink-0 rounded-lg border border-white/12 px-2.5 py-1 text-[12px] font-medium text-zinc-200">
-          Browse
-        </span>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          required={required}
-          className="sr-only"
-          onChange={(e) => onChange(e.target.files?.[0] || null)}
-        />
-      </label>
-    </div>
-  );
-}

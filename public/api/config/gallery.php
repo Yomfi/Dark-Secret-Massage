@@ -17,6 +17,21 @@ function ds_provider_media_dir(string $profileId): string
     return $dir;
 }
 
+function ds_customer_avatar_url(string $userId): ?string
+{
+    if (!ds_table_exists('provider_gallery_images')) {
+        return null;
+    }
+    $stmt = ds_pdo()->prepare(
+        "SELECT path FROM provider_gallery_images
+         WHERE provider_profile_id = ? AND kind = 'customer_avatar' AND moderation_status = 'approved'
+         ORDER BY created_at DESC LIMIT 1"
+    );
+    $stmt->execute(['customer-' . $userId]);
+    $row = $stmt->fetch();
+    return $row && !empty($row['path']) ? (string) $row['path'] : null;
+}
+
 function ds_provider_media_url(string $profileId, string $filename): string
 {
     $safeProfile = rawurlencode(preg_replace('/[^a-zA-Z0-9_-]/', '', $profileId) ?: 'x');
@@ -182,6 +197,10 @@ function ds_process_provider_image(array $file, string $profileId, int $maxBytes
     if (!$src) {
         ds_error(400, 'UPLOAD_ERROR', 'Unable to read image data.');
     }
+    $oriented = ds_image_apply_exif_orientation($src, $tmp, $mime);
+    $src = $oriented['im'];
+    $srcW = $oriented['width'];
+    $srcH = $oriented['height'];
 
     // Re-encode to strip EXIF / location metadata and create display size (max 1600).
     $display = ds_image_resize_contain($src, $srcW, $srcH, 1600, 1600);
@@ -209,6 +228,40 @@ function ds_process_provider_image(array $file, string $profileId, int $maxBytes
         'width' => $display['width'],
         'height' => $display['height'],
     ];
+}
+
+/**
+ * Apply EXIF orientation before resizing, then discard metadata on re-encode.
+ *
+ * @param resource|\GdImage $im
+ * @return array{im:resource|\GdImage,width:int,height:int}
+ */
+function ds_image_apply_exif_orientation($im, string $path, string $mime): array
+{
+    $width = imagesx($im);
+    $height = imagesy($im);
+    if ($mime !== 'image/jpeg' || !function_exists('exif_read_data')) {
+        return ['im' => $im, 'width' => $width, 'height' => $height];
+    }
+    $exif = @exif_read_data($path);
+    $orientation = (int) ($exif['Orientation'] ?? 1);
+    if ($orientation === 3) {
+        $rotated = imagerotate($im, 180, 0);
+    } elseif ($orientation === 6) {
+        $rotated = imagerotate($im, -90, 0);
+    } elseif ($orientation === 8) {
+        $rotated = imagerotate($im, 90, 0);
+    } else {
+        $rotated = false;
+    }
+    if ($rotated === false) {
+        return ['im' => $im, 'width' => $width, 'height' => $height];
+    }
+    imagedestroy($im);
+    if (in_array($orientation, [2, 4, 5, 7], true)) {
+        imageflip($rotated, IMG_FLIP_HORIZONTAL);
+    }
+    return ['im' => $rotated, 'width' => imagesx($rotated), 'height' => imagesy($rotated)];
 }
 
 /** @return resource|\GdImage|false */
