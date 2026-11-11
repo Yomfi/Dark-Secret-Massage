@@ -108,6 +108,20 @@ export function isDemoProviderImage(src?: string | null): boolean {
   return typeof src === 'string' && /(?:^|\/)demo[-_]/i.test(src);
 }
 
+/** Genuine, de-duplicated provider image sources in display order. */
+export function providerImageSources(
+  profile: Pick<MarketplaceProfile, 'primaryImage' | 'gallery'>,
+): string[] {
+  return Array.from(
+    new Set(
+      [profile.primaryImage, ...(profile.gallery ?? [])].filter(
+        (src): src is string =>
+          typeof src === 'string' && src.trim() !== '' && !isDemoProviderImage(src),
+      ),
+    ),
+  );
+}
+
 /** Runtime cache filled from the public providers endpoint. */
 let cache: MarketplaceProfile[] = [];
 

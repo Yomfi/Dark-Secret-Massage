@@ -18,9 +18,11 @@ import { Footer } from '../components/Footer';
 import {
   findMarketplaceProfile,
   mapApiProvider,
+  providerImageSources,
   setMarketplaceProfiles,
   siblingProfiles,
   type MarketplaceProfile,
+  type MarketplaceProviderKind,
 } from '../data/marketplaceProfiles';
 import {
   availabilityLabel,
@@ -32,7 +34,7 @@ import {
 } from '../lib/marketplace';
 import { marketplaceEnquireMailto } from '../lib/companyEmails';
 import { useAuth } from '../auth/AuthContext';
-import { PortraitMedia } from '../components/marketplace/PortraitMedia';
+import { ProviderImage, ProviderImageFallback } from '../components/marketplace/ProviderImage';
 import { VerifiedBadge, VerifiedNameCheck } from '../components/marketplace/VerifiedBadge';
 import {
   UnverifiedContactModal,
@@ -230,17 +232,36 @@ function ProfileGallery({
   images,
   displayName,
   isDemo,
+  providerKind,
 }: {
   images: string[];
   displayName: string;
   isDemo: boolean;
+  providerKind: MarketplaceProviderKind;
 }) {
   const [index, setIndex] = useState(0);
   const [lightbox, setLightbox] = useState(false);
+  const [lightboxFailed, setLightboxFailed] = useState(false);
 
   const go = (dir: -1 | 1) => {
+    setLightboxFailed(false);
     setIndex((i) => (i + dir + images.length) % images.length);
   };
+
+  if (images.length === 0) {
+    return (
+      <section className="relative">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0f]">
+          <ProviderImage
+            name={displayName}
+            kind={providerKind}
+            aspectClassName="aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5]"
+            size="profile"
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -248,14 +269,20 @@ function ProfileGallery({
         <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0f] group">
           <button
             type="button"
-            onClick={() => setLightbox(true)}
+            onClick={() => {
+              setLightboxFailed(false);
+              setLightbox(true);
+            }}
             className="block w-full text-left"
             aria-label="Open gallery lightbox"
           >
-            <PortraitMedia
+            <ProviderImage
               src={images[index]}
+              name={displayName}
+              kind={providerKind}
               alt={displayName}
               aspectClassName="aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5]"
+              size="profile"
               hoverZoom
             />
           </button>
@@ -302,7 +329,14 @@ function ProfileGallery({
                   i === index ? 'border-brand-purple opacity-100' : 'border-white/10 opacity-75 hover:opacity-100'
                 }`}
               >
-                <PortraitMedia src={src} alt="" aspectClassName="w-full h-full" />
+                <ProviderImage
+                  src={src}
+                  name={displayName}
+                  kind={providerKind}
+                  alt=""
+                  aspectClassName="w-full h-full"
+                  size="thumb"
+                />
               </button>
             ))}
           </div>
@@ -339,11 +373,22 @@ function ProfileGallery({
               </IconButton>
             </>
           )}
-          <img
-            src={images[index]}
-            alt={displayName}
-            className="max-h-[90vh] max-w-full w-auto object-contain rounded-lg"
-          />
+          {lightboxFailed ? (
+            <ProviderImageFallback
+              name={displayName}
+              kind={providerKind}
+              aspectClassName="aspect-[4/5]"
+              className="w-[min(90vw,520px)] rounded-2xl"
+              size="profile"
+            />
+          ) : (
+            <img
+              src={images[index]}
+              alt={displayName}
+              onError={() => setLightboxFailed(true)}
+              className="max-h-[90vh] max-w-full w-auto object-contain rounded-lg"
+            />
+          )}
         </div>
       )}
     </>
@@ -445,9 +490,7 @@ export const MarketplaceProfilePage: React.FC = () => {
     );
   }
 
-  const images = (profile.gallery.length ? profile.gallery : [profile.primaryImage]).filter(
-    (src): src is string => typeof src === 'string' && src.length > 0,
-  );
+  const images = providerImageSources(profile);
   const isProvider =
     profile.profileType === 'massage_provider' || profile.profileType === 'wellness_provider';
 
@@ -492,7 +535,12 @@ export const MarketplaceProfilePage: React.FC = () => {
 
         {/* Desktop: gallery left + sticky contact; Mobile: gallery → identity → contact summary */}
         <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] gap-8 lg:gap-10 items-start">
-          <ProfileGallery images={images} displayName={profile.displayName} isDemo={profile.isDemo} />
+          <ProfileGallery
+            images={images}
+            displayName={profile.displayName}
+            isDemo={profile.isDemo}
+            providerKind={profile.providerKind}
+          />
 
           <div className="space-y-5">
             <header>
@@ -630,13 +678,14 @@ export const MarketplaceProfilePage: React.FC = () => {
                       key={member.id}
                       className="rounded-xl border border-white/10 bg-black/20 overflow-hidden"
                     >
-                      {member.profileImage && (
-                        <PortraitMedia
-                          src={member.profileImage}
-                          alt={member.displayName}
-                          aspectClassName="aspect-[4/3]"
-                        />
-                      )}
+                      <ProviderImage
+                        src={member.profileImage}
+                        name={member.displayName}
+                        kind="individual"
+                        alt={member.displayName}
+                        aspectClassName="aspect-[4/3]"
+                        size="team"
+                      />
                       <div className="p-4">
                         <p className="text-sm font-semibold text-white">
                           {member.displayName}

@@ -9,6 +9,8 @@ type PortraitMediaProps = {
   imgClassName?: string;
   /** Slight zoom on hover for cards (foreground only). */
   hoverZoom?: boolean;
+  /** Lets the caller replace a broken image with a branded fallback. */
+  onError?: React.ReactEventHandler<HTMLImageElement>;
 };
 
 /**
@@ -22,6 +24,7 @@ export const PortraitMedia: React.FC<PortraitMediaProps> = ({
   className = '',
   imgClassName = '',
   hoverZoom = false,
+  onError,
 }) => {
   return (
     <div className={`relative overflow-hidden bg-[#0a0a0f] ${aspectClassName} ${className}`}>
@@ -30,6 +33,7 @@ export const PortraitMedia: React.FC<PortraitMediaProps> = ({
         alt=""
         aria-hidden
         className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-55 saturate-125"
+        onError={onError}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/35" />
       <img
@@ -38,6 +42,7 @@ export const PortraitMedia: React.FC<PortraitMediaProps> = ({
         className={`absolute inset-0 w-full h-full object-contain object-center transition-transform duration-700 ${
           hoverZoom ? 'group-hover:scale-[1.02]' : ''
         } ${imgClassName}`}
+        onError={onError}
       />
     </div>
   );
