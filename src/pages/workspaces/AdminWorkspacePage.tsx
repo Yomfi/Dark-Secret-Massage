@@ -1327,6 +1327,24 @@ export const AdminWorkspacePage: React.FC = () => {
                             }, p.published ? 'Provider unpublished.' : 'Provider published.');
                           },
                         },
+                        ...(p.accountStatus === 'pending_verification' || p.accountStatus === 'pending'
+                          ? [{
+                              label: 'Approve account',
+                              disabled: busy,
+                              onClick: () => {
+                                void act(async () => {
+                                  await apiRequest('/admin/providers.php', {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                      providerUserId: p.userId,
+                                      action: 'activate',
+                                      notes: 'Account approved independently of identity verification.',
+                                    }),
+                                  });
+                                }, 'Provider account approved. Identity verification was not changed.');
+                              },
+                            }]
+                          : []),
                         {
                           label: 'Review',
                           onClick: () => {
