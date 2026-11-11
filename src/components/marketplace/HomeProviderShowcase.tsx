@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import {
   fetchMarketplaceProfiles,
+  isDemoProviderImage,
   type MarketplaceProfile,
 } from '../../data/marketplaceProfiles';
 import { whatsappEnquiryUrl } from '../../lib/marketplace';
@@ -59,7 +60,9 @@ function ProviderCard({
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   const isAgency = profile.providerKind === 'agency';
-  const image = profile.primaryImage || profile.gallery[0];
+  const image = [profile.primaryImage, ...profile.gallery].find(
+    (src): src is string => Boolean(src) && !isDemoProviderImage(src),
+  );
   const showImage = Boolean(image) && !imageFailed;
   const location = [profile.city, profile.region].filter(Boolean).join(', ') || profile.country;
   const canWhatsApp = profile.publicContactEnabled && Boolean(profile.whatsapp);

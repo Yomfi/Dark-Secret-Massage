@@ -103,6 +103,11 @@ export function isPublicMassageProfile(profile: MarketplaceProfile): boolean {
   return profile.profileType === 'massage_provider' || profile.profileType === 'wellness_provider';
 }
 
+/** Seed/demo artwork is never shown as a provider's real photo or agency logo. */
+export function isDemoProviderImage(src?: string | null): boolean {
+  return typeof src === 'string' && /(?:^|\/)demo[-_]/i.test(src);
+}
+
 /** Runtime cache filled from the public providers endpoint. */
 let cache: MarketplaceProfile[] = [];
 

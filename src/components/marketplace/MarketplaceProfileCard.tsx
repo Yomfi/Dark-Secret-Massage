@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
-import type { MarketplaceProfile } from '../../data/marketplaceProfiles';
+import { isDemoProviderImage, type MarketplaceProfile } from '../../data/marketplaceProfiles';
 import {
   availabilityLabel,
   formatPrice,
@@ -32,7 +32,9 @@ function initials(name: string): string {
 
 export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) => {
   const price = formatPrice(profile.startingPrice, profile.currency);
-  const image = profile.primaryImage || profile.gallery[0];
+  const image = [profile.primaryImage, ...profile.gallery].find(
+    (src): src is string => Boolean(src) && !isDemoProviderImage(src),
+  );
 
   return (
     <motion.article
