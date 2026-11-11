@@ -5,11 +5,14 @@ import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { WorkspaceShell, type WorkspaceNavItem } from '../../components/workspace/WorkspaceShell';
 import { ProviderGalleryManager } from '../../components/provider/ProviderGalleryManager';
+import { LocationFields, emptyLocation, type LocationValue } from '../../components/location/LocationFields';
 
 type ProfilePayload = {
   profile: {
     id: string; slug: string; providerType: string; displayName: string; businessName: string | null;
-    city: string; about: string; serviceArea: string; workingDays: string | null; workingHours: string | null;
+    gender: string | null; city: string; region: string; district: string | null; areaNeighbourhood: string | null;
+    serviceRadiusKm: number | null; latitude: number | null; longitude: number | null;
+    about: string; serviceArea: string; workingDays: string | null; workingHours: string | null;
     startingPrice: number | null; currency: string; primaryImage: string | null;
     publicPhone: boolean; publicWhatsapp: boolean; completed: boolean;
   } | null;
@@ -60,7 +63,9 @@ export const ProviderWorkspacePage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [isAgency, setIsAgency] = useState(false);
-  const [form, setForm] = useState({ displayName: '', city: '', about: '', serviceArea: '', workingDays: '', workingHours: '', startingPrice: 0 });
+  const [form, setForm] = useState({ displayName: '', gender: '', city: '', about: '', serviceArea: '', workingDays: '', workingHours: '', startingPrice: 0 });
+  const [locationForm, setLocationForm] = useState<LocationValue>({ ...emptyLocation });
+  const [serviceRadiusKm, setServiceRadiusKm] = useState('');
   const [serviceForm, setServiceForm] = useState({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false });
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyForm, setVerifyForm] = useState({
@@ -89,6 +94,7 @@ export const ProviderWorkspacePage: React.FC = () => {
       setIsAgency(me.profile.providerType === 'agency');
       setForm({
         displayName: me.profile.displayName,
+        gender: me.profile.gender ?? '',
         city: me.profile.city,
         about: me.profile.about,
         serviceArea: me.profile.serviceArea,
@@ -96,6 +102,16 @@ export const ProviderWorkspacePage: React.FC = () => {
         workingHours: me.profile.workingHours ?? '',
         startingPrice: me.profile.startingPrice ?? 0,
       });
+      setLocationForm({
+        country: 'Ghana',
+        region: me.profile.region || '',
+        district: me.profile.district || '',
+        city: me.profile.city || '',
+        area: me.profile.areaNeighbourhood || '',
+        latitude: me.profile.latitude ?? null,
+        longitude: me.profile.longitude ?? null,
+      });
+      setServiceRadiusKm(me.profile.serviceRadiusKm != null ? String(me.profile.serviceRadiusKm) : '');
     }
     const [svc, bk] = await Promise.all([
       apiRequest<{ services: Service[] }>('/provider/services.php'),
@@ -214,8 +230,15 @@ export const ProviderWorkspacePage: React.FC = () => {
               body: JSON.stringify({
                 providerType: isAgency ? 'agency' : 'individual',
                 displayName: form.displayName,
+                gender: form.gender,
                 businessName: isAgency ? form.displayName : undefined,
-                city: form.city,
+                city: locationForm.city,
+                region: locationForm.region,
+                district: locationForm.district,
+                areaNeighbourhood: locationForm.area,
+                latitude: locationForm.latitude,
+                longitude: locationForm.longitude,
+                serviceRadiusKm: serviceRadiusKm === '' ? null : Number(serviceRadiusKm),
                 about: form.about,
                 serviceArea: form.serviceArea,
                 workingDays: form.workingDays,
@@ -231,12 +254,28 @@ export const ProviderWorkspacePage: React.FC = () => {
           <label className="block text-[12px] font-medium text-[#675f73]">Display name
             <input className={`${input} mt-1`} value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} required />
           </label>
-          <label className="block text-[12px] font-medium text-[#675f73]">City
-            <input className={`${input} mt-1`} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+          <label className="block text-[12px] font-medium text-[#675f73]">Gender
+            <select className={`${input} mt-1`} value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} required={!isAgency}>
+              <option value="">Select gender</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
           </label>
           <label className="block text-[12px] font-medium text-[#675f73]">About
             <textarea className={`${input} mt-1 h-32 py-2`} value={form.about} onChange={(e) => setForm({ ...form, about: e.target.value })} />
           </label>
+          <div className="space-y-3 border-t border-[#ece3f6] pt-4">
+            <div>
+              <h3 className="text-[13px] font-semibold">Service location</h3>
+              <p className="mt-1 text-[12px] leading-relaxed text-[#675f73]">
+                Customers use this structured location to find and match you. Your exact pin is private and never shown publicly.
+              </p>
+            </div>
+            <LocationFields value={locationForm} onChange={setLocationForm} theme="light" />
+            <label className="block text-[12px] font-medium text-[#675f73]">Maximum home-visit radius (km)
+              <input className={`${input} mt-1`} type="number" min={0} max={500} value={serviceRadiusKm} onChange={(e) => setServiceRadiusKm(e.target.value)} placeholder="e.g. 20" />
+            </label>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block text-[12px] font-medium text-[#675f73]">Service area
               <input className={`${input} mt-1`} value={form.serviceArea} onChange={(e) => setForm({ ...form, serviceArea: e.target.value })} />

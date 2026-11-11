@@ -329,6 +329,7 @@ export const AdminWorkspacePage: React.FC = () => {
   const [bookingDetail, setBookingDetail] = useState<Booking | null>(null);
   const [bookingProviders, setBookingProviders] = useState<Provider[]>([]);
   const [bookingProviderId, setBookingProviderId] = useState('');
+  const [bookingNote, setBookingNote] = useState('');
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [content, setContent] = useState<ContentPayload | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -1626,7 +1627,7 @@ export const AdminWorkspacePage: React.FC = () => {
             emptyIcon={CalendarDays}
             emptyTitle="Select a booking"
             emptyDescription="Inspect timeline, customer and provider details."
-            onClose={() => { setSelectedBookingId(null); setBookingDetail(null); }}
+            onClose={() => { setSelectedBookingId(null); setBookingDetail(null); setBookingNote(''); }}
           >
             {bookingDetail ? (
               <div className="space-y-4">
@@ -1673,14 +1674,44 @@ export const AdminWorkspacePage: React.FC = () => {
                     <p className="text-[11.5px] text-[#7e22ce]">Only verified providers. Assigning does not create or mark a payment.</p>
                   </div>
                 ) : null}
+                <div className="space-y-2 border-t border-[#ede4f7] pt-3">
+                  <p className="text-[13px] font-semibold">Internal note</p>
+                  <textarea
+                    className={`${adminInputClass} min-h-24 py-2`}
+                    value={bookingNote}
+                    onChange={(e) => setBookingNote(e.target.value)}
+                    maxLength={2000}
+                    placeholder="Context for staff only — never shown to customers or providers."
+                    aria-label="Internal booking note"
+                  />
+                  <button
+                    className={adminBtnClass}
+                    disabled={busy || !bookingNote.trim()}
+                    onClick={() => run(async () => {
+                      await apiRequest('/admin/bookings.php', {
+                        method: 'POST',
+                        body: JSON.stringify({ bookingId: bookingDetail.id, action: 'note', note: bookingNote.trim() }),
+                      });
+                      setBookingNote('');
+                      setNotice('Internal note added.');
+                      await loadBookingDetail(bookingDetail.id);
+                    })}
+                  >
+                    Add internal note
+                  </button>
+                  <p className="text-[11.5px] leading-relaxed text-[#7e22ce]">Staff-only. Internal notes do not change the booking status or notify the customer.</p>
+                </div>
                 {bookingDetail.events && bookingDetail.events.length > 0 ? (
                   <div className="border-t border-[#ede4f7] pt-3">
                     <p className="text-[13px] font-semibold">Timeline</p>
                     <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto text-[12.5px]">
                       {bookingDetail.events.map((ev, idx) => (
                         <li key={`${ev.event}-${idx}`} className="rounded-[12px] bg-[#faf7ff] px-3 py-2">
-                          <p className="font-medium">{ev.event}</p>
-                          <p className="text-[#6b6275]">{ev.fromStatus ?? '—'} → {ev.toStatus ?? '—'} · {ev.createdAt}</p>
+                          <p className="font-medium capitalize">{ev.event.replace(/_/g, ' ')}</p>
+                          <p className="text-[#6b6275]">
+                            {ev.fromStatus || ev.toStatus ? `${ev.fromStatus ?? '—'} → ${ev.toStatus ?? '—'} · ` : ''}
+                            {ev.createdAt}
+                          </p>
                           {ev.note ? <p className="mt-1">{ev.note}</p> : null}
                         </li>
                       ))}

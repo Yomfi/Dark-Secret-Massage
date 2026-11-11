@@ -38,6 +38,9 @@ if ($method === 'GET') {
     $bookings = array_map(static function (array $row): array {
         $dto = ds_booking_row_to_api($row);
         $dto['providerName'] = $row['provider_name'] ?? null;
+        $dto['serviceId'] = $row['service_id'] ?? null;
+        $dto['providerProfileId'] = $row['provider_profile_id'] ?? null;
+        $dto['durationMinutes'] = isset($row['duration_minutes']) ? (int) $row['duration_minutes'] : null;
         $dto['canCancel'] = in_array((string) $row['status'], ['pending', 'confirmed'], true);
         $dto['canReschedule'] = in_array((string) $row['status'], ['pending', 'confirmed'], true);
         return $dto;

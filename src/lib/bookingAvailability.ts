@@ -59,10 +59,12 @@ export async function fetchAvailability(params: {
   date: string;
   serviceId?: string;
   providerProfileId?: string;
+  durationMinutes?: number;
 }): Promise<AvailabilityResponse> {
   const query = new URLSearchParams({ date: params.date });
   if (params.serviceId) query.set('serviceId', params.serviceId);
   if (params.providerProfileId) query.set('providerProfileId', params.providerProfileId);
+  if (!params.serviceId && params.durationMinutes) query.set('duration', String(params.durationMinutes));
 
   const data = await apiRequest<AvailabilityResponse>(`/public/availability.php?${query}`);
   return {

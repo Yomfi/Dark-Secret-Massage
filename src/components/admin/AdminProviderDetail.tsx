@@ -69,6 +69,16 @@ type ProviderDetail = {
   badges: string[];
 };
 
+type AssignedCustomer = {
+  id: string;
+  customerName: string;
+  customerEmail: string | null;
+  statusLabel: string;
+  serviceName: string | null;
+  preferredAt: string | null;
+  createdAt: string | null;
+};
+
 type Props = {
   userId: string;
   canDelete: boolean;
@@ -104,6 +114,7 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
   const [serviceAreas, setServiceAreas] = useState<Array<{ region: string; city: string; area: string; radiusKm: string }>>([]);
   const [serviceRegions, setServiceRegions] = useState('');
   const [serviceRadiusKm, setServiceRadiusKm] = useState('');
+  const [assignedCustomers, setAssignedCustomers] = useState<AssignedCustomer[]>([]);
 
   const load = async () => {
     setError(null);
@@ -137,6 +148,18 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
       );
       setServiceRegions((data.profile.serviceRegions ?? []).join(', '));
       setServiceRadiusKm(data.profile.serviceRadiusKm != null ? String(data.profile.serviceRadiusKm) : '');
+    }
+    if (data.provider.kind === 'agency' && data.provider.profileId) {
+      try {
+        const assigned = await apiRequest<{ assignments: AssignedCustomer[] }>(
+          `/admin/assignments.php?providerProfileId=${encodeURIComponent(data.provider.profileId)}&perPage=50`,
+        );
+        setAssignedCustomers(assigned.assignments);
+      } catch {
+        setAssignedCustomers([]);
+      }
+    } else {
+      setAssignedCustomers([]);
     }
   };
 
@@ -230,6 +253,31 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
             <p><span className="text-[#7e22ce]">Listing</span> · {p.listingStatus}</p>
             <p><span className="text-[#7e22ce]">Account</span> · {p.accountStatus}</p>
             {p.slug ? <Link to={`/profile/${p.slug}`} className="font-semibold text-[#6d28d9] hover:underline">Open public profile</Link> : null}
+            {p.kind === 'agency' ? (
+              <div className="border-t border-[#ede4f7] pt-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[13px] font-semibold">Assigned customers</p>
+                  <span className="rounded-full bg-[#f3edfa] px-2 py-0.5 text-[11.5px] font-semibold text-[#6d28d9]">{assignedCustomers.length}</span>
+                </div>
+                {assignedCustomers.length === 0 ? (
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[#6b6275]">
+                    No customers are assigned to this agency yet. Use Assignments to match one.
+                  </p>
+                ) : (
+                  <ul className="mt-2 max-h-64 space-y-2 overflow-y-auto">
+                    {assignedCustomers.map((assignment) => (
+                      <li key={assignment.id} className="rounded-[12px] border border-[#ede4f7] bg-[#faf7ff] px-3 py-2">
+                        <p className="text-[12.5px] font-semibold">{assignment.customerName}</p>
+                        <p className="text-[11.5px] text-[#6b6275]">{assignment.customerEmail ?? '—'}</p>
+                        <p className="mt-1 text-[11.5px] capitalize text-[#6b6275]">
+                          {assignment.statusLabel}{assignment.serviceName ? ` · ${assignment.serviceName}` : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2 border-t border-[#ede4f7] pt-4">
               {!p.published ? (
                 <button type="button" className={adminBtnCompactClass} disabled={busy} onClick={() => post({ action: 'publish' }, 'Provider published.')}>Publish</button>

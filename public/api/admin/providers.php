@@ -455,6 +455,7 @@ function ds_admin_provider_list_dto(array $row): array
 
 function ds_admin_provider_detail(string $userId): void
 {
+    global $admin;
     $user = ds_find_user_by_id($userId);
     if (!$user || (string) ($user['role'] ?? '') !== 'massage_provider') {
         ds_error(404, 'NOT_FOUND', 'Provider not found.');

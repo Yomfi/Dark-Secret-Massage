@@ -14,6 +14,7 @@ import { BrandLogo } from './BrandLogo';
 import { LocationFields, emptyLocation, type LocationValue } from './location/LocationFields';
 import { apiRequest } from '../lib/api';
 import { formatScheduledDate } from '../lib/dates';
+import { fetchAvailability, todayISO, type AvailabilityResponse } from '../lib/bookingAvailability';
 
 type Booking = {
   id: string;
@@ -26,6 +27,9 @@ type Booking = {
   timeSlot: string | null;
   locationType: string | null;
   providerName?: string | null;
+  serviceId?: string | null;
+  providerProfileId?: string | null;
+  durationMinutes?: number | null;
   canCancel?: boolean;
   canReschedule?: boolean;
 };
@@ -94,6 +98,13 @@ export const ClientDashboard: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleSlotId, setRescheduleSlotId] = useState('');
+  const [rescheduleNote, setRescheduleNote] = useState('');
+  const [rescheduleAvailability, setRescheduleAvailability] = useState<AvailabilityResponse | null>(null);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
   const load = () => {
     setError(null);
@@ -178,19 +189,73 @@ export const ClientDashboard: React.FC<{
     }
   };
 
-  const reschedule = async (bookingId: string) => {
-    const note = window.prompt('What date or time would suit you better?') ?? '';
-    if (!note.trim()) return;
-    setBusy(true);
-    try {
-      await apiRequest(`/customer/bookings.php`, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'reschedule', bookingId, note }),
+  const openReschedule = (booking: Booking) => {
+    setRescheduleBooking(booking);
+    setRescheduleDate('');
+    setRescheduleSlotId('');
+    setRescheduleNote('');
+    setRescheduleAvailability(null);
+    setRescheduleError(null);
+  };
+
+  useEffect(() => {
+    if (!rescheduleBooking || !rescheduleDate) {
+      setRescheduleAvailability(null);
+      return;
+    }
+    let cancelled = false;
+    setRescheduleLoading(true);
+    setRescheduleError(null);
+    setRescheduleSlotId('');
+    fetchAvailability({
+      date: rescheduleDate,
+      serviceId: rescheduleBooking.serviceId ?? undefined,
+      providerProfileId: rescheduleBooking.providerProfileId ?? undefined,
+      durationMinutes: rescheduleBooking.durationMinutes ?? undefined,
+    })
+      .then((result) => {
+        if (!cancelled) setRescheduleAvailability(result);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setRescheduleAvailability(null);
+        setRescheduleError(err instanceof Error ? err.message : 'Unable to check live availability.');
+      })
+      .finally(() => {
+        if (!cancelled) setRescheduleLoading(false);
       });
-      setNotice('Reschedule request sent.');
+    return () => {
+      cancelled = true;
+    };
+  }, [rescheduleBooking, rescheduleDate]);
+
+  const submitReschedule = async () => {
+    const slot = rescheduleAvailability?.slots.find(
+      (candidate) => candidate.id === rescheduleSlotId && candidate.available,
+    );
+    if (!rescheduleBooking || !rescheduleDate || !slot) {
+      setRescheduleError('Choose a date and an open time before confirming.');
+      return;
+    }
+    setBusy(true);
+    setRescheduleError(null);
+    try {
+      await apiRequest('/customer/bookings.php', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'reschedule',
+          bookingId: rescheduleBooking.id,
+          scheduledAt: `${rescheduleDate}T00:00:00`,
+          timeSlotId: slot.id,
+          timeSlot: slot.label,
+          note: rescheduleNote.trim(),
+        }),
+      });
+      setNotice(`Booking rescheduled to ${formatScheduledDate(`${rescheduleDate}T00:00:00`)} · ${slot.label}.`);
+      setRescheduleBooking(null);
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to request a reschedule.');
+      setRescheduleError(err instanceof Error ? err.message : 'Unable to reschedule this booking.');
     } finally {
       setBusy(false);
     }
@@ -328,10 +393,10 @@ export const ClientDashboard: React.FC<{
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => reschedule(booking.id)}
+                          onClick={() => openReschedule(booking)}
                           className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d8c7ea] px-3.5 text-[12.5px] font-semibold hover:bg-[#f3edfa] disabled:opacity-60"
                         >
-                          <RefreshCw className="h-4 w-4" aria-hidden /> Request reschedule
+                          <RefreshCw className="h-4 w-4" aria-hidden /> Reschedule
                         </button>
                       ) : null}
                       {booking.canCancel ? (
@@ -500,6 +565,106 @@ export const ClientDashboard: React.FC<{
           </div>
         ) : null}
       </main>
+
+      {rescheduleBooking ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reschedule-title"
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-[#e4d8f2] bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7e22ce]">Reschedule booking</p>
+                <h2 id="reschedule-title" className="mt-1 text-[19px] font-semibold">{rescheduleBooking.serviceName}</h2>
+                <p className="mt-1 text-[12.5px] text-[#675f73]">
+                  Currently {formatScheduledDate(rescheduleBooking.scheduledAt)}
+                  {rescheduleBooking.timeSlot ? ` · ${rescheduleBooking.timeSlot}` : ''}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRescheduleBooking(null)}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#e4d8f2] text-[18px] text-[#675f73] hover:bg-[#f3edfa]"
+                aria-label="Close reschedule dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <label className="block text-[12px] font-medium text-[#675f73]">New date
+                <input
+                  type="date"
+                  min={todayISO()}
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="mt-1 h-12 w-full rounded-xl border border-[#d8c7ea] bg-white px-3 text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea]"
+                />
+              </label>
+
+              {rescheduleLoading ? (
+                <p role="status" className="text-[12.5px] text-[#675f73]">Checking live availability…</p>
+              ) : null}
+              {rescheduleError ? (
+                <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12.5px] text-red-800">
+                  {rescheduleError}
+                </p>
+              ) : null}
+              {!rescheduleLoading && rescheduleAvailability ? (
+                rescheduleAvailability.slots.some((slot) => slot.available) ? (
+                  <label className="block text-[12px] font-medium text-[#675f73]">Open time
+                    <select
+                      value={rescheduleSlotId}
+                      onChange={(e) => setRescheduleSlotId(e.target.value)}
+                      className="mt-1 h-12 w-full rounded-xl border border-[#d8c7ea] bg-white px-3 text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea]"
+                    >
+                      <option value="">Select an open time</option>
+                      {rescheduleAvailability.slots.filter((slot) => slot.available).map((slot) => (
+                        <option key={slot.id} value={slot.id}>{slot.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <p className="rounded-xl border border-[#ece3f6] bg-[#faf5ff] px-3 py-2 text-[12.5px] leading-relaxed text-[#675f73]">
+                    {rescheduleAvailability.message || 'No open slots on this date. Try another day.'}
+                  </p>
+                )
+              ) : null}
+
+              <label className="block text-[12px] font-medium text-[#675f73]">Note (optional)
+                <textarea
+                  value={rescheduleNote}
+                  onChange={(e) => setRescheduleNote(e.target.value)}
+                  rows={3}
+                  className="mt-1 w-full rounded-xl border border-[#d8c7ea] bg-white px-3 py-2 text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9333ea]"
+                  placeholder="Anything the provider should know about the new time"
+                />
+              </label>
+
+              <div className="flex flex-wrap justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setRescheduleBooking(null)}
+                  disabled={busy}
+                  className="inline-flex h-12 items-center rounded-xl border border-[#d8c7ea] px-4 text-[13px] font-semibold text-[#675f73] hover:bg-[#f3edfa] disabled:opacity-60"
+                >
+                  Keep current time
+                </button>
+                <button
+                  type="button"
+                  onClick={submitReschedule}
+                  disabled={busy || !rescheduleSlotId}
+                  className="inline-flex h-12 items-center rounded-xl bg-[#6d28d9] px-4 text-[13px] font-semibold text-white hover:bg-[#9333ea] disabled:opacity-60"
+                >
+                  {busy ? 'Rescheduling…' : 'Confirm new time'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

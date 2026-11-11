@@ -127,6 +127,19 @@ if (!$booking) {
 
 $now = ds_now_sql();
 
+if ($action === 'note') {
+    $note = trim((string) ($body['note'] ?? ''));
+    if ($note === '') {
+        ds_error(400, 'VALIDATION_ERROR', 'Write an internal note before saving.');
+    }
+    if (mb_strlen($note) > 2000) {
+        ds_error(400, 'VALIDATION_ERROR', 'Internal notes must be 2,000 characters or fewer.');
+    }
+    ds_booking_log($bookingId, $admin['id'], 'internal_note', (string) $booking['status'], (string) $booking['status'], $note);
+    ds_audit('booking.note_added', 'booking', $bookingId, ['length' => mb_strlen($note)], $admin['id']);
+    ds_success(['bookingId' => $bookingId, 'noted' => true]);
+}
+
 if ($action === 'assign') {
     $providerProfileId = trim((string) ($body['providerProfileId'] ?? ''));
     $teamMemberId = trim((string) ($body['teamMemberId'] ?? ''));

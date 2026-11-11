@@ -35,6 +35,10 @@ if ($serviceId !== '' && ds_table_exists('services')) {
         ds_error(409, 'SERVICE_UNAVAILABLE', 'That service is not available right now.');
     }
     $duration = max(15, (int) $row['duration_minutes']);
+} elseif (isset($_GET['duration'])) {
+    // Existing bookings can outlive an edited service; reschedule previews use
+    // the booking's stored duration rather than an arbitrary default.
+    $duration = max(15, min(480, (int) $_GET['duration']));
 }
 
 $providerName = null;
