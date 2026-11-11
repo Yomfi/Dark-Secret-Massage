@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import { Building2, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { MarketplaceProfile } from '../../data/marketplaceProfiles';
 import {
@@ -19,8 +19,20 @@ type Props = {
   index?: number;
 };
 
+function initials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'MS'
+  );
+}
+
 export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) => {
   const price = formatPrice(profile.startingPrice, profile.currency);
+  const image = profile.primaryImage || profile.gallery[0];
 
   return (
     <motion.article
@@ -31,12 +43,22 @@ export const MarketplaceProfileCard: React.FC<Props> = ({ profile, index = 0 }) 
     >
       <div className="flex flex-col sm:flex-row">
         <div className="relative w-full shrink-0 bg-brand-ink sm:w-[220px] lg:w-[240px]">
-          <PortraitMedia
-            src={profile.primaryImage ?? ''}
-            alt={profile.displayName}
-            aspectClassName="aspect-[4/3] sm:aspect-auto sm:h-full sm:min-h-[228px]"
-            hoverZoom
-          />
+          {image ? (
+            <PortraitMedia
+              src={image}
+              alt={profile.displayName}
+              aspectClassName="aspect-[4/3] sm:aspect-auto sm:h-full sm:min-h-[228px]"
+              hoverZoom
+            />
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center bg-[radial-gradient(circle_at_35%_25%,rgba(147,51,234,0.22),rgba(10,9,14,0.96)_68%)] sm:aspect-auto sm:h-full sm:min-h-[228px]">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-purple/25 bg-black/30 text-base font-semibold tracking-wide text-brand-lavender">
+                {profile.providerKind === 'agency' ? (
+                  <Building2 className="h-6 w-6 text-brand-purple-light" aria-hidden />
+                ) : initials(profile.displayName)}
+              </span>
+            </div>
+          )}
           {profile.isDemo ? (
             <span className="absolute left-3 top-3 z-10 rounded-full border border-white/15 bg-black/70 px-2 py-0.5 text-[10px] font-medium text-zinc-300">
               Demo

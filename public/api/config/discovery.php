@@ -69,7 +69,7 @@ function ds_discovery_search(array $params, ?array $target = null): array
     // the badge and booking eligibility, not whether a published profile can
     // be browsed. Left join keeps legacy profiles without a verification row
     // visible as Unverified once an admin publishes them.
-    $sql = "SELECT p.*, u.email_verified_at, u.account_status,
+    $sql = "SELECT p.*, u.email_verified_at, u.account_status, u.phone AS user_phone,
                    COALESCE(v.verification_status, 'unverified') AS verification_status,
                    v.verified_at
             FROM provider_profiles p
@@ -337,6 +337,16 @@ function ds_discovery_provider_dto(array $row, array $offerings, array $match): 
         ? array_values(array_map(static fn (array $s): string => (string) $s['name'], $offerings))
         : (is_array($servicesJson) ? array_values(array_map('strval', $servicesJson)) : []);
 
+    // Only publish direct contact details the provider has explicitly made
+    // public. The WhatsApp number follows the same fallback as the profile DTO:
+    // the provider's business number, then their verified account phone.
+    $waNumber = trim((string) ($row['whatsapp_number'] ?? ''));
+    if ($waNumber === '') {
+        $waNumber = trim((string) ($row['user_phone'] ?? ''));
+    }
+    $publicPhone = !empty($row['public_phone']) && !empty($row['user_phone']);
+    $publicWhatsapp = !empty($row['public_whatsapp']) && $waNumber !== '';
+
     return [
         'id' => $profileId,
         'slug' => (string) $row['slug'],
@@ -377,7 +387,8 @@ function ds_discovery_provider_dto(array $row, array $offerings, array $match): 
         'primaryImage' => $row['primary_image'] !== null ? (string) $row['primary_image'] : null,
         'coverImage' => $row['cover_image'] !== null ? (string) $row['cover_image'] : null,
         'gallery' => is_array($gallery) ? array_values(array_filter(array_map('strval', $gallery))) : [],
-        'publicContactEnabled' => (bool) ($row['public_phone'] ?? false),
+        'publicContactEnabled' => $publicPhone || $publicWhatsapp,
+        'whatsapp' => $publicWhatsapp ? $waNumber : null,
         'languages' => is_array($languages) ? $languages : [],
         'yearsExperience' => isset($row['years_experience']) ? (int) $row['years_experience'] : null,
         'teamMembers' => $kind === 'agency' ? ds_agency_team_members($profileId, true) : [],

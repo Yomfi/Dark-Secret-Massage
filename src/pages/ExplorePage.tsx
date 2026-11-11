@@ -65,8 +65,9 @@ export const ExplorePage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const citySlug = citySlugParam ?? 'accra';
-  const viewAll = citySlugParam === 'all';
+  // /explore/all is a static route, so useParams has no citySlug there.
+  const viewAll = citySlugParam === 'all' || (!citySlugParam && !regionSlug);
+  const citySlug = viewAll ? 'all' : citySlugParam ?? 'accra';
   const city = findCityBySlug(citySlug);
   const region = regionSlug ? findRegionBySlug(regionSlug) : undefined;
   const filters = useMemo(() => parseExploreSearchParams(searchParams), [searchParams]);
@@ -80,6 +81,7 @@ export const ExplorePage: React.FC = () => {
   const [override, setOverride] = useState<ActiveLocation | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -203,6 +205,12 @@ export const ExplorePage: React.FC = () => {
       : filters.sort;
     return filterAndSortProfiles(profiles, { ...filters, sort });
   }, [profiles, filters, activeLocation]);
+
+  const visibleResults = results.slice(0, visibleCount);
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [activeLocation, filters]);
 
   const locationName =
     activeLocation?.city ||
@@ -445,10 +453,23 @@ export const ExplorePage: React.FC = () => {
             ) : (
               <>
                 <div className="space-y-3.5">
-                  {results.map((profile, i) => (
+                  {visibleResults.map((profile, i) => (
                     <MarketplaceProfileCard key={profile.id} profile={profile} index={i} />
                   ))}
                 </div>
+                {visibleResults.length < results.length ? (
+                  <div className="mt-6 flex flex-col items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setVisibleCount((count) => count + 12)}
+                    >
+                      Load More Providers
+                    </Button>
+                    <p className="text-[12px] text-zinc-500">
+                      Showing {visibleResults.length} of {results.length}
+                    </p>
+                  </div>
+                ) : null}
                 {distanceNote ? (
                   <p className="mt-4 text-[11.5px] leading-relaxed text-zinc-500">{distanceNote}</p>
                 ) : null}

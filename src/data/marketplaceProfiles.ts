@@ -218,6 +218,7 @@ export function mapApiProvider(raw: Record<string, unknown>): MarketplaceProfile
     serviceArea: raw.serviceArea ? String(raw.serviceArea) : null,
     primaryImage,
     gallery,
+    whatsapp: raw.whatsapp ? String(raw.whatsapp) : undefined,
     publicContactEnabled: Boolean(raw.publicContactEnabled),
     verified: Boolean(raw.verified),
     bookable: Boolean(raw.bookable),

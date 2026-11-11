@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
+import { HomeProviderShowcase } from './components/marketplace/HomeProviderShowcase';
 import { SafetyTrust } from './components/SafetyTrust';
 import { Footer } from './components/Footer';
 import { ClientDashboard } from './components/ClientDashboard';
@@ -67,6 +68,7 @@ function HomePage({
 
       <main className="flex-1 flex flex-col">
         <Hero />
+        <HomeProviderShowcase />
         <SafetyTrust />
       </main>
 

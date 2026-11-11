@@ -8,7 +8,7 @@ import { Container } from './ui/Layout';
 
 export const Hero: React.FC = () => {
   return (
-    <section className="relative isolate flex min-h-[92svh] flex-col justify-center pb-14 pt-28 sm:pb-16 sm:pt-32">
+    <section className="relative isolate flex min-h-[84svh] flex-col justify-center pb-12 pt-28 sm:pb-14 sm:pt-32">
       <div className="absolute inset-0 -z-10">
         <VisualMedia
           type="hero-cinematic"
@@ -59,15 +59,6 @@ export const Hero: React.FC = () => {
               Private booking details
             </li>
           </ul>
-        </div>
-
-        <div className="mx-auto mt-10 flex max-w-xl items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
-          <p className="text-[12.5px] leading-relaxed text-zinc-300">
-            Admin-approved profiles can appear here for browsing. Verified profiles have completed
-            identity review; Unverified profiles remain visible but cannot accept bookings until review
-            is complete.
-          </p>
         </div>
       </Container>
     </section>
