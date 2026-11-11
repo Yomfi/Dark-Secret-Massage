@@ -6,6 +6,7 @@ import { authApi, providerApi } from '../lib/api';
 import { getAuthErrorMessage, useAuth } from '../auth/AuthContext';
 import { MARKETPLACE_REGIONS } from '../data/locations';
 import { LocationFields } from '../components/location/LocationFields';
+import { TERMS_VERSION } from '../lib/legalContent';
 import {
   MASSAGE_SERVICE_OPTIONS,
   SERVICE_SETTING_OPTIONS,
@@ -500,6 +501,7 @@ export const ProviderRegisterPage: React.FC = () => {
         password: account.password,
         confirmPassword: account.confirmPassword,
         termsAccepted: true,
+        termsVersion: TERMS_VERSION,
       });
       await refreshSession();
       setAccountCreated(true);
@@ -1109,7 +1111,27 @@ export const ProviderRegisterPage: React.FC = () => {
                         name="provider-terms"
                         checked={account.termsAccepted}
                         onChange={(e) => setAccount({ ...account, termsAccepted: e.target.checked })}
-                        label="I accept the Terms and Privacy Policy. My profile starts unverified."
+                        label={
+                          <>
+                            I accept the{' '}
+                            <Link
+                              to="/terms-and-conditions"
+                              className="font-medium text-brand-purple-light underline decoration-brand-purple/40 underline-offset-4"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              Terms &amp; Conditions
+                            </Link>
+                            {' '}and have read the{' '}
+                            <Link
+                              to="/privacy-policy"
+                              className="font-medium text-brand-purple-light underline decoration-brand-purple/40 underline-offset-4"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              Privacy Policy
+                            </Link>
+                            . My profile starts unverified.
+                          </>
+                        }
                       />
 
                       <div className="flex flex-col-reverse gap-2.5 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">

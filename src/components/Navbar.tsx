@@ -56,15 +56,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </Link>
 
           <nav className="hidden items-center lg:flex" aria-label="Primary">
-            <Link to="/" className={navLinkClass}>
-              Home
-            </Link>
             <button type="button" onClick={goExplore} className={navLinkClass}>
               Explore
             </button>
-            <Link to="/massage" className={navLinkClass}>
-              Massage
-            </Link>
             <Link to="/provider/register" className={navLinkClass}>
               For providers
             </Link>
@@ -102,9 +96,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="border-t border-white/10 bg-brand-surface/98 backdrop-blur-xl sm:hidden">
           <Container className="py-3">
             <nav className="flex flex-col" aria-label="Mobile">
-              <Link to="/" onClick={closeMenu} className="flex min-h-12 items-center rounded-xl px-3 text-[14px] font-medium text-zinc-200 hover:bg-white/[0.05]">
-                Home
-              </Link>
               <button
                 type="button"
                 onClick={goExplore}
@@ -112,13 +103,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 Explore
               </button>
-              <Link
-                to="/massage"
-                onClick={closeMenu}
-                className="flex min-h-12 items-center rounded-xl px-3 text-[14px] font-medium text-zinc-200 hover:bg-white/[0.05]"
-              >
-                Massage
-              </Link>
               <Link
                 to="/provider/register"
                 onClick={closeMenu}

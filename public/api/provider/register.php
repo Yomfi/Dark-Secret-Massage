@@ -168,6 +168,13 @@ if (!$user) {
     ds_error(500, 'INTERNAL_ERROR', 'Unable to create provider account.');
 }
 
+if (function_exists('ds_audit')) {
+    ds_audit('terms.accepted', 'user', $id, [
+        'termsVersion' => (string) ($input['termsVersion'] ?? 'unversioned'),
+        'source' => 'provider_registration',
+    ], $id);
+}
+
 // Email is the verification gate for providers too, so send the confirmation
 // link at signup instead of waiting for the dashboard's resend action.
 $verificationEmailSent = false;

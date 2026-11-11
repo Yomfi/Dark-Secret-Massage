@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { MassageBookingPage } from './pages/MassageBookingPage';
 import { MassagePage } from './pages/MassagePage';
 import { CmsPage } from './pages/CmsPage';
+import { LegalPage } from './pages/LegalPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -69,7 +70,7 @@ function HomePage({
         <SafetyTrust />
       </main>
 
-      <Footer onOpenBooking={() => goBook()} onOpenDashboard={onOpenDashboard} />
+      <Footer />
     </div>
   );
 }
@@ -147,6 +148,9 @@ function AppRoutes() {
         }
       />
       <Route path="/massage" element={<MassagePage />} />
+      <Route path="/terms-and-conditions" element={<LegalPage slug="terms-and-conditions" />} />
+      <Route path="/privacy-policy" element={<LegalPage slug="privacy-policy" />} />
+      <Route path="/data-policy" element={<LegalPage slug="data-policy" />} />
       <Route path="/p/:slug" element={<CmsPage />} />
       <Route path="/massage-services" element={<Navigate to="/massage" replace />} />
       <Route path="/explore" element={<Navigate to="/explore/accra" replace />} />

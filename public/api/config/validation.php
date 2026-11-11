@@ -12,6 +12,10 @@ function ds_validate_register(array $body): array
     $password = (string) ($body['password'] ?? '');
     $confirm = (string) ($body['confirmPassword'] ?? '');
     $terms = $body['termsAccepted'] ?? false;
+    $termsVersion = trim((string) ($body['termsVersion'] ?? ''));
+    if ($termsVersion === '' || strlen($termsVersion) > 64) {
+        $termsVersion = 'unversioned';
+    }
 
     if ($firstName === '' || strlen($firstName) > 100) {
         $errors[] = ['path' => 'firstName', 'message' => 'Enter a valid first name.'];
@@ -47,6 +51,7 @@ function ds_validate_register(array $body): array
         'email' => $email,
         'phone' => preg_replace('/\s+/', '', $phone) ?? $phone,
         'password' => $password,
+        'termsVersion' => $termsVersion,
     ];
 }
 

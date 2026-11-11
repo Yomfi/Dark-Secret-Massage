@@ -52,7 +52,7 @@ export const Hero: React.FC = () => {
             </li>
             <li className="inline-flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-brand-purple-light" aria-hidden />
-              Reviewed providers
+              Admin-reviewed listings
             </li>
             <li className="inline-flex items-center gap-1.5">
               <Lock className="h-4 w-4 text-brand-purple-light" aria-hidden />
@@ -64,8 +64,9 @@ export const Hero: React.FC = () => {
         <div className="mx-auto mt-10 flex max-w-xl items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-purple-light" aria-hidden />
           <p className="text-[12.5px] leading-relaxed text-zinc-300">
-            Profiles appear here only after identity review and admin approval. Verified counts are not
-            published until real providers are approved.
+            Admin-approved profiles can appear here for browsing. Verified profiles have completed
+            identity review; Unverified profiles remain visible but cannot accept bookings until review
+            is complete.
           </p>
         </div>
       </Container>

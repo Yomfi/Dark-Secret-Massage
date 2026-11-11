@@ -109,6 +109,13 @@ if (!$user) {
     ds_error(500, 'INTERNAL_ERROR', 'Unable to create account.');
 }
 
+if (function_exists('ds_audit')) {
+    ds_audit('terms.accepted', 'user', $id, [
+        'termsVersion' => (string) ($input['termsVersion'] ?? 'unversioned'),
+        'source' => 'customer_registration',
+    ], $id);
+}
+
 // Delivery failure must not undo a created account; report the outcome instead.
 $verificationEmailSent = false;
 if ($emailRaw !== null) {

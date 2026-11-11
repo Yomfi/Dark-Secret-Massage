@@ -5,6 +5,7 @@ import { AuthLayout } from '../components/layout/AuthLayout';
 import { Alert, Button, CheckboxField, SelectField, TextField } from '../components/ui';
 import { MARKETPLACE_REGIONS } from '../data/locations';
 import { customerApi } from '../lib/customerApi';
+import { TERMS_VERSION } from '../lib/legalContent';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -46,6 +47,7 @@ export const RegisterPage: React.FC = () => {
         password: form.password,
         confirmPassword: form.confirmPassword,
         termsAccepted: true,
+        termsVersion: TERMS_VERSION,
       });
       // Location is optional at registration and can always be changed later in
       // account settings. Never block account creation if it cannot be saved.
@@ -181,7 +183,27 @@ export const RegisterPage: React.FC = () => {
           name="terms"
           checked={form.termsAccepted}
           onChange={(e) => patch({ termsAccepted: e.target.checked })}
-          label="I accept the Massager Studio terms and privacy policy."
+          label={
+            <>
+              I accept the{' '}
+              <Link
+                to="/terms-and-conditions"
+                className="font-medium text-brand-purple-light underline decoration-brand-purple/40 underline-offset-4"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Terms &amp; Conditions
+              </Link>
+              . I have read the{' '}
+              <Link
+                to="/privacy-policy"
+                className="font-medium text-brand-purple-light underline decoration-brand-purple/40 underline-offset-4"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Privacy Policy
+              </Link>
+              .
+            </>
+          }
         />
 
         <Button type="submit" fullWidth loading={loading} loadingLabel="Creating account">

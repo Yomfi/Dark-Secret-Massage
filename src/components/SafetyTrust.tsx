@@ -10,8 +10,9 @@ const PILLARS = [
   },
   {
     icon: ShieldCheck,
-    title: 'Reviewed providers',
-    description: 'Provider profiles are reviewed before becoming publicly available.',
+    title: 'Publication review',
+    description:
+      'Profiles are reviewed for publication. Identity verification is separate, and only Verified providers can accept bookings.',
   },
   {
     icon: Lock,

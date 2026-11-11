@@ -284,7 +284,7 @@ export const ExplorePage: React.FC = () => {
             </h1>
             <p className="mt-2 max-w-2xl text-[14.5px] leading-relaxed text-zinc-400">
               {activeLocation && activeLocation.source !== 'general'
-                ? 'Eligible providers serving your location are ranked nearest first. Every profile below has completed identity review and been approved for publication.'
+                ? 'Admin-published providers serving your location are ranked nearest first. Verified profiles have completed identity review; Unverified profiles are for browsing only and cannot accept bookings.'
                 : 'General results for this town. Set your location or share your current location for nearest-first matching.'}
             </p>
             <p className="mt-3 text-[12.5px] text-zinc-500">
@@ -337,7 +337,7 @@ export const ExplorePage: React.FC = () => {
                 <p className="mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-zinc-400">
                   {effectiveRadius != null
                     ? 'Providers outside this radius are not mixed into the results. Widen the radius or search a nearby town.'
-                    : 'Profiles appear here once identity review and admin approval are complete. Try another town or clear a filter.'}
+                    : 'Profiles appear here once admin-published. Unverified profiles can be browsed but cannot accept bookings; Verified profiles have completed identity review.'}
                 </p>
                 {effectiveRadius != null ? (
                   <div className="mt-5 flex flex-wrap justify-center gap-2">

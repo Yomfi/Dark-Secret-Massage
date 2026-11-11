@@ -15,6 +15,7 @@ import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { userHasPermission } from '../../lib/workspaceHome';
 import { MARKETPLACE_REGIONS } from '../../data/locations';
+import { LEGAL_DOCUMENT_LIST, legalDraftHtml } from '../../lib/legalContent';
 import {
   AdminAssignmentsPanel,
   AdminCard,
@@ -1730,7 +1731,27 @@ export const AdminWorkspacePage: React.FC = () => {
             <AdminCard padding={false}>
               <div className="flex items-center justify-between border-b border-[#ede4f7] px-5 py-4">
                 <h2 className="font-display text-[22px] font-semibold">Pages</h2>
-                <button className={adminBtnGhostClass} onClick={() => setPageEditor({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' })}>New page</button>
+                <div className="flex flex-wrap gap-2">
+                  {LEGAL_DOCUMENT_LIST.some((doc) => !content.pages.some((p) => p.slug === doc.slug)) ? (
+                    <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
+                      const missing = LEGAL_DOCUMENT_LIST.filter((doc) => !content.pages.some((p) => p.slug === doc.slug));
+                      for (const doc of missing) {
+                        await apiRequest('/admin/content.php', {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            action: 'save_page',
+                            slug: doc.slug,
+                            title: doc.title,
+                            bodyHtml: legalDraftHtml(doc),
+                            seoTitle: `${doc.title} — Massager Studio`,
+                            seoDescription: doc.intro.slice(0, 300),
+                          }),
+                        });
+                      }
+                    }, 'Legal drafts created. Review and publish each policy individually.')}>Create legal drafts</button>
+                  ) : null}
+                  <button className={adminBtnGhostClass} onClick={() => setPageEditor({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' })}>New page</button>
+                </div>
               </div>
               <ul className="divide-y divide-[#ede4f7]">
                 {content.pages.length === 0 ? (
@@ -1739,10 +1760,11 @@ export const AdminWorkspacePage: React.FC = () => {
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <button type="button" className="min-w-0 text-left" onClick={() => setPageEditor({ id: p.id, slug: p.slug, title: p.title, bodyHtml: p.bodyHtml, seoTitle: p.seoTitle, seoDescription: p.seoDescription })}>
                       <p className="truncate text-[13.5px] font-semibold">{p.title}</p>
-                      <p className="text-[12px] text-[#6b6275]">/{p.slug}</p>
+                      <p className="text-[12px] text-[#6b6275]">/{p.slug}{p.updatedAt ? ` · Updated ${new Date(p.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</p>
                     </button>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={p.status === 'published' ? 'published' : 'pending'} label={p.status} />
+                      <button className={adminBtnGhostClass} onClick={() => window.open(`/p/${p.slug}?preview=${encodeURIComponent(p.id)}`, '_blank', 'noopener,noreferrer')}>Preview</button>
                       <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
                         await apiRequest('/admin/content.php', { method: 'POST', body: JSON.stringify({ action: p.status === 'published' ? 'unpublish_page' : 'publish_page', id: p.id }) });
                       }, p.status === 'published' ? 'Page unpublished.' : 'Page published.')}>{p.status === 'published' ? 'Unpublish' : 'Publish'}</button>

@@ -185,6 +185,7 @@ export type RegisterBody = {
   password: string;
   confirmPassword: string;
   termsAccepted: true;
+  termsVersion?: string;
 };
 
 export type ProviderRegisterBody = RegisterBody & {

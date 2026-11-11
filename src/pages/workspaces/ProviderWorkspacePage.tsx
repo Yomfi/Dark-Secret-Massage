@@ -205,8 +205,9 @@ export const ProviderWorkspacePage: React.FC = () => {
               <div><dt className={label}>Bookings</dt><dd className="mt-1 text-[14px] font-semibold">{bookings.length}</dd></div>
             </dl>
             <p className="mt-4 rounded-xl border border-[#ece3f6] bg-[#faf5ff] px-3 py-2.5 text-[12.5px] leading-relaxed text-[#675f73]">
-              Your profile is public only after identity review and admin approval. The verified badge cannot be
-              self-granted from this workspace.
+              Admin publication controls whether your profile appears publicly. Identity verification is
+              separate: Published Unverified profiles can be browsed but cannot accept bookings, and only
+              Verified providers are bookable. The verified badge cannot be self-granted here.
             </p>
           </section>
           <section className={card}>

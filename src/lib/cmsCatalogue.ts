@@ -42,6 +42,7 @@ export type PublicPage = {
   seoTitle: string | null;
   seoDescription: string | null;
   ogImage: string | null;
+  publishedAt?: string | null;
 };
 
 export type PublicContent = {
