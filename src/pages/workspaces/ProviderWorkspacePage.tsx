@@ -18,6 +18,7 @@ type ProfilePayload = {
     publicPhone: boolean; publicWhatsapp: boolean; completed: boolean;
   } | null;
   accountStatus?: string;
+  accountRejectionReason?: string | null;
   verificationStatus: string;
   verification: {
     status: string;
@@ -141,6 +142,14 @@ export const ProviderWorkspacePage: React.FC = () => {
 
   const verification = profileData?.verificationStatus ?? 'unverified';
   const verificationInfo = profileData?.verification;
+  const accountStatus = profileData?.accountStatus ?? 'active';
+  const accountLabel = accountStatus === 'active'
+    ? 'Approved'
+    : accountStatus === 'pending_verification' || accountStatus === 'pending'
+      ? 'Pending Approval'
+      : accountStatus === 'banned'
+        ? 'Blocked'
+        : accountStatus.charAt(0).toUpperCase() + accountStatus.slice(1).replace(/_/g, ' ');
   const verificationLabel =
     verification === 'verified'
       ? 'Verified'
@@ -202,11 +211,18 @@ export const ProviderWorkspacePage: React.FC = () => {
           <section className={`${card} lg:col-span-2`}>
             <h2 className="text-[15px] font-semibold">Your workspace</h2>
             <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div><dt className={label}>Account</dt><dd className="mt-1 text-[14px] font-semibold capitalize">{(profileData?.accountStatus ?? 'active').replace(/_/g, ' ')}</dd></div>
+              <div><dt className={label}>Account</dt><dd className="mt-1 text-[14px] font-semibold">{accountLabel}</dd></div>
               <div><dt className={label}>Identity</dt><dd className="mt-1 text-[14px] font-semibold capitalize">{verification.replace('_', ' ')}</dd></div>
               <div><dt className={label}>Services</dt><dd className="mt-1 text-[14px] font-semibold">{services.length}</dd></div>
               <div><dt className={label}>Bookings</dt><dd className="mt-1 text-[14px] font-semibold">{bookings.length}</dd></div>
             </dl>
+            {accountStatus === 'rejected' ? (
+              <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] leading-relaxed text-red-800">
+                <p className="font-semibold">Account registration not approved</p>
+                <p className="mt-1">{profileData?.accountRejectionReason || 'Contact support for the decision details.'}</p>
+                <p className="mt-1">This does not change your identity verification status. Profile changes are disabled while the account is rejected.</p>
+              </div>
+            ) : null}
             <p className="mt-4 rounded-xl border border-[#ece3f6] bg-[#faf5ff] px-3 py-2.5 text-[12.5px] leading-relaxed text-[#675f73]">
               Admin publication controls whether your profile appears publicly. Identity verification is
               separate: Published Unverified profiles can be browsed but cannot accept bookings, and only

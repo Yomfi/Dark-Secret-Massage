@@ -10,7 +10,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 $user = ds_require_user();
-if (($user['role'] ?? '') !== 'customer') {
+if (!in_array((string) ($user['role'] ?? ''), ['user', 'customer'], true)) {
     ds_error(403, 'FORBIDDEN', 'Customer access only.');
 }
 ds_require_same_origin();

@@ -107,7 +107,7 @@ type CustomerDetail = {
 type Provider = {
   userId: string; profileId: string | null; displayName: string; email: string; phone: string;
   kind: string; city: string; region?: string; district?: string | null; area?: string | null;
-  slug: string | null; accountStatus: string; emailVerified: boolean;
+  slug: string | null; accountStatus: string; accountRejectionReason?: string | null; emailVerified: boolean;
   verificationStatus: string; identityStatus: string; rejectionReason: string | null;
   published: boolean; submittedAt: string | null; removed?: boolean; listingStatus?: string;
 };
@@ -1306,7 +1306,7 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataCell>
                     <StatusBadge
                       status={p.accountStatus === 'banned' ? 'blocked' : p.accountStatus}
-                      label={p.accountStatus === 'banned' ? 'Blocked' : p.accountStatus}
+                      label={p.accountStatus === 'banned' ? 'Blocked' : p.accountStatus === 'pending_verification' ? 'Pending Approval' : p.accountStatus.charAt(0).toUpperCase() + p.accountStatus.slice(1)}
                     />
                   </DataCell>
                   <DataCell className="whitespace-nowrap">

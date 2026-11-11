@@ -73,9 +73,12 @@ if ($method === 'GET') {
     $verification = ds_table_exists('provider_verification')
         ? ds_ensure_provider_verification($user['id'])
         : null;
+    $accountState = ds_provider_account_state($user);
     ds_success([
         'profile' => ds_profile_row_to_api($profile),
-        'accountStatus' => (string) ($user['account_status'] ?? 'active'),
+        'accountStatus' => $accountState['status'],
+        'accountRejectionReason' => $accountState['reason'],
+        'accountDecidedAt' => $accountState['decidedAt'],
         'verificationStatus' => $verification['verification_status'] ?? 'unverified',
         'verification' => $verification
             ? ds_provider_verification_summary($verification, $user['id'])

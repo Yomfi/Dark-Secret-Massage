@@ -99,7 +99,10 @@ if ($method === 'GET') {
             'slug' => $row['slug'],
             'city' => (string) ($row['city'] ?? ''),
             'providerType' => (string) ($row['provider_type'] ?? 'individual'),
-            'accountStatus' => (string) ($row['account_status'] ?? 'active'),
+            'accountStatus' => (string) ds_provider_account_state([
+                'id' => (string) $row['provider_user_id'],
+                'account_status' => (string) ($row['account_status'] ?? 'active'),
+            ])['status'],
             'phoneVerified' => !empty($row['phone_verified_at']) || !empty($row['user_phone_verified_at']),
             'emailVerified' => !empty($row['email_verified_at']) || !empty($row['user_email_verified_at']),
             'identityStatus' => (string) $row['identity_status'],
@@ -179,6 +182,10 @@ if ($action === 'approve_account') {
     if ($stmt->rowCount() === 0) {
         ds_error(409, 'INVALID_ACCOUNT_STATE', 'This account was already updated. Refresh the queue.');
     }
+    ds_ensure_provider_moderation_schema();
+    ds_moderation_log($providerUserId, 'account_approve', $admin['id'], null, $notes !== '' ? $notes : null, null, [
+        'identityVerificationChanged' => false,
+    ]);
     ds_audit('provider.account_approve', 'provider', $providerUserId, [
         'from' => $accountStatus,
         'to' => 'active',

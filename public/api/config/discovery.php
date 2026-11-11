@@ -86,6 +86,12 @@ function ds_discovery_search(array $params, ?array $target = null): array
     if (ds_table_exists('qa_accounts')) {
         $sql .= ' AND ' . ds_qa_sql_exclusion('u.email');
     }
+    if (ds_table_exists('provider_moderation_events')) {
+        $sql .= " AND COALESCE((SELECT m.action FROM provider_moderation_events m
+            WHERE m.provider_user_id = p.user_id
+              AND m.action IN ('account_reject','reject_account','account_approve','account_reopen','reopen_account')
+            ORDER BY m.created_at DESC, m.id DESC LIMIT 1), '') <> 'account_reject'";
+    }
 
     $where = [];
     $bind = [];

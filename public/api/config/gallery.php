@@ -205,16 +205,11 @@ function ds_process_provider_image(array $file, string $profileId, int $maxBytes
     // Re-encode to strip EXIF / location metadata and create display size (max 1600).
     $display = ds_image_resize_contain($src, $srcW, $srcH, 1600, 1600);
     if (!ds_image_write($display['im'], $displayPath, $mime)) {
-        imagedestroy($src);
-        imagedestroy($display['im']);
         ds_error(500, 'UPLOAD_ERROR', 'Unable to store image.');
     }
 
     $thumb = ds_image_resize_contain($src, $srcW, $srcH, 480, 480);
     $thumbOk = ds_image_write($thumb['im'], $thumbPath, $mime);
-    imagedestroy($src);
-    imagedestroy($display['im']);
-    imagedestroy($thumb['im']);
 
     $url = ds_provider_media_url($profileId, $displayName);
     $thumbUrl = $thumbOk ? ds_provider_media_url($profileId, $thumbName) : null;
@@ -257,7 +252,6 @@ function ds_image_apply_exif_orientation($im, string $path, string $mime): array
     if ($rotated === false) {
         return ['im' => $im, 'width' => $width, 'height' => $height];
     }
-    imagedestroy($im);
     if (in_array($orientation, [2, 4, 5, 7], true)) {
         imageflip($rotated, IMG_FLIP_HORIZONTAL);
     }
@@ -469,6 +463,14 @@ function ds_provider_is_publicly_listable(string $providerUserId): bool
  */
 function ds_assert_provider_can_operate(array $user): void
 {
+    $accountState = ds_provider_account_state($user);
+    if ((string) $accountState['status'] === 'rejected') {
+        ds_error(
+            403,
+            'ACCOUNT_REJECTED',
+            'This provider registration was not approved. You can still view the decision and contact support, but profile management is disabled.'
+        );
+    }
     $status = (string) ($user['account_status'] ?? '');
     if ($status === 'banned') {
         ds_error(403, 'ACCOUNT_BLOCKED', 'This provider account has been blocked. Contact support if you believe this is a mistake.');

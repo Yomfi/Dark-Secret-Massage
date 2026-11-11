@@ -233,6 +233,46 @@ function ds_provider_verification_summary(array $verification, string $userId): 
     ];
 }
 
+/**
+ * Latest account-level moderation decision. Account rejection is deliberately
+ * separate from identity verification and does not reuse its rejected state.
+ * The existing moderation event table is the source of truth, so no account
+ * status enum migration is required.
+ */
+function ds_provider_account_moderation(string $userId): ?array
+{
+    if (!ds_table_exists('provider_moderation_events')) {
+        return null;
+    }
+    try {
+        $stmt = ds_pdo()->prepare(
+            "SELECT action, reason, notes, created_at FROM provider_moderation_events
+             WHERE provider_user_id = ?
+               AND action IN ('account_reject','reject_account','account_approve','account_reopen','reopen_account')
+             ORDER BY created_at DESC, id DESC LIMIT 1"
+        );
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+function ds_provider_account_state(array $user): array
+{
+    $status = (string) ($user['account_status'] ?? 'active');
+    $event = ds_provider_account_moderation((string) ($user['id'] ?? ''));
+    if ($event && in_array((string) $event['action'], ['account_reject', 'reject_account'], true)) {
+        return [
+            'status' => 'rejected',
+            'reason' => $event['reason'] !== null ? (string) $event['reason'] : null,
+            'decidedAt' => $event['created_at'] ?? null,
+        ];
+    }
+    return ['status' => $status, 'reason' => null, 'decidedAt' => null];
+}
+
 /** Admin-visible review history without exposing private document paths. */
 function ds_provider_review_history(string $userId, int $limit = 20): array
 {
@@ -475,8 +515,13 @@ function ds_provider_dashboard_dto(array $user, ?array $profile, array $verifica
 
     $completion = $profile ? ds_provider_completion_percent($profile) : 0;
 
+    $accountState = ds_provider_account_state($user);
+
     return [
         'user' => ds_user_dto($user),
+        'accountStatus' => $accountState['status'],
+        'accountRejectionReason' => $accountState['reason'],
+        'accountDecidedAt' => $accountState['decidedAt'],
         'profile' => $profile ? [
             'id' => $profile['id'],
             'slug' => $profile['slug'],
@@ -577,8 +622,6 @@ function ds_save_uploaded_image(array $file, string $subdir, int $maxBytes = 524
     $name = ds_new_id() . '.' . $allowed[$mime];
     $dest = $dir . '/' . $name;
     $written = ds_image_write($safe['im'], $dest, $mime);
-    imagedestroy($src);
-    imagedestroy($safe['im']);
     if (!$written) {
         ds_error(500, 'UPLOAD_ERROR', 'Unable to store uploaded file.');
     }

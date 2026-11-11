@@ -16,6 +16,7 @@ type ProviderDetail = {
     city: string;
     slug: string | null;
     accountStatus: string;
+    accountRejectionReason?: string | null;
     listingStatus: string;
     removed: boolean;
     verificationStatus: string;
@@ -537,11 +538,25 @@ export const AdminProviderDetail: React.FC<Props> = ({ userId, canDelete, busy, 
             <div className="rounded-[14px] bg-[#faf7ff] p-3 text-[12.5px] text-[#6b6275]">
               Account, verification, and publication stay independent. Suspend / block / remove do not change verification status.
             </div>
-            <FormField label="Reason"><input className={adminInputClass} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Required for suspend, block, remove, delete" /></FormField>
+            <FormField label="Reason"><input className={adminInputClass} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Required for reject, suspend, block, remove, delete" /></FormField>
             <FormField label="Internal notes"><textarea className={`${adminInputClass} h-20 py-2`} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField>
             <FormField label="Suspension end (optional)"><input className={adminInputClass} type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} /></FormField>
 
+            {p.accountStatus === 'rejected' ? (
+              <div className="rounded-[14px] border border-red-200 bg-red-50 p-3 text-[12.5px] text-red-800">
+                <p className="font-semibold">Account rejected</p>
+                <p className="mt-1">{p.accountRejectionReason || 'No reason recorded.'}</p>
+                <p className="mt-1">Identity verification was not changed by this decision.</p>
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap gap-2">
+              {p.accountStatus === 'pending_verification' || p.accountStatus === 'pending' ? (
+                <button type="button" className={`${adminBtnGhostCompactClass} border-red-200 text-red-800`} disabled={busy || reason.trim().length < 3} onClick={() => post({ action: 'reject_account', reason, notes }, 'Provider account rejected.')}>Reject account</button>
+              ) : null}
+              {p.accountStatus === 'rejected' ? (
+                <button type="button" className={adminBtnCompactClass} disabled={busy} onClick={() => post({ action: 'reopen_account', reason, notes }, 'Account returned to pending review.')}>Reopen account</button>
+              ) : null}
               <button type="button" className={adminBtnGhostCompactClass} disabled={busy} onClick={() => post({ action: 'remove', reason, notes }, 'Profile removed from public platform.')}>Remove Profile</button>
               {p.removed ? (
                 <button type="button" className={adminBtnCompactClass} disabled={busy} onClick={() => post({ action: 'restore', notes }, 'Profile restored (still unpublished until you publish).')}>Restore Profile</button>

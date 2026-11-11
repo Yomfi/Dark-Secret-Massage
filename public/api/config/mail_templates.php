@@ -209,6 +209,27 @@ function ds_mail_template(string $template, array $vars): ?array
         ];
     }
 
+    if ($template === 'account_rejected') {
+        $reason = (string) ($vars['reason'] ?? 'Your registration did not meet the current approval requirements.');
+        $link = (string) ($vars['link'] ?? ds_app_link('/provider/dashboard'));
+        $html = '<p style="margin:0 0 12px 0;">' . ds_mail_greeting($firstName) . '</p>'
+            . '<p style="margin:0 0 8px 0;">Your Massager Studio provider registration was not approved.</p>'
+            . '<p style="margin:0 0 8px 0;"><strong>Reason:</strong> ' . ds_mail_e($reason) . '</p>'
+            . '<p style="margin:0 0 8px 0;">This decision concerns your account registration only. It does not change your identity verification status.</p>'
+            . ds_mail_button($link, 'View account status')
+            . '<p style="margin:18px 0 0 0;font-size:13px;color:#6b6778;">Contact support if you believe this decision was made in error.</p>';
+        $text = "Hi " . ($firstName !== '' ? $firstName : 'there') . ",\n\n"
+            . "Your Massager Studio provider registration was not approved.\n\n"
+            . "Reason: " . $reason . "\n\n"
+            . "This decision concerns your account registration only and does not change identity verification.\n\n"
+            . "View your account status: " . $link . "\n\nMassager Studio\n";
+        return [
+            'subject' => 'Your Massager Studio provider registration decision',
+            'html' => ds_mail_layout('Your provider registration was not approved.', 'Registration decision', $html),
+            'text' => $text,
+        ];
+    }
+
     if ($template === 'staff_invite') {
         $link = (string) ($vars['link'] ?? '');
         $roleLabel = (string) ($vars['role_label'] ?? 'staff');

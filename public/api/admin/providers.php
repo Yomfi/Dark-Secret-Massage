@@ -82,6 +82,7 @@ $action = strtolower(trim((string) ($body['action'] ?? '')));
 $allowed = [
     'suspend', 'activate', 'publish', 'unpublish',
     'remove', 'restore', 'block', 'unblock',
+    'reject_account', 'reopen_account',
     'update_profile', 'moderate_image',
     'permanently_delete',
 ];
@@ -101,6 +102,63 @@ $profile = ds_provider_profile_by_user($userId);
 $now = ds_now_sql();
 $reason = trim((string) ($body['reason'] ?? ''));
 $notes = trim((string) ($body['notes'] ?? ''));
+
+if ($action === 'reject_account' || $action === 'reopen_account') {
+    if ($action === 'reject_account') {
+        if ($reason === '') {
+            ds_error(400, 'VALIDATION_ERROR', 'A rejection reason is required.');
+        }
+        if (!in_array((string) ($target['account_status'] ?? ''), ['pending_verification', 'pending'], true)) {
+            ds_error(409, 'INVALID_ACCOUNT_STATE', 'Only a pending registration can be rejected. Use suspend or block for an active account.');
+        }
+    }
+    ds_ensure_provider_moderation_schema();
+    $pdo = ds_pdo();
+    $pdo->beginTransaction();
+    try {
+        if ($action === 'reject_account' && $profile && ds_column_exists('provider_profiles', 'is_published')) {
+            $pdo->prepare('UPDATE provider_profiles SET is_published = 0, updated_at = ? WHERE user_id = ?')
+                ->execute([$now, $userId]);
+        }
+        // Keep identity verification untouched. Account state is derived from
+        // this event, not from verification_status. Persist canonical action
+        // names so the account-state resolver reads the same vocabulary.
+        $eventAction = $action === 'reject_account' ? 'account_reject' : 'account_reopen';
+        ds_moderation_log($userId, $eventAction, $admin['id'], $reason !== '' ? $reason : null, $notes !== '' ? $notes : null, null, [
+            'identityVerificationChanged' => false,
+        ]);
+        ds_audit('provider.' . $action, 'provider', $userId, [
+            'reason' => $reason,
+            'identityVerificationChanged' => false,
+        ], $admin['id']);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+    if ($action === 'reject_account') {
+        try {
+            ds_send_template(
+                'account_rejected',
+                (string) ($target['email'] ?? ''),
+                (string) ($target['first_name'] ?? ''),
+                [
+                    'reason' => $reason,
+                    'link' => ds_app_link('/provider/dashboard'),
+                ],
+                ['user' => $userId]
+            );
+        } catch (Throwable $e) {
+            // The persisted decision is authoritative even if mail is unavailable.
+        }
+    }
+    ds_success([
+        'accountStatus' => $action === 'reject_account' ? 'rejected' : (string) ($target['account_status'] ?? 'pending_verification'),
+        'identityStatus' => (string) (ds_provider_identity_summary($userId)['identityStatus'] ?? 'not_submitted'),
+    ]);
+}
 
 if ($action === 'update_profile') {
     if (!$profile) {
@@ -418,6 +476,11 @@ ds_error(400, 'VALIDATION_ERROR', 'Unhandled provider action.');
 function ds_admin_provider_list_dto(array $row): array
 {
     $account = (string) ($row['account_status'] ?? 'active');
+    $accountState = ds_provider_account_state([
+        'id' => (string) ($row['user_id'] ?? ''),
+        'account_status' => $account,
+    ]);
+    $account = (string) $accountState['status'];
     $removed = !empty($row['removed_at']);
     return [
         'userId' => (string) $row['user_id'],
@@ -432,6 +495,7 @@ function ds_admin_provider_list_dto(array $row): array
         'area' => isset($row['area_neighbourhood']) && $row['area_neighbourhood'] !== null ? (string) $row['area_neighbourhood'] : null,
         'slug' => $row['slug'] !== null ? (string) $row['slug'] : null,
         'accountStatus' => $account,
+        'accountRejectionReason' => $accountState['reason'],
         'listingStatus' => $removed ? 'removed' : (((int) ($row['is_published'] ?? 0) === 1) ? 'published' : 'unpublished'),
         'removed' => $removed,
         'emailVerified' => !empty($row['email_verified_at']),
@@ -642,10 +706,14 @@ function ds_admin_provider_detail(string $userId): void
 
 function ds_admin_provider_badges(array $user, ?array $profile, ?array $verification): array
 {
-    $account = (string) ($user['account_status'] ?? 'active');
+    $accountState = ds_provider_account_state($user);
+    $account = (string) $accountState['status'];
     $badges = [];
     if ($account === 'active') {
         $badges[] = 'Active';
+    }
+    if ($account === 'rejected') {
+        $badges[] = 'Account Rejected';
     }
     if ($account === 'suspended') {
         $badges[] = 'Suspended';

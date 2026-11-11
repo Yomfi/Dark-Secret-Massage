@@ -60,6 +60,15 @@ type CustomerLocation = {
   updatedAt?: string | null;
 };
 
+function customerAccountLabel(status: string): string {
+  if (status === 'active') return 'Approved';
+  if (status === 'pending_verification' || status === 'pending') return 'Pending Approval';
+  if (status === 'banned') return 'Blocked';
+  if (status === 'suspended') return 'Suspended';
+  if (status === 'deleted') return 'Deleted';
+  return status.replace(/_/g, ' ');
+}
+
 function toLocationValue(location: CustomerLocation | null): LocationValue {
   if (!location) return { ...emptyLocation };
   return {
@@ -606,6 +615,10 @@ export const ClientDashboard: React.FC<{
                 </div>
               </div>
               <dl className="mt-3 space-y-3 text-[13px]">
+                <div>
+                  <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Account status</dt>
+                  <dd className="mt-0.5 font-medium">{customerAccountLabel(profile.accountStatus)}</dd>
+                </div>
                 <div>
                   <dt className="text-[11px] uppercase tracking-wider text-[#7e22ce]">Name</dt>
                   <dd className="mt-0.5 font-medium">{profile.user.firstName} {profile.user.lastName}</dd>
