@@ -154,6 +154,8 @@ function AppRoutes() {
       <Route path="/p/:slug" element={<CmsPage />} />
       <Route path="/massage-services" element={<Navigate to="/massage" replace />} />
       <Route path="/explore" element={<Navigate to="/explore/accra" replace />} />
+      <Route path="/explore/region/:regionSlug" element={<ExplorePage />} />
+      <Route path="/explore/all" element={<ExplorePage />} />
       <Route path="/explore/:citySlug" element={<ExplorePage />} />
       <Route path="/profile/:profileSlug" element={<MarketplaceProfilePage />} />
       <Route path="/provider/register" element={<ProviderRegisterPage />} />

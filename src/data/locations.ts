@@ -56,7 +56,14 @@ export const MARKETPLACE_REGIONS: MarketplaceRegion[] = [
   { id: 'gh-ah', countryCode: 'GH', name: 'Ahafo', slug: 'ahafo' },
 ];
 
-type CitySeed = [regionId: string, name: string, district: string, lat: number, lng: number];
+type CitySeed = [
+  regionId: string,
+  name: string,
+  district: string,
+  lat: number,
+  lng: number,
+  aliases?: string[],
+];
 
 const CITY_SEEDS: CitySeed[] = [
   // Greater Accra
@@ -64,7 +71,14 @@ const CITY_SEEDS: CitySeed[] = [
   ['gh-ga', 'Tema', 'Tema Metropolitan', 5.6698, -0.0166],
   ['gh-ga', 'East Legon', 'Accra Metropolitan', 5.635, -0.156],
   ['gh-ga', 'Osu', 'Accra Metropolitan', 5.558, -0.177],
-  ['gh-ga', 'Airport Residential', 'Accra Metropolitan', 5.606, -0.173],
+  ['gh-ga', 'Airport Residential', 'Accra Metropolitan', 5.606, -0.173, ['Airport Residential Area']],
+  ['gh-ga', 'West Legon', 'Accra Metropolitan', 5.651, -0.207],
+  ['gh-ga', 'Cantonments', 'Accra Metropolitan', 5.573, -0.174],
+  ['gh-ga', 'Labone', 'Accra Metropolitan', 5.567, -0.173],
+  ['gh-ga', 'Tesano', 'Accra Metropolitan', 5.607, -0.233],
+  ['gh-ga', 'Haatso', 'Ga East', 5.657, -0.214],
+  ['gh-ga', 'Weija', 'Ga South', 5.575, -0.337],
+  ['gh-ga', 'Community 25', 'Tema Metropolitan', 5.65, 0.02, ['Tema Community 25']],
   ['gh-ga', 'Spintex', 'Ledzokuku / Krowor', 5.626, -0.093],
   ['gh-ga', 'Madina', 'La Nkwantanang Madina', 5.683, -0.166],
   ['gh-ga', 'Adenta', 'Adentan Municipal', 5.707, -0.16],
@@ -131,7 +145,7 @@ const CITY_SEEDS: CitySeed[] = [
   ['gh-er', 'Akosombo', 'Asuogyaman', 6.3, 0.05],
   ['gh-er', 'Donkorkrom', 'Kwahu Afram Plains North', 7.05, -0.05],
   // Western
-  ['gh-wr', 'Sekondi-Takoradi', 'Sekondi Takoradi Metropolitan', 4.9344, -1.7131],
+  ['gh-wr', 'Sekondi-Takoradi', 'Sekondi Takoradi Metropolitan', 4.9344, -1.7131, ['Sekondi', 'Takoradi']],
   ['gh-wr', 'Tarkwa', 'Tarkwa Nsuaem', 5.3, -1.9833],
   ['gh-wr', 'Axim', 'Nzema East', 4.8667, -2.2333],
   ['gh-wr', 'Elubo', 'Jomoro', 5.1, -2.8],
@@ -265,7 +279,7 @@ function slugify(value: string): string {
 
 const seen = new Set<string>();
 
-export const MARKETPLACE_CITIES: MarketplaceCity[] = CITY_SEEDS.map(([regionId, name, district, lat, lng]) => {
+export const MARKETPLACE_CITIES: MarketplaceCity[] = CITY_SEEDS.map(([regionId, name, district, lat, lng, aliases]) => {
   const base = slugify(name);
   let slug = base;
   if (seen.has(slug)) {
@@ -282,8 +296,27 @@ export const MARKETPLACE_CITIES: MarketplaceCity[] = CITY_SEEDS.map(([regionId, 
     district,
     latitude: lat,
     longitude: lng,
+    aliases,
   };
 });
+
+/** Homepage order for the common city and neighbourhood searches. */
+const POPULAR_LOCATION_SEEDS: Array<{ citySlug: string; label?: string }> = [
+  { citySlug: 'accra' },
+  { citySlug: 'kumasi' },
+  { citySlug: 'tema' },
+  { citySlug: 'east-legon' },
+  { citySlug: 'sekondi-takoradi', label: 'Takoradi' },
+  { citySlug: 'cape-coast' },
+  { citySlug: 'tamale' },
+  { citySlug: 'kasoa' },
+];
+
+export const POPULAR_LOCATIONS: Array<{ city: MarketplaceCity; label: string }> =
+  POPULAR_LOCATION_SEEDS.flatMap(({ citySlug, label }) => {
+    const city = MARKETPLACE_CITIES.find((candidate) => candidate.slug === citySlug);
+    return city ? [{ city, label: label ?? city.name }] : [];
+  });
 
 export function findCityBySlug(slug: string): MarketplaceCity | undefined {
   const key = slug.trim().toLowerCase();
@@ -297,6 +330,11 @@ export function findRegionById(id: string): MarketplaceRegion | undefined {
 export function findRegionByName(name: string): MarketplaceRegion | undefined {
   const key = name.trim().toLowerCase();
   return MARKETPLACE_REGIONS.find((r) => r.name.toLowerCase() === key);
+}
+
+export function findRegionBySlug(slug: string): MarketplaceRegion | undefined {
+  const key = slug.trim().toLowerCase();
+  return MARKETPLACE_REGIONS.find((r) => r.slug === key);
 }
 
 export function citiesForRegion(regionId: string): MarketplaceCity[] {
@@ -325,6 +363,74 @@ export function searchCities(query: string, limit = 8, regionId?: string): Marke
 
 export function cityExplorePath(slug: string): string {
   return `/explore/${slug}`;
+}
+
+export function regionExplorePath(slug: string): string {
+  return `/explore/region/${slug}`;
+}
+
+export type MarketplaceLocationMatch =
+  | { kind: 'city'; city: MarketplaceCity }
+  | { kind: 'region'; region: MarketplaceRegion };
+
+function normalized(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function startsWithWord(value: string, query: string): boolean {
+  return value.split(/[\s,/()-]+/).some((word) => word.startsWith(query));
+}
+
+function citySearchScore(city: MarketplaceCity, query: string): number | null {
+  const name = normalized(city.name);
+  const aliases = (city.aliases ?? []).map(normalized);
+  const region = normalized(regionNameForCity(city));
+  const district = normalized(city.district ?? '');
+  if (name === query) return 0;
+  if (aliases.includes(query)) return 1;
+  if (name.startsWith(query)) return 2;
+  if (aliases.some((alias) => alias.startsWith(query))) return 3;
+  if (startsWithWord(name, query) || aliases.some((alias) => startsWithWord(alias, query))) return 4;
+  if (name.includes(query) || aliases.some((alias) => alias.includes(query))) return 5;
+  if (region === query || region.startsWith(query)) return 6;
+  if (region.includes(query) || district.includes(query)) return 7;
+  return null;
+}
+
+function regionSearchScore(region: MarketplaceRegion, query: string): number | null {
+  const name = normalized(region.name);
+  if (name === query) return 0;
+  if (name.startsWith(query)) return 1;
+  if (startsWithWord(name, query)) return 4;
+  if (name.includes(query)) return 5;
+  return null;
+}
+
+/** Search regions, towns and neighbourhoods with exact matches first. */
+export function searchLocations(query: string, limit = 50): MarketplaceLocationMatch[] {
+  const q = normalized(query);
+  if (!q) return [];
+
+  const matches: Array<{ match: MarketplaceLocationMatch; score: number; name: string }> = [];
+  for (const region of MARKETPLACE_REGIONS) {
+    const score = regionSearchScore(region, q);
+    if (score !== null) {
+      matches.push({ match: { kind: 'region', region }, score, name: region.name });
+    }
+  }
+  for (const city of MARKETPLACE_CITIES) {
+    const score = citySearchScore(city, q);
+    if (score !== null) {
+      matches.push({ match: { kind: 'city', city }, score, name: city.name });
+    }
+  }
+
+  matches.sort((a, b) => {
+    if (a.score !== b.score) return a.score - b.score;
+    if (a.match.kind !== b.match.kind) return a.match.kind === 'region' ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  return matches.slice(0, limit).map(({ match }) => match);
 }
 
 /** Nearest known town to a coordinate, used only to prefill a form after consent. */

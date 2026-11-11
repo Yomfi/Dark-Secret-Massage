@@ -12,7 +12,7 @@ import type {
 import { CitySearch, type CitySearchHandle } from './CitySearch';
 import { Button } from '../ui/Button';
 import { SelectField, TextField } from '../ui/Field';
-import { MARKETPLACE_REGIONS, findCityBySlug } from '../../data/locations';
+import { MARKETPLACE_REGIONS, findCityBySlug, findRegionBySlug } from '../../data/locations';
 
 type Props = {
   citySlug: string;
@@ -20,6 +20,7 @@ type Props = {
   onChange: (next: MarketplaceFilters) => void;
   onCityChange: (slug: string) => void;
   onRegionChange?: (regionId: string) => void;
+  regionSlug?: string;
   onUseCurrentLocation?: () => void;
   locating?: boolean;
   locationLabel?: string | null;
@@ -61,10 +62,11 @@ const SORTS: { value: MarketplaceSort; label: string }[] = [
 
 const RADIUS_PRESETS = [5, 10, 20, 50];
 
-function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChange, onUseCurrentLocation, locating, locationLabel, hasCoordinates, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
+function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChange, regionSlug, onUseCurrentLocation, locating, locationLabel, hasCoordinates, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
   const citySearchRef = useRef<CitySearchHandle>(null);
   const isSheet = layout === 'sheet';
   const city = findCityBySlug(citySlug);
+  const region = regionSlug ? findRegionBySlug(regionSlug) : undefined;
   const [customOpen, setCustomOpen] = useState(
     filters.radiusKm != null && !RADIUS_PRESETS.includes(filters.radiusKm),
   );
@@ -77,7 +79,7 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChang
         <div className="min-w-0 flex-1">
           <SelectField
             label="Region"
-            value={city?.regionId ?? ''}
+            value={region?.id ?? city?.regionId ?? ''}
             onChange={(e) => onRegionChange?.(e.target.value)}
           >
             <option value="">All regions</option>
@@ -95,7 +97,9 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChang
             variant="toolbar"
             showSubmitButton={false}
             initialSlug={citySlug}
+            initialRegionSlug={regionSlug}
             onNavigate={onCityChange}
+            onRegionNavigate={(selectedRegion) => onRegionChange?.(selectedRegion.id)}
           />
         </div>
         <Button
@@ -292,7 +296,9 @@ export const ExploreFilters: React.FC<Props> = (props) => {
             variant="toolbar"
             showSubmitButton={false}
             initialSlug={props.citySlug}
+            initialRegionSlug={props.regionSlug}
             onNavigate={props.onCityChange}
+            onRegionNavigate={(selectedRegion) => props.onRegionChange?.(selectedRegion.id)}
           />
         </div>
         <Button onClick={() => mobileCityRef.current?.submit()} className="shrink-0 px-4" aria-label="Search city">

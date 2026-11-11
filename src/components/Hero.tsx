@@ -8,7 +8,7 @@ import { Container } from './ui/Layout';
 
 export const Hero: React.FC = () => {
   return (
-    <section className="relative isolate flex min-h-[92svh] flex-col justify-center overflow-hidden pb-14 pt-28 sm:pb-16 sm:pt-32">
+    <section className="relative isolate flex min-h-[92svh] flex-col justify-center pb-14 pt-28 sm:pb-16 sm:pt-32">
       <div className="absolute inset-0 -z-10">
         <VisualMedia
           type="hero-cinematic"

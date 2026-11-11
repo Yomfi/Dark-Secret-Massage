@@ -5,8 +5,9 @@ import { Footer } from '../components/Footer';
 import { ExploreFilters } from '../components/marketplace/ExploreFilters';
 import { MarketplaceProfileCard } from '../components/marketplace/MarketplaceProfileCard';
 import {
-  MARKETPLACE_CITIES,
   findCityBySlug,
+  findRegionById,
+  findRegionBySlug,
   nearestCity,
   regionNameForCity,
 } from '../data/locations';
@@ -49,18 +50,25 @@ function fromSaved(location: CustomerLocationDto | null): ActiveLocation | null 
 
 function locationLabel(location: ActiveLocation | null): string | null {
   if (!location) return null;
+  if (!location.city && location.region) return `Across ${location.region}`;
   const parts = [location.area, location.city, location.region].filter(Boolean);
   if (parts.length === 0) return null;
   return `Near ${parts.join(', ')}`;
 }
 
 export const ExplorePage: React.FC = () => {
-  const { citySlug = 'accra' } = useParams<{ citySlug: string }>();
+  const { citySlug: citySlugParam, regionSlug } = useParams<{
+    citySlug?: string;
+    regionSlug?: string;
+  }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
+  const citySlug = citySlugParam ?? 'accra';
+  const viewAll = citySlugParam === 'all';
   const city = findCityBySlug(citySlug);
+  const region = regionSlug ? findRegionBySlug(regionSlug) : undefined;
   const filters = useMemo(() => parseExploreSearchParams(searchParams), [searchParams]);
 
   const [profiles, setProfiles] = useState<MarketplaceProfile[] | null>(null);
@@ -94,6 +102,16 @@ export const ExplorePage: React.FC = () => {
 
   const activeLocation = useMemo<ActiveLocation | null>(() => {
     if (override) return override;
+    if (region) {
+      return {
+        region: region.name,
+        city: '',
+        source: 'general',
+        latitude: null,
+        longitude: null,
+      };
+    }
+    if (viewAll) return null;
     if (savedLocation) return savedLocation;
     if (city) {
       return {
@@ -105,7 +123,7 @@ export const ExplorePage: React.FC = () => {
       };
     }
     return null;
-  }, [override, savedLocation, city]);
+  }, [override, region, savedLocation, city, viewAll]);
 
   const hasCoordinates = activeLocation?.latitude != null && activeLocation?.longitude != null;
   const effectiveRadius = hasCoordinates ? filters.radiusKm ?? null : null;
@@ -183,13 +201,18 @@ export const ExplorePage: React.FC = () => {
     return filterAndSortProfiles(profiles, { ...filters, sort });
   }, [profiles, filters, activeLocation]);
 
+  const locationName =
+    activeLocation?.city ||
+    (activeLocation?.region ? `${activeLocation.region} Region` : '') ||
+    city?.name ||
+    (viewAll ? 'Ghana' : citySlug);
+
   useEffect(() => {
-    const cityName = activeLocation?.city || city?.name || citySlug;
     const title = filters.service
-      ? `${filters.service} in ${cityName} | Massager Studio`
-      : `Massage Professionals in ${cityName} | Massager Studio`;
+      ? `${filters.service} in ${locationName} | Massager Studio`
+      : `Massage Professionals in ${locationName} | Massager Studio`;
     document.title = title;
-  }, [activeLocation, city, citySlug, filters.service]);
+  }, [filters.service, locationName]);
 
   const updateFilters = (next: MarketplaceFilters) => {
     setSearchParams(buildExploreSearchParams(next), { replace: true });
@@ -215,14 +238,20 @@ export const ExplorePage: React.FC = () => {
   const onRegionChange = (regionId: string) => {
     if (!regionId) {
       setOverride(null);
+      navigate('/explore/all');
       return;
     }
-    const region = regionId;
-    const first = findCityBySlug(citySlug);
-    if (first && first.regionId === region) return;
-    // Move to the region's first listed town; the location field remains editable.
-    const candidate = MARKETPLACE_CITIES.find((c) => c.regionId === region);
-    if (candidate) onCityChange(candidate.slug);
+    const picked = findRegionById(regionId);
+    if (!picked) return;
+    setOverride({
+      region: picked.name,
+      city: '',
+      source: 'manual',
+      latitude: null,
+      longitude: null,
+    });
+    const qs = buildExploreSearchParams(filters).toString();
+    navigate(qs ? `/explore/region/${picked.slug}?${qs}` : `/explore/region/${picked.slug}`);
   };
 
   const useCurrentLocation = () => {
@@ -280,12 +309,14 @@ export const ExplorePage: React.FC = () => {
               Explore
             </p>
             <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-3xl">
-              Massage professionals in {activeLocation?.city || city?.name || citySlug}
+              Massage professionals in {locationName}
             </h1>
             <p className="mt-2 max-w-2xl text-[14.5px] leading-relaxed text-zinc-400">
-              {activeLocation && activeLocation.source !== 'general'
+              {activeLocation?.city
                 ? 'Admin-published providers serving your location are ranked nearest first. Verified profiles have completed identity review; Unverified profiles are for browsing only and cannot accept bookings.'
-                : 'General results for this town. Set your location or share your current location for nearest-first matching.'}
+                : activeLocation?.region
+                  ? `Showing admin-published providers across the ${activeLocation.region} Region. Region matches do not use precise distances.`
+                  : 'Browse all approved providers in Ghana, or choose a town or region to narrow the results.'}
             </p>
             <p className="mt-3 text-[12.5px] text-zinc-500">
               {profiles === null ? 'Loading providers…' : `${results.length} ${results.length === 1 ? 'result' : 'results'}`}
@@ -306,6 +337,7 @@ export const ExplorePage: React.FC = () => {
             onChange={updateFilters}
             onCityChange={onCityChange}
             onRegionChange={onRegionChange}
+            regionSlug={region?.slug}
             onUseCurrentLocation={useCurrentLocation}
             locating={locating}
             locationLabel={label}
@@ -332,7 +364,7 @@ export const ExplorePage: React.FC = () => {
                 <p className="text-[15px] font-semibold text-white">
                   {effectiveRadius != null
                     ? `No eligible providers within ${effectiveRadius} km`
-                    : `No approved providers match ${activeLocation?.city || city?.name || citySlug} yet`}
+                    : `No approved providers match ${locationName} yet`}
                 </p>
                 <p className="mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-zinc-400">
                   {effectiveRadius != null
@@ -364,6 +396,9 @@ export const ExplorePage: React.FC = () => {
                   <Button variant="secondary" onClick={() => updateFilters({ sort: 'recommended' })}>
                     Clear filters
                   </Button>
+                  <Link to="/explore/all" className={buttonClass({ variant: 'secondary' })}>
+                    Search all of Ghana
+                  </Link>
                   <Link to="/explore/accra" className={buttonClass({})}>
                     Browse Accra
                   </Link>
