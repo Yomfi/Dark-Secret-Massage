@@ -36,6 +36,7 @@ import { marketplaceEnquireMailto } from '../lib/companyEmails';
 import { useAuth } from '../auth/AuthContext';
 import { ProviderImage, ProviderImageFallback } from '../components/marketplace/ProviderImage';
 import { VerifiedBadge, VerifiedNameCheck } from '../components/marketplace/VerifiedBadge';
+import { isAdultService } from '../data/serviceCategories';
 import {
   UnverifiedContactModal,
   acknowledgeUnverified,
@@ -574,9 +575,17 @@ export const MarketplaceProfilePage: React.FC = () => {
                 {profile.services.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-brand-purple/25 bg-brand-purple/10 text-brand-lavender-soft"
+                    className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-brand-purple/25 bg-brand-purple/10 text-brand-lavender-soft"
                   >
                     {tag}
+                    {isAdultService(tag) ? (
+                      <span
+                        className="rounded-full border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.06em] text-amber-200"
+                        title="Adults-only (18+) service"
+                      >
+                        18+
+                      </span>
+                    ) : null}
                   </span>
                 ))}
               </div>

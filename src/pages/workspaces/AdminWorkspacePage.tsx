@@ -15,6 +15,7 @@ import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { userHasPermission } from '../../lib/workspaceHome';
 import { MARKETPLACE_REGIONS } from '../../data/locations';
+import { MASSAGE_SERVICE_OPTIONS, isAdultService } from '../../data/serviceCategories';
 import { LEGAL_DOCUMENT_LIST, legalDraftHtml } from '../../lib/legalContent';
 import {
   AdminAssignmentsPanel,
@@ -1528,7 +1529,14 @@ export const AdminWorkspacePage: React.FC = () => {
               {services.map((s) => (
                 <DataRow key={s.id}>
                   <DataCell>
-                    <p className="font-semibold">{s.name}</p>
+                    <p className="flex flex-wrap items-center gap-1.5 font-semibold">
+                      {s.name}
+                      {isAdultService(s.name) ? (
+                        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-amber-700">
+                          18+
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="max-w-md text-[12px] text-[#6b6275]">{s.description}</p>
                   </DataCell>
                   <DataCell>{s.durationMinutes} min</DataCell>
@@ -1555,7 +1563,23 @@ export const AdminWorkspacePage: React.FC = () => {
             }, 'Service saved.');
           }}>
             <h2 className="font-display text-[22px] font-semibold">{serviceForm.id ? 'Edit service' : 'Create service'}</h2>
-            <FormField label="Service name"><input className={adminInputClass} value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} required /></FormField>
+            <FormField
+              label="Service name"
+              hint="Standard catalogue names are suggested below. Erotic Massage is an adults-only (18+) category: keep its description lawful and non-explicit."
+            >
+              <input
+                className={adminInputClass}
+                list="admin-service-name-options"
+                value={serviceForm.name}
+                onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
+                required
+              />
+              <datalist id="admin-service-name-options">
+                {MASSAGE_SERVICE_OPTIONS.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
+            </FormField>
             <FormField label="Description"><textarea className={`${adminInputClass} h-28 py-2`} value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} /></FormField>
             <div className="grid grid-cols-2 gap-2">
               <FormField label="Duration (minutes)"><input className={adminInputClass} type="number" min={15} max={480} value={serviceForm.durationMinutes} onChange={(e) => setServiceForm({ ...serviceForm, durationMinutes: Number(e.target.value) })} /></FormField>

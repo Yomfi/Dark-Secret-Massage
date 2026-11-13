@@ -27,10 +27,26 @@ export const MASSAGE_SERVICE_OPTIONS = [
   'Home Massage',
   'Couples Massage',
   'Spa Session',
+  'Erotic Massage',
   'Other Massage Service',
 ] as const;
 
 export type MassageServiceOption = (typeof MASSAGE_SERVICE_OPTIONS)[number];
+
+/**
+ * Adults-only (18+) massage categories.
+ *
+ * Age and legal safeguards apply wherever these are selectable: the service is
+ * offered only to adults, must be delivered as a lawful, non-explicit massage,
+ * and listings may never include sexual services or explicit imagery.
+ */
+export const ADULT_SERVICE_OPTIONS = ['Erotic Massage'] as const;
+
+export function isAdultService(label: string | null | undefined): boolean {
+  if (!label) return false;
+  const key = label.trim().toLowerCase();
+  return ADULT_SERVICE_OPTIONS.some((option) => option.toLowerCase() === key);
+}
 
 /** Public massage/wellness categories (legacy grouping for profile primaryCategory). */
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
@@ -45,6 +61,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       'Aromatherapy',
       'Relaxation Massage',
       'Sports Massage',
+      'Erotic Massage',
     ],
   },
   {

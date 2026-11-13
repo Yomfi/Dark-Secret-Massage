@@ -26,6 +26,7 @@ import { useAuth } from '../auth/AuthContext';
 import { customerApi, type CustomerLocationDto } from '../lib/customerApi';
 import { Container } from '../components/ui/Layout';
 import { Button, buttonClass } from '../components/ui/Button';
+import { useExploreViewPreference } from '../lib/exploreView';
 
 type ActiveLocation = {
   region: string;
@@ -82,6 +83,7 @@ export const ExplorePage: React.FC = () => {
   const [locating, setLocating] = useState(false);
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(12);
+  const [view, setView] = useExploreViewPreference();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -388,6 +390,8 @@ export const ExplorePage: React.FC = () => {
             locating={locating}
             locationLabel={label}
             hasCoordinates={hasCoordinates}
+            view={view}
+            onViewChange={setView}
           />
 
           <div className="mt-6">
@@ -400,11 +404,32 @@ export const ExplorePage: React.FC = () => {
                 </Button>
               </div>
             ) : profiles === null ? (
-              <div className="space-y-3.5" aria-hidden>
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]" />
-                ))}
-              </div>
+              view === 'grid' ? (
+                <div
+                  className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4"
+                  aria-hidden
+                >
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+                    >
+                      <div className="aspect-[4/3] animate-pulse bg-white/[0.04]" />
+                      <div className="space-y-2 p-2.5 sm:p-4">
+                        <div className="h-3.5 w-3/4 animate-pulse rounded bg-white/[0.06]" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-white/[0.05]" />
+                        <div className="h-11 w-full animate-pulse rounded-xl bg-white/[0.04]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3.5" aria-hidden>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]" />
+                  ))}
+                </div>
+              )
             ) : results.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-14 text-center">
                 <p className="text-[15px] font-semibold text-white">
@@ -452,9 +477,20 @@ export const ExplorePage: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="space-y-3.5">
+                <div
+                  className={
+                    view === 'grid'
+                      ? 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4'
+                      : 'space-y-3.5'
+                  }
+                >
                   {visibleResults.map((profile, i) => (
-                    <MarketplaceProfileCard key={profile.id} profile={profile} index={i} />
+                    <MarketplaceProfileCard
+                      key={profile.id}
+                      profile={profile}
+                      index={i}
+                      variant={view}
+                    />
                   ))}
                 </div>
                 {visibleResults.length < results.length ? (

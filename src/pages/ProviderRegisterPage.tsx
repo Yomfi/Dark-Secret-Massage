@@ -12,6 +12,7 @@ import {
   MASSAGE_SERVICE_OPTIONS,
   SERVICE_SETTING_OPTIONS,
   computeLocalCompletion,
+  isAdultService,
   emptyRatesForServices,
   type ProviderGender,
   type ProviderType,
@@ -1390,11 +1391,26 @@ export const ProviderRegisterPage: React.FC = () => {
                                   : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
                               ].join(' ')}
                             >
-                              {label}
+                              <span className="inline-flex items-center gap-1.5">
+                                {label}
+                                {isAdultService(label) ? (
+                                  <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-amber-200">
+                                    18+
+                                  </span>
+                                ) : null}
+                              </span>
                             </button>
                           );
                         })}
                       </div>
+                      {profile.services.some(isAdultService) ? (
+                        <p className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2 text-[12px] leading-relaxed text-amber-100/85">
+                          Erotic Massage is an adults-only (18+) category. It must be offered as a
+                          lawful, non-explicit massage. Sexual services, explicit imagery and
+                          descriptions of a sexual nature are not permitted on Massager Studio and
+                          can lead to removal of the profile.
+                        </p>
+                      ) : null}
                     </fieldset>
 
                     {profile.rates.length > 0 ? (
@@ -1630,7 +1646,7 @@ export const ProviderRegisterPage: React.FC = () => {
                           Services
                         </legend>
                         <div className="flex flex-wrap gap-2">
-                          {MASSAGE_SERVICE_OPTIONS.slice(0, 6).map((label) => {
+                          {MASSAGE_SERVICE_OPTIONS.map((label) => {
                             const selected = teamDraft.services.includes(label);
                             return (
                               <button
@@ -1652,11 +1668,24 @@ export const ProviderRegisterPage: React.FC = () => {
                                     : 'border-white/12 bg-white/[0.02] text-zinc-400 hover:border-white/25 hover:text-zinc-200',
                                 ].join(' ')}
                               >
-                                {label}
+                                <span className="inline-flex items-center gap-1.5">
+                                  {label}
+                                  {isAdultService(label) ? (
+                                    <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-amber-200">
+                                      18+
+                                    </span>
+                                  ) : null}
+                                </span>
                               </button>
                             );
                           })}
                         </div>
+                        {teamDraft.services.some(isAdultService) ? (
+                          <p className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2 text-[12px] leading-relaxed text-amber-100/85">
+                            Erotic Massage is an adults-only (18+) category for this team member.
+                            Only lawful, non-explicit massage may be offered.
+                          </p>
+                        ) : null}
                       </fieldset>
 
                       <div className="grid gap-4 sm:grid-cols-2">

@@ -141,6 +141,7 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
         title: 'Service descriptions, prices and availability',
         paragraphs: [
           'Service descriptions, durations and prices are supplied by providers or agencies. Massager Studio may display them but does not independently guarantee that they are complete, available or suitable for a particular customer.',
+          'Erotic Massage is an adults-only (18+) massage category. It may only be offered to, requested by or discussed with people aged 18 or over. It must always be delivered as a lawful, consenting, non-explicit massage. Sexual services, sexual imagery, obscene content and any description of a sexual nature are prohibited in that category and everywhere else on Massager Studio, and may be removed without notice.',
           'A listing does not create a confirmed appointment. Availability can change, and a provider may need to confirm health, location or service details before accepting a request.',
         ],
       },

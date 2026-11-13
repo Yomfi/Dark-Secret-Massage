@@ -1,18 +1,9 @@
 export type ProviderType = 'individual' | 'agency';
 export type ProviderGender = 'female' | 'male';
 
-export const MASSAGE_SERVICE_OPTIONS = [
-  'Swedish Massage',
-  'Deep Tissue Massage',
-  'Relaxation Massage',
-  'Aromatherapy',
-  'Sports Massage',
-  'Hot Stone Massage',
-  'Couples Massage',
-  'Home Massage',
-  'Spa Session',
-  'Other Massage Service',
-] as const;
+// One catalogue source of truth: registration, Explore filters and team services
+// must always offer the same selectable services.
+export { MASSAGE_SERVICE_OPTIONS, ADULT_SERVICE_OPTIONS, isAdultService } from './serviceCategories';
 
 export const SERVICE_SETTING_OPTIONS: { id: string; label: string }[] = [
   { id: 'studio', label: 'Studio' },

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { LocateFixed, Search, SlidersHorizontal, X } from 'lucide-react';
-import { MASSAGE_SERVICE_OPTIONS } from '../../data/serviceCategories';
+import { MASSAGE_SERVICE_OPTIONS, isAdultService } from '../../data/serviceCategories';
 import type { MarketplaceAvailability } from '../../data/marketplaceProfiles';
 import type {
   MarketplaceFilters,
@@ -10,6 +10,8 @@ import type {
   MarketplaceSort,
 } from '../../lib/marketplace';
 import { CitySearch, type CitySearchHandle } from './CitySearch';
+import { ExploreViewToggle } from './ExploreViewToggle';
+import type { ExploreView } from '../../lib/exploreView';
 import { Button } from '../ui/Button';
 import { SelectField, TextField } from '../ui/Field';
 import { MARKETPLACE_REGIONS, findCityBySlug, findRegionBySlug } from '../../data/locations';
@@ -25,6 +27,8 @@ type Props = {
   locating?: boolean;
   locationLabel?: string | null;
   hasCoordinates?: boolean;
+  view: ExploreView;
+  onViewChange: (view: ExploreView) => void;
 };
 
 const PROVIDER_TYPES: { value: MarketplaceProviderTypeFilter; label: string }[] = [
@@ -62,7 +66,7 @@ const SORTS: { value: MarketplaceSort; label: string }[] = [
 
 const RADIUS_PRESETS = [5, 10, 20, 50];
 
-function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChange, regionSlug, onUseCurrentLocation, locating, locationLabel, hasCoordinates, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
+function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChange, regionSlug, onUseCurrentLocation, locating, locationLabel, hasCoordinates, view, onViewChange, layout }: Props & { layout: 'toolbar' | 'sheet' }) {
   const citySearchRef = useRef<CitySearchHandle>(null);
   const isSheet = layout === 'sheet';
   const city = findCityBySlug(citySlug);
@@ -109,6 +113,12 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChang
         >
           Search
         </Button>
+        {isSheet ? null : (
+          <div className="shrink-0">
+            <span className="mb-1.5 block text-[12px] font-medium text-zinc-400">View</span>
+            <ExploreViewToggle value={view} onChange={onViewChange} />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2">
@@ -167,7 +177,7 @@ function FilterFields({ filters, onChange, citySlug, onCityChange, onRegionChang
           <option value="">All services</option>
           {MASSAGE_SERVICE_OPTIONS.map((label) => (
             <option key={label} value={label}>
-              {label}
+              {isAdultService(label) ? `${label} (18+)` : label}
             </option>
           ))}
         </SelectField>
@@ -289,29 +299,35 @@ export const ExploreFilters: React.FC<Props> = (props) => {
         <FilterFields {...props} layout="toolbar" />
       </div>
 
-      <div className="flex items-stretch gap-2 md:hidden">
-        <div className="min-w-0 flex-1">
-          <CitySearch
-            ref={mobileCityRef}
-            variant="toolbar"
-            showSubmitButton={false}
-            initialSlug={props.citySlug}
-            initialRegionSlug={props.regionSlug}
-            onNavigate={props.onCityChange}
-            onRegionNavigate={(selectedRegion) => props.onRegionChange?.(selectedRegion.id)}
-          />
+      <div className="md:hidden">
+        <div className="flex items-stretch gap-2">
+          <div className="min-w-0 flex-1">
+            <CitySearch
+              ref={mobileCityRef}
+              variant="toolbar"
+              showSubmitButton={false}
+              initialSlug={props.citySlug}
+              initialRegionSlug={props.regionSlug}
+              onNavigate={props.onCityChange}
+              onRegionNavigate={(selectedRegion) => props.onRegionChange?.(selectedRegion.id)}
+            />
+          </div>
+          <Button onClick={() => mobileCityRef.current?.submit()} className="shrink-0 px-4" aria-label="Search city">
+            <Search className="h-4 w-4" aria-hidden />
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setSheetOpen(true)}
+            className="shrink-0 px-4"
+          >
+            <SlidersHorizontal className="h-4 w-4" aria-hidden />
+            Filters
+          </Button>
         </div>
-        <Button onClick={() => mobileCityRef.current?.submit()} className="shrink-0 px-4" aria-label="Search city">
-          <Search className="h-4 w-4" aria-hidden />
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={() => setSheetOpen(true)}
-          className="shrink-0 px-4"
-        >
-          <SlidersHorizontal className="h-4 w-4" aria-hidden />
-          Filters
-        </Button>
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <span className="text-[11.5px] font-medium text-zinc-500">Provider layout</span>
+          <ExploreViewToggle value={props.view} onChange={props.onViewChange} />
+        </div>
       </div>
 
       {sheetOpen ? (
