@@ -78,10 +78,10 @@ export const AdultServiceGate: React.FC<Props> = ({ open, onConfirm, onDecline }
           any content of a sexual nature are prohibited on Massager Studio.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-          <Button variant="secondary" className="flex-1" onClick={onDecline}>
+          <Button variant="secondary" className="w-full sm:flex-1" onClick={onDecline}>
             I am under 18
           </Button>
-          <Button ref={confirmRef} className="flex-1" onClick={onConfirm}>
+          <Button ref={confirmRef} className="w-full sm:flex-1" onClick={onConfirm}>
             I am 18 or older
           </Button>
         </div>
