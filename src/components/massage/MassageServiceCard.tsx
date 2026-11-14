@@ -6,6 +6,7 @@ import {
   formatDurationSummary,
   type MassageServicePresentation,
 } from '../../lib/massageServicePresentation';
+import { isAdultService, isAdultServiceCategory } from '../../data/serviceCategories';
 
 interface MassageServiceCardProps {
   item: MassageServicePresentation;
@@ -35,8 +36,16 @@ export const MassageServiceCard: React.FC<MassageServiceCardProps> = ({
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-[17px] font-semibold leading-snug tracking-[-0.01em] text-white">
+        <h3 className="flex flex-wrap items-center gap-2 text-[17px] font-semibold leading-snug tracking-[-0.01em] text-white">
           {service.name}
+          {isAdultService(service.name) || isAdultServiceCategory(service.category) ? (
+            <span
+              className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200"
+              title="Adults-only (18+) service"
+            >
+              18+
+            </span>
+          ) : null}
         </h3>
         <p className="mt-1.5 line-clamp-2 min-h-[2.6em] text-[13.5px] leading-relaxed text-zinc-400">
           {service.tagline}

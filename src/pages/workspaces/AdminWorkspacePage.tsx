@@ -15,7 +15,14 @@ import { formatScheduledDate } from '../../lib/dates';
 import { useAuth } from '../../auth/AuthContext';
 import { userHasPermission } from '../../lib/workspaceHome';
 import { MARKETPLACE_REGIONS } from '../../data/locations';
-import { MASSAGE_SERVICE_OPTIONS, isAdultService } from '../../data/serviceCategories';
+import {
+  ADULT_SERVICE_CATEGORY,
+  MASSAGE_SERVICE_OPTIONS,
+  SERVICE_CATEGORY_OPTIONS,
+  isAdultService,
+  isAdultServiceCategory,
+  serviceCategoryLabel,
+} from '../../data/serviceCategories';
 import { LEGAL_DOCUMENT_LIST, legalDraftHtml } from '../../lib/legalContent';
 import {
   AdminAssignmentsPanel,
@@ -358,7 +365,11 @@ export const AdminWorkspacePage: React.FC = () => {
   const [providerAccount, setProviderAccount] = useState('all');
   const [status, setStatus] = useState('');
   const [pageEditor, setPageEditor] = useState({ id: '', slug: '', title: '', bodyHtml: '', seoTitle: '', seoDescription: '' });
-  const [serviceForm, setServiceForm] = useState({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false, image: '' });
+  const [serviceForm, setServiceForm] = useState({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false, image: '', category: '' });
+  const [serviceAdultAck, setServiceAdultAck] = useState(false);
+  /** Adults-only when the name is an adult category or the stored category says so. */
+  const serviceFormAdult =
+    isAdultService(serviceForm.name) || isAdultServiceCategory(serviceForm.category);
 
   const can = useCallback(
     (permission: string) => {
@@ -1531,20 +1542,26 @@ export const AdminWorkspacePage: React.FC = () => {
                   <DataCell>
                     <p className="flex flex-wrap items-center gap-1.5 font-semibold">
                       {s.name}
-                      {isAdultService(s.name) ? (
+                      {isAdultService(s.name) || isAdultServiceCategory(s.category) ? (
                         <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-amber-700">
                           18+
                         </span>
                       ) : null}
                     </p>
                     <p className="max-w-md text-[12px] text-[#6b6275]">{s.description}</p>
+                    <p className="mt-0.5 text-[11px] uppercase tracking-[0.06em] text-[#8b7f99]">
+                      {serviceCategoryLabel(s.category)}
+                    </p>
                   </DataCell>
                   <DataCell>{s.durationMinutes} min</DataCell>
                   <DataCell>{s.currency} {s.price.toLocaleString()}</DataCell>
                   <DataCell><StatusBadge status={s.active ? 'active' : 'inactive'} label={s.active ? 'Active' : 'Inactive'} /></DataCell>
                   <DataCell>
                     <div className="flex gap-2">
-                      <button className={adminBtnGhostClass} onClick={() => setServiceForm({ id: s.id, name: s.name, description: s.description, durationMinutes: s.durationMinutes, price: s.price, active: s.active, image: s.image ?? '' })}>Edit</button>
+                      <button className={adminBtnGhostClass} onClick={() => {
+                        setServiceForm({ id: s.id, name: s.name, description: s.description, durationMinutes: s.durationMinutes, price: s.price, active: s.active, image: s.image ?? '', category: s.category ?? '' });
+                        setServiceAdultAck(false);
+                      }}>Edit</button>
                       <button className={adminBtnGhostClass} disabled={busy} onClick={() => act(async () => {
                         await apiRequest('/admin/services.php', { method: 'DELETE', body: JSON.stringify({ id: s.id }) });
                       }, 'Service deleted.')}>Delete</button>
@@ -1557,9 +1574,18 @@ export const AdminWorkspacePage: React.FC = () => {
 
           <form className="min-w-0 space-y-3 rounded-[16px] border border-[#e5d9f2] bg-white p-5 shadow-[0_1px_2px_rgba(22,22,22,0.04)]" onSubmit={(e) => {
             e.preventDefault();
+            if (serviceFormAdult && !serviceAdultAck) return;
             act(async () => {
-              await apiRequest('/admin/services.php', { method: 'POST', body: JSON.stringify(serviceForm) });
-              setServiceForm({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false, image: '' });
+              await apiRequest('/admin/services.php', {
+                method: 'POST',
+                body: JSON.stringify({
+                  ...serviceForm,
+                  // Adults-only services always persist in the adult category.
+                  category: serviceFormAdult ? ADULT_SERVICE_CATEGORY : serviceForm.category,
+                }),
+              });
+              setServiceForm({ id: '', name: '', description: '', durationMinutes: 60, price: 0, active: false, image: '', category: '' });
+              setServiceAdultAck(false);
             }, 'Service saved.');
           }}>
             <h2 className="font-display text-[22px] font-semibold">{serviceForm.id ? 'Edit service' : 'Create service'}</h2>
@@ -1581,6 +1607,33 @@ export const AdminWorkspacePage: React.FC = () => {
               </datalist>
             </FormField>
             <FormField label="Description"><textarea className={`${adminInputClass} h-28 py-2`} value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} /></FormField>
+            <FormField
+              label="Category"
+              hint={
+                serviceFormAdult
+                  ? 'Adults-only services are always stored in the 18+ category.'
+                  : 'Used for catalogue grouping and the public service details.'
+              }
+            >
+              <select
+                className={adminInputClass}
+                value={serviceFormAdult ? ADULT_SERVICE_CATEGORY : serviceForm.category}
+                disabled={isAdultService(serviceForm.name)}
+                onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
+              >
+                {[
+                  ...SERVICE_CATEGORY_OPTIONS,
+                  ...(serviceForm.category &&
+                  !SERVICE_CATEGORY_OPTIONS.some((option) => option.value === serviceForm.category)
+                    ? [{ value: serviceForm.category, label: serviceForm.category }]
+                    : []),
+                ].map((option) => (
+                  <option key={option.value || 'general'} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
             <div className="grid grid-cols-2 gap-2">
               <FormField label="Duration (minutes)"><input className={adminInputClass} type="number" min={15} max={480} value={serviceForm.durationMinutes} onChange={(e) => setServiceForm({ ...serviceForm, durationMinutes: Number(e.target.value) })} /></FormField>
               <FormField label="Price (GHS)"><input className={adminInputClass} type="number" min={0} value={serviceForm.price} onChange={(e) => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} /></FormField>
@@ -1588,11 +1641,34 @@ export const AdminWorkspacePage: React.FC = () => {
             <FormField label="Image / media URL" hint="Paste a URL from the Media library.">
               <input className={adminInputClass} value={serviceForm.image} onChange={(e) => setServiceForm({ ...serviceForm, image: e.target.value })} />
             </FormField>
+            {serviceFormAdult ? (
+              <div className="space-y-2 rounded-[14px] border border-amber-300 bg-amber-50 p-3">
+                <p className="text-[12.5px] font-semibold text-amber-900">Adults only (18+)</p>
+                <p className="text-[12px] leading-relaxed text-amber-900/90">
+                  This entry is shown to adults only and must describe a lawful, non-explicit massage.
+                  Sexual services, sexual imagery and obscene or explicit descriptions or media are
+                  prohibited and will be removed.
+                </p>
+                <label className="flex items-start gap-2 text-[12px] leading-relaxed text-amber-900">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-400"
+                    checked={serviceAdultAck}
+                    onChange={(e) => setServiceAdultAck(e.target.checked)}
+                    required
+                  />
+                  <span>
+                    I confirm the description is lawful and non-explicit, no explicit imagery is
+                    attached, and no sexual service is offered.
+                  </span>
+                </label>
+              </div>
+            ) : null}
             <label className="flex min-h-12 items-center gap-3 text-[13px]">
               <input type="checkbox" className="h-5 w-5 rounded border-[#d8c7ea]" checked={serviceForm.active} onChange={(e) => setServiceForm({ ...serviceForm, active: e.target.checked })} />
-              Active on public website
+              Published on the public website (/massage and booking)
             </label>
-            <button className={adminBtnClass} type="submit" disabled={busy}>{serviceForm.id ? 'Save changes' : 'Create service'}</button>
+            <button className={adminBtnClass} type="submit" disabled={busy || (serviceFormAdult && !serviceAdultAck)}>{serviceForm.id ? 'Save changes' : 'Create service'}</button>
           </form>
         </div>
       ) : null}

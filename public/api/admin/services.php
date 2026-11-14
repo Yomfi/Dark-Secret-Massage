@@ -65,6 +65,12 @@ if ($currency === '' || strlen($currency) > 8) {
     $currency = 'GHS';
 }
 
+// Adults-only catalogue entries are always stored in the adult category so the
+// public catalogue can label them, whatever the form submitted.
+if (ds_is_adult_service_name($name)) {
+    $category = 'adult';
+}
+
 $now = ds_now_sql();
 $pdo = ds_pdo();
 

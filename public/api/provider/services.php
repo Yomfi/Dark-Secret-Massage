@@ -69,6 +69,11 @@ if (strlen($currency) > 8 || $currency === '') {
     $currency = 'GHS';
 }
 
+// Adults-only names always persist as the adult category for consistent labelling.
+if (ds_is_adult_service_name($name)) {
+    $category = 'adult';
+}
+
 $now = ds_now_sql();
 if ($id !== '') {
     $check = $pdo->prepare('SELECT id FROM services WHERE id = ? AND provider_profile_id = ? LIMIT 1');

@@ -475,6 +475,27 @@ function ds_public_services(bool $activeOnly = true): array
     return array_map('ds_service_row_to_public', $rows ?: []);
 }
 
+/**
+ * Adults-only service names in the platform catalogue. Kept in sync with the
+ * frontend catalogue; these are never assigned to a provider automatically.
+ *
+ * @return array<int, string>
+ */
+function ds_adult_service_names(): array
+{
+    return ['erotic massage'];
+}
+
+function ds_is_adult_service_name(?string $name): bool
+{
+    return $name !== null && in_array(mb_strtolower(trim($name)), ds_adult_service_names(), true);
+}
+
+function ds_is_adult_service_category(?string $category): bool
+{
+    return $category !== null && mb_strtolower(trim($category)) === 'adult';
+}
+
 /** @return array<string, mixed> */
 function ds_service_row_to_public(array $row): array
 {

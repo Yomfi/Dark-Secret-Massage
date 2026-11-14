@@ -48,6 +48,29 @@ export function isAdultService(label: string | null | undefined): boolean {
   return ADULT_SERVICE_OPTIONS.some((option) => option.toLowerCase() === key);
 }
 
+/** Catalogue category stored in the `services.category` column for adult services. */
+export const ADULT_SERVICE_CATEGORY = 'adult';
+
+/** Category choices offered when an admin publishes a platform service. */
+export const SERVICE_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'General massage' },
+  { value: 'wellness', label: 'Wellness & spa' },
+  { value: 'home', label: 'Home & mobile' },
+  { value: ADULT_SERVICE_CATEGORY, label: 'Adults only (18+)' },
+];
+
+export function isAdultServiceCategory(category: string | null | undefined): boolean {
+  if (!category) return false;
+  return category.trim().toLowerCase() === ADULT_SERVICE_CATEGORY;
+}
+
+/** Human label for a stored catalogue category. */
+export function serviceCategoryLabel(category: string | null | undefined): string {
+  if (!category) return 'General massage';
+  if (isAdultServiceCategory(category)) return 'Adults only (18+)';
+  return SERVICE_CATEGORY_OPTIONS.find((option) => option.value === category)?.label ?? category;
+}
+
 /** Public massage/wellness categories (legacy grouping for profile primaryCategory). */
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
   {

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiRequest } from './api';
+import {
+  isAdultService,
+  isAdultServiceCategory,
+  serviceCategoryLabel,
+} from '../data/serviceCategories';
 import type { MassageService, MassageTherapist } from './catalogue';
 
 export type CmsService = {
@@ -61,10 +66,21 @@ function firstSentence(text: string): string {
 
 /** CMS row → presentation model used by the public components. */
 export function mapCmsService(row: CmsService): MassageService {
+  // Adult categories are stored as the `adult` token; never surface that token
+  // as copy. The public 18+ label is applied instead.
+  const adult = isAdultServiceCategory(row.category) || isAdultService(row.name);
+  const categoryLabel = adult
+    ? 'Adults only (18+)'
+    : row.category
+      ? serviceCategoryLabel(row.category)
+      : null;
+
   return {
     id: row.id,
     name: row.name,
-    tagline: firstSentence(row.category ? `${row.category}. ${row.description}` : row.description),
+    tagline: firstSentence(
+      adult || !row.category ? row.description : `${serviceCategoryLabel(row.category)}. ${row.description}`,
+    ),
     description: row.description,
     // A CMS service has one published duration; the wizard never invents
     // 60/90/120 minute variants.
@@ -72,7 +88,7 @@ export function mapCmsService(row: CmsService): MassageService {
     basePriceGHS: row.price,
     benefits: [],
     image: row.image ?? null,
-    category: row.category ?? null,
+    category: categoryLabel,
   };
 }
 
