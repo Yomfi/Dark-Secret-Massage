@@ -5,6 +5,12 @@ import { Footer } from '../components/Footer';
 import { ExploreFilters } from '../components/marketplace/ExploreFilters';
 import { MarketplaceProfileCard } from '../components/marketplace/MarketplaceProfileCard';
 import {
+  AdultServiceGate,
+  grantAdultServiceConsent,
+  hasAdultServiceConsent,
+} from '../components/marketplace/AdultServiceGate';
+import { isAdultService } from '../data/serviceCategories';
+import {
   findCityBySlug,
   findRegionById,
   findRegionBySlug,
@@ -84,6 +90,8 @@ export const ExplorePage: React.FC = () => {
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(12);
   const [view, setView] = useExploreViewPreference();
+  const [adultConsent, setAdultConsent] = useState(hasAdultServiceConsent);
+  const [pendingAdultFilters, setPendingAdultFilters] = useState<MarketplaceFilters | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -227,9 +235,35 @@ export const ExplorePage: React.FC = () => {
     document.title = title;
   }, [filters.service, locationName]);
 
-  const updateFilters = (next: MarketplaceFilters) => {
+  const applyFilters = (next: MarketplaceFilters) => {
     setSearchParams(buildExploreSearchParams(next), { replace: true });
   };
+
+  const updateFilters = (next: MarketplaceFilters) => {
+    // Adult categories need an 18+ confirmation before the filter is applied.
+    if (isAdultService(next.service) && !adultConsent) {
+      setPendingAdultFilters(next);
+      return;
+    }
+    applyFilters(next);
+  };
+
+  const confirmAdultAccess = () => {
+    grantAdultServiceConsent();
+    setAdultConsent(true);
+    const next = pendingAdultFilters;
+    setPendingAdultFilters(null);
+    if (next) applyFilters(next);
+  };
+
+  const declineAdultAccess = () => {
+    setPendingAdultFilters(null);
+    // A deep link straight into the adult category falls back to all services.
+    if (isAdultService(filters.service)) applyFilters({ ...filters, service: null });
+  };
+
+  const adultGateOpen =
+    Boolean(pendingAdultFilters) || (isAdultService(filters.service) && !adultConsent);
 
   const clearFilters = () => {
     updateFilters({
@@ -516,6 +550,12 @@ export const ExplorePage: React.FC = () => {
       </main>
 
       <Footer />
+
+      <AdultServiceGate
+        open={adultGateOpen}
+        onConfirm={confirmAdultAccess}
+        onDecline={declineAdultAccess}
+      />
     </div>
   );
 };
